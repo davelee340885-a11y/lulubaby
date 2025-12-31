@@ -21,7 +21,7 @@ import {
 } from "@/components/ui/sidebar";
 import { getLoginUrl } from "@/const";
 import { useIsMobile } from "@/hooks/useMobile";
-import { LayoutDashboard, LogOut, PanelLeft, FileText, Bot, BarChart3, Palette, Globe, Brain, Zap } from "lucide-react";
+import { LayoutDashboard, LogOut, PanelLeft, FileText, Bot, BarChart3, Palette, Globe, Brain, Zap, Puzzle } from "lucide-react";
 import { CSSProperties, useEffect, useRef, useState } from "react";
 import { useLocation } from "wouter";
 import { DashboardLayoutSkeleton } from './DashboardLayoutSkeleton';
@@ -34,6 +34,7 @@ const menuItems = [
   { icon: Brain, label: "訓練智能體", path: "/training" },
   { icon: Zap, label: "開發超能力", path: "/superpowers" },
   { icon: FileText, label: "知識庫", path: "/knowledge" },
+  { icon: Puzzle, label: "擴充功能", path: "/extensions" },
   { icon: Globe, label: "專屬網址", path: "/domain" },
 ];
 
