@@ -1,4 +1,4 @@
-import { eq, and, asc } from "drizzle-orm";
+import { eq, and, asc, desc, sql, count, gte } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/mysql2";
 import { 
   InsertUser, users, 
@@ -234,4 +234,170 @@ export async function createConversation(data: InsertConversation): Promise<Conv
   
   const created = await db.select().from(conversations).where(eq(conversations.id, insertId)).limit(1);
   return created.length > 0 ? created[0] : undefined;
+}
+
+// ==================== Analytics Operations ====================
+export type AnalyticsStats = {
+  totalConversations: number;
+  totalSessions: number;
+  todayConversations: number;
+  weekConversations: number;
+};
+
+export async function getAnalyticsStats(personaId: number): Promise<AnalyticsStats> {
+  const db = await getDb();
+  if (!db) return { totalConversations: 0, totalSessions: 0, todayConversations: 0, weekConversations: 0 };
+  
+  const now = new Date();
+  const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  const weekStart = new Date(todayStart.getTime() - 7 * 24 * 60 * 60 * 1000);
+  
+  // Total conversations (user messages only)
+  const totalResult = await db.select({ count: count() })
+    .from(conversations)
+    .where(and(eq(conversations.personaId, personaId), eq(conversations.role, "user")));
+  const totalConversations = totalResult[0]?.count || 0;
+  
+  // Unique sessions
+  const sessionsResult = await db.select({ sessionId: conversations.sessionId })
+    .from(conversations)
+    .where(eq(conversations.personaId, personaId))
+    .groupBy(conversations.sessionId);
+  const totalSessions = sessionsResult.length;
+  
+  // Today's conversations
+  const todayResult = await db.select({ count: count() })
+    .from(conversations)
+    .where(and(
+      eq(conversations.personaId, personaId),
+      eq(conversations.role, "user"),
+      gte(conversations.createdAt, todayStart)
+    ));
+  const todayConversations = todayResult[0]?.count || 0;
+  
+  // This week's conversations
+  const weekResult = await db.select({ count: count() })
+    .from(conversations)
+    .where(and(
+      eq(conversations.personaId, personaId),
+      eq(conversations.role, "user"),
+      gte(conversations.createdAt, weekStart)
+    ));
+  const weekConversations = weekResult[0]?.count || 0;
+  
+  return { totalConversations, totalSessions, todayConversations, weekConversations };
+}
+
+export type DailyStats = {
+  date: string;
+  count: number;
+};
+
+export async function getDailyStats(personaId: number, days: number = 7): Promise<DailyStats[]> {
+  const db = await getDb();
+  if (!db) return [];
+  
+  const now = new Date();
+  const startDate = new Date(now.getTime() - days * 24 * 60 * 60 * 1000);
+  
+  const result = await db.select({
+    date: sql<string>`DATE(${conversations.createdAt})`,
+    count: count(),
+  })
+    .from(conversations)
+    .where(and(
+      eq(conversations.personaId, personaId),
+      eq(conversations.role, "user"),
+      gte(conversations.createdAt, startDate)
+    ))
+    .groupBy(sql`DATE(${conversations.createdAt})`)
+    .orderBy(sql`DATE(${conversations.createdAt})`);
+  
+  // Fill in missing dates with 0
+  const statsMap = new Map(result.map(r => [r.date, r.count]));
+  const dailyStats: DailyStats[] = [];
+  
+  for (let i = days - 1; i >= 0; i--) {
+    const date = new Date(now.getTime() - i * 24 * 60 * 60 * 1000);
+    const dateStr = date.toISOString().split('T')[0];
+    dailyStats.push({
+      date: dateStr,
+      count: statsMap.get(dateStr) || 0,
+    });
+  }
+  
+  return dailyStats;
+}
+
+export type PopularQuestion = {
+  content: string;
+  count: number;
+};
+
+export async function getPopularQuestions(personaId: number, limit: number = 10): Promise<PopularQuestion[]> {
+  const db = await getDb();
+  if (!db) return [];
+  
+  // Get user messages and group similar ones
+  const result = await db.select({
+    content: conversations.content,
+    count: count(),
+  })
+    .from(conversations)
+    .where(and(
+      eq(conversations.personaId, personaId),
+      eq(conversations.role, "user")
+    ))
+    .groupBy(conversations.content)
+    .orderBy(desc(count()))
+    .limit(limit);
+  
+  return result;
+}
+
+export type RecentConversation = {
+  sessionId: string;
+  lastMessage: string;
+  messageCount: number;
+  lastActivity: Date;
+};
+
+export async function getRecentConversations(personaId: number, limit: number = 10): Promise<RecentConversation[]> {
+  const db = await getDb();
+  if (!db) return [];
+  
+  // Get unique sessions with their latest activity
+  const sessions = await db.select({
+    sessionId: conversations.sessionId,
+    lastActivity: sql<Date>`MAX(${conversations.createdAt})`,
+    messageCount: count(),
+  })
+    .from(conversations)
+    .where(eq(conversations.personaId, personaId))
+    .groupBy(conversations.sessionId)
+    .orderBy(desc(sql`MAX(${conversations.createdAt})`))
+    .limit(limit);
+  
+  // Get last message for each session
+  const result: RecentConversation[] = [];
+  for (const session of sessions) {
+    const lastMsg = await db.select({ content: conversations.content })
+      .from(conversations)
+      .where(and(
+        eq(conversations.personaId, personaId),
+        eq(conversations.sessionId, session.sessionId),
+        eq(conversations.role, "user")
+      ))
+      .orderBy(desc(conversations.createdAt))
+      .limit(1);
+    
+    result.push({
+      sessionId: session.sessionId,
+      lastMessage: lastMsg[0]?.content || "",
+      messageCount: session.messageCount,
+      lastActivity: session.lastActivity,
+    });
+  }
+  
+  return result;
 }

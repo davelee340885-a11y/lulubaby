@@ -9,6 +9,7 @@ import Dashboard from "./pages/Dashboard";
 import Settings from "./pages/Settings";
 import Knowledge from "./pages/Knowledge";
 import Buttons from "./pages/Buttons";
+import Analytics from "./pages/Analytics";
 import Chat from "./pages/Chat";
 
 function DashboardRoutes() {
@@ -19,6 +20,7 @@ function DashboardRoutes() {
         <Route path="/settings" component={Settings} />
         <Route path="/knowledge" component={Knowledge} />
         <Route path="/buttons" component={Buttons} />
+        <Route path="/analytics" component={Analytics} />
         <Route component={NotFound} />
       </Switch>
     </DashboardLayout>
@@ -36,6 +38,7 @@ function Router() {
       <Route path="/settings" component={DashboardRoutes} />
       <Route path="/knowledge" component={DashboardRoutes} />
       <Route path="/buttons" component={DashboardRoutes} />
+      <Route path="/analytics" component={DashboardRoutes} />
       
       <Route path="/404" component={NotFound} />
       <Route component={NotFound} />

@@ -7,7 +7,8 @@ import {
   getPersonaByUserId, upsertPersona, getPersonaById,
   getKnowledgeBasesByUserId, createKnowledgeBase, updateKnowledgeBase, deleteKnowledgeBase, getKnowledgeContentByUserId,
   getQuickButtonsByUserId, createQuickButton, updateQuickButton, deleteQuickButton,
-  getConversationsBySession, createConversation, getUserById
+  getConversationsBySession, createConversation, getUserById,
+  getAnalyticsStats, getDailyStats, getPopularQuestions, getRecentConversations
 } from "./db";
 import { invokeLLM } from "./_core/llm";
 import { storagePut } from "./storage";
@@ -243,6 +244,46 @@ ${knowledgeContent.substring(0, 10000)}
       }))
       .query(async ({ input }) => {
         return getConversationsBySession(input.personaId, input.sessionId);
+      }),
+  }),
+
+  // Analytics
+  analytics: router({
+    stats: protectedProcedure.query(async ({ ctx }) => {
+      const persona = await getPersonaByUserId(ctx.user.id);
+      if (!persona) {
+        return {
+          totalConversations: 0,
+          totalSessions: 0,
+          todayConversations: 0,
+          weekConversations: 0,
+        };
+      }
+      return getAnalyticsStats(persona.id);
+    }),
+
+    dailyStats: protectedProcedure
+      .input(z.object({ days: z.number().min(1).max(30).optional() }))
+      .query(async ({ ctx, input }) => {
+        const persona = await getPersonaByUserId(ctx.user.id);
+        if (!persona) return [];
+        return getDailyStats(persona.id, input.days || 7);
+      }),
+
+    popularQuestions: protectedProcedure
+      .input(z.object({ limit: z.number().min(1).max(50).optional() }))
+      .query(async ({ ctx, input }) => {
+        const persona = await getPersonaByUserId(ctx.user.id);
+        if (!persona) return [];
+        return getPopularQuestions(persona.id, input.limit || 10);
+      }),
+
+    recentConversations: protectedProcedure
+      .input(z.object({ limit: z.number().min(1).max(50).optional() }))
+      .query(async ({ ctx, input }) => {
+        const persona = await getPersonaByUserId(ctx.user.id);
+        if (!persona) return [];
+        return getRecentConversations(persona.id, input.limit || 10);
       }),
   }),
 });
