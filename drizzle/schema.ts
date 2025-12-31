@@ -75,7 +75,7 @@ export const quickButtons = mysqlTable("quick_buttons", {
   userId: int("userId").notNull(),
   label: varchar("label", { length: 100 }).notNull(),
   icon: varchar("icon", { length: 50 }),
-  actionType: mysqlEnum("actionType", ["query", "link", "booking", "custom"]).default("query").notNull(),
+  actionType: mysqlEnum("actionType", ["query", "link", "booking", "product", "profile", "company", "catalog", "contact", "faq", "custom"]).default("query").notNull(),
   actionValue: text("actionValue"),
   sortOrder: int("sortOrder").default(0).notNull(),
   isActive: boolean("isActive").default(true).notNull(),

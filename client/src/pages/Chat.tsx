@@ -260,7 +260,7 @@ type PersonaData = {
     id: number;
     label: string;
     icon: string | null;
-    actionType: "link" | "query" | "custom" | "booking";
+    actionType: string;
     actionValue: string | null;
   }>;
 };

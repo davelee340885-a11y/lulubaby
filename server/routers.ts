@@ -101,7 +101,7 @@ export const appRouter = router({
             id: b.id,
             label: b.label,
             icon: b.icon,
-            actionType: b.actionType,
+            actionType: b.actionType as string,
             actionValue: b.actionValue,
           })) : [],
         };
@@ -158,7 +158,7 @@ export const appRouter = router({
       .input(z.object({
         label: z.string().min(1).max(100),
         icon: z.string().optional(),
-        actionType: z.enum(["query", "link", "booking", "custom"]),
+        actionType: z.enum(["query", "link", "booking", "product", "profile", "company", "catalog", "contact", "faq", "custom"]),
         actionValue: z.string().optional(),
         sortOrder: z.number().optional(),
         isActive: z.boolean().optional(),
@@ -180,7 +180,7 @@ export const appRouter = router({
         id: z.number(),
         label: z.string().min(1).max(100).optional(),
         icon: z.string().optional(),
-        actionType: z.enum(["query", "link", "booking", "custom"]).optional(),
+        actionType: z.enum(["query", "link", "booking", "product", "profile", "company", "catalog", "contact", "faq", "custom"]).optional(),
         actionValue: z.string().optional(),
         sortOrder: z.number().optional(),
         isActive: z.boolean().optional(),
