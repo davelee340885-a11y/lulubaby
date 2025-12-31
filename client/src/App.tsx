@@ -6,7 +6,7 @@ import ErrorBoundary from "./components/ErrorBoundary";
 import { ThemeProvider } from "./contexts/ThemeContext";
 import DashboardLayout from "./components/DashboardLayout";
 import Dashboard from "./pages/Dashboard";
-import Settings from "./pages/Settings";
+// Settings page content has been merged into Appearance page
 import Knowledge from "./pages/Knowledge";
 import Analytics from "./pages/Analytics";
 import Appearance from "./pages/Appearance";
@@ -20,7 +20,7 @@ function DashboardRoutes() {
     <DashboardLayout>
       <Switch>
         <Route path="/" component={Dashboard} />
-        <Route path="/settings" component={Settings} />
+        {/* Settings merged into Appearance */}
         <Route path="/knowledge" component={Knowledge} />
         <Route path="/analytics" component={Analytics} />
         <Route path="/appearance" component={Appearance} />
@@ -41,7 +41,7 @@ function Router() {
       
       {/* Dashboard routes - auth required */}
       <Route path="/" component={DashboardRoutes} />
-      <Route path="/settings" component={DashboardRoutes} />
+      {/* Settings merged into Appearance */}
       <Route path="/knowledge" component={DashboardRoutes} />
       <Route path="/analytics" component={DashboardRoutes} />
       <Route path="/appearance" component={DashboardRoutes} />

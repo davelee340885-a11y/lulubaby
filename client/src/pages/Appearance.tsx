@@ -4,9 +4,11 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
+import { Textarea } from "@/components/ui/textarea";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Loader2, Upload, X, Plus, Trash2, Image as ImageIcon, Bot, Send, MessageSquare, User, Package, Calendar, Phone, HelpCircle, Search, Link, Building2, FileText, Mail, ExternalLink, ShoppingBag, Star, Info, Palette, Zap, MessageCircle } from "lucide-react";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Loader2, Upload, X, Plus, Trash2, Image as ImageIcon, Bot, Send, MessageSquare, User, Package, Calendar, Phone, HelpCircle, Search, Link, Building2, FileText, Mail, ExternalLink, ShoppingBag, Star, Info, Palette, Zap, MessageCircle, Settings2, Save } from "lucide-react";
 import { toast } from "sonner";
 import { useState, useRef, useEffect } from "react";
 import {
@@ -95,6 +97,13 @@ export default function Appearance() {
   const { data: buttons, isLoading: buttonsLoading } = trpc.quickButtons.list.useQuery();
   const utils = trpc.useUtils();
 
+  // AI Settings state (from Settings.tsx)
+  const [agentName, setAgentName] = useState("");
+  const [avatarUrl, setAvatarUrl] = useState("");
+  const [welcomeMessage, setWelcomeMessage] = useState("");
+  const [systemPrompt, setSystemPrompt] = useState("");
+  const [primaryColor, setPrimaryColor] = useState("#3B82F6");
+
   // Appearance state
   const [layoutStyle, setLayoutStyle] = useState<"minimal" | "professional" | "custom">("minimal");
   const [profilePhotoUrl, setProfilePhotoUrl] = useState("");
@@ -118,6 +127,14 @@ export default function Appearance() {
 
   useEffect(() => {
     if (persona) {
+      // AI Settings
+      setAgentName(persona.agentName || "");
+      setAvatarUrl(persona.avatarUrl || "");
+      setWelcomeMessage(persona.welcomeMessage || "");
+      setSystemPrompt(persona.systemPrompt || "");
+      setPrimaryColor(persona.primaryColor || "#3B82F6");
+      
+      // Appearance settings
       setLayoutStyle((persona.layoutStyle as "minimal" | "professional" | "custom") || "minimal");
       setProfilePhotoUrl(persona.profilePhotoUrl || "");
       setBackgroundImageUrl(persona.backgroundImageUrl || "");
@@ -225,17 +242,17 @@ export default function Appearance() {
   };
 
   const handleSave = () => {
-    if (!persona?.agentName) {
-      toast.error("請先在AI設定中設定助手名稱");
+    if (!agentName) {
+      toast.error("請先設定AI助手名稱");
       return;
     }
 
     upsertMutation.mutate({
-      agentName: persona.agentName,
-      avatarUrl: persona.avatarUrl,
-      welcomeMessage: persona.welcomeMessage,
-      systemPrompt: persona.systemPrompt,
-      primaryColor: persona.primaryColor || "#3B82F6",
+      agentName,
+      avatarUrl: avatarUrl || null,
+      welcomeMessage: welcomeMessage || null,
+      systemPrompt: systemPrompt || null,
+      primaryColor,
       layoutStyle,
       backgroundImageUrl: backgroundImageUrl || null,
       profilePhotoUrl: profilePhotoUrl || null,
@@ -288,13 +305,13 @@ export default function Appearance() {
     }
   };
 
-  const handleToggleButton = (id: number, isActive: boolean) => {
-    toggleButtonMutation.mutate({ id, isActive: !isActive });
+  const handleToggleButton = (id: number, currentActive: boolean) => {
+    toggleButtonMutation.mutate({ id, isActive: !currentActive });
   };
 
   const getIconComponent = (iconName: string) => {
-    const option = iconOptions.find((o) => o.value === iconName);
-    return option ? option.icon : Search;
+    const option = iconOptions.find(o => o.value === iconName);
+    return option?.icon || Search;
   };
 
   const getActionPlaceholder = (actionType: string) => {
@@ -326,13 +343,17 @@ export default function Appearance() {
     <div className="space-y-6">
       <div>
         <h1 className="text-2xl font-bold tracking-tight">版面設定</h1>
-        <p className="text-muted-foreground mt-1">自訂您的AI對話頁面外觀、功能按鈕和對話設定</p>
+        <p className="text-muted-foreground mt-1">自訂您的AI助手外觀、行為和對話頁面設定</p>
       </div>
 
       <div className="grid lg:grid-cols-[1fr,280px] gap-6">
         {/* Left: Settings with Tabs */}
-        <Tabs defaultValue="appearance" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-3">
+        <Tabs defaultValue="ai" className="space-y-6">
+          <TabsList className="grid w-full grid-cols-4">
+            <TabsTrigger value="ai" className="gap-2">
+              <Settings2 className="h-4 w-4" />
+              AI設定
+            </TabsTrigger>
             <TabsTrigger value="appearance" className="gap-2">
               <Palette className="h-4 w-4" />
               外觀風格
@@ -346,6 +367,112 @@ export default function Appearance() {
               對話設定
             </TabsTrigger>
           </TabsList>
+
+          {/* ===== AI設定 Tab (NEW) ===== */}
+          <TabsContent value="ai" className="space-y-6">
+            {/* Basic Info */}
+            <Card>
+              <CardHeader className="pb-3">
+                <CardTitle className="text-base">基本資訊</CardTitle>
+                <CardDescription>設定AI助手的名稱和頭像</CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="flex items-center gap-6">
+                  <Avatar className="h-16 w-16">
+                    <AvatarImage src={avatarUrl} />
+                    <AvatarFallback className="text-xl bg-primary text-primary-foreground">
+                      <Bot className="h-8 w-8" />
+                    </AvatarFallback>
+                  </Avatar>
+                  <div className="flex-1 space-y-2">
+                    <Label htmlFor="avatarUrl">頭像網址</Label>
+                    <Input
+                      id="avatarUrl"
+                      placeholder="https://example.com/avatar.jpg"
+                      value={avatarUrl}
+                      onChange={(e) => setAvatarUrl(e.target.value)}
+                    />
+                    <p className="text-xs text-muted-foreground">輸入圖片網址，建議使用正方形圖片</p>
+                  </div>
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="agentName">AI助手名稱 *</Label>
+                  <Input
+                    id="agentName"
+                    placeholder="例如：小明的保險顧問"
+                    value={agentName}
+                    onChange={(e) => setAgentName(e.target.value)}
+                    required
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="primaryColor">主題顏色</Label>
+                  <div className="flex items-center gap-3">
+                    <input
+                      type="color"
+                      id="primaryColor"
+                      value={primaryColor}
+                      onChange={(e) => setPrimaryColor(e.target.value)}
+                      className="h-10 w-20 rounded border cursor-pointer"
+                    />
+                    <Input
+                      value={primaryColor}
+                      onChange={(e) => setPrimaryColor(e.target.value)}
+                      className="w-32"
+                    />
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Conversation Settings */}
+            <Card>
+              <CardHeader className="pb-3">
+                <CardTitle className="text-base">對話設定</CardTitle>
+                <CardDescription>設定AI助手的歡迎語和行為指引</CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="space-y-2">
+                  <Label htmlFor="welcomeMessage">歡迎語</Label>
+                  <Textarea
+                    id="welcomeMessage"
+                    placeholder="您好！我是您的專屬AI助手，請問有什麼可以幫您？"
+                    value={welcomeMessage}
+                    onChange={(e) => setWelcomeMessage(e.target.value)}
+                    rows={3}
+                  />
+                  <p className="text-xs text-muted-foreground">客戶進入對話頁面時看到的第一條訊息</p>
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="systemPrompt">AI行為指引（System Prompt）</Label>
+                  <Textarea
+                    id="systemPrompt"
+                    placeholder="例如：你是一位專業的保險顧問，專門為客戶提供保險產品諮詢服務。請用友善、專業的語氣回答問題，並在適當時候引導客戶預約諮詢。"
+                    value={systemPrompt}
+                    onChange={(e) => setSystemPrompt(e.target.value)}
+                    rows={5}
+                  />
+                  <p className="text-xs text-muted-foreground">
+                    告訴AI它的角色、專業領域和回答風格。這段文字不會顯示給客戶看。
+                  </p>
+                </div>
+              </CardContent>
+            </Card>
+
+            <div className="flex justify-end">
+              <Button onClick={handleSave} disabled={upsertMutation.isPending}>
+                {upsertMutation.isPending ? (
+                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                ) : (
+                  <Save className="h-4 w-4 mr-2" />
+                )}
+                保存AI設定
+              </Button>
+            </div>
+          </TabsContent>
 
           {/* ===== 外觀風格 Tab ===== */}
           <TabsContent value="appearance" className="space-y-6">
@@ -646,11 +773,11 @@ export default function Appearance() {
                   {/* Header */}
                   <div className={`p-2 border-b ${layoutStyle === "custom" ? "bg-black/20 border-white/10" : "bg-background/95"}`}>
                     <div className="flex items-center gap-2">
-                      <div className="h-6 w-6 rounded-full flex items-center justify-center overflow-hidden" style={{ backgroundColor: `${persona?.primaryColor || "#3B82F6"}15` }}>
-                        {persona?.avatarUrl ? <img src={persona.avatarUrl} alt="" className="h-full w-full object-cover" /> : <Bot className="h-3 w-3" style={{ color: persona?.primaryColor || "#3B82F6" }} />}
+                      <div className="h-6 w-6 rounded-full flex items-center justify-center overflow-hidden" style={{ backgroundColor: `${primaryColor}15` }}>
+                        {avatarUrl ? <img src={avatarUrl} alt="" className="h-full w-full object-cover" /> : <Bot className="h-3 w-3" style={{ color: primaryColor }} />}
                       </div>
                       <div>
-                        <p className={`text-[10px] font-medium ${layoutStyle === "custom" ? "text-white" : ""}`}>{persona?.agentName || "AI 助手"}</p>
+                        <p className={`text-[10px] font-medium ${layoutStyle === "custom" ? "text-white" : ""}`}>{agentName || "AI 助手"}</p>
                         <p className={`text-[8px] ${layoutStyle === "custom" ? "text-white/70" : "text-muted-foreground"}`}>在線</p>
                       </div>
                     </div>
@@ -662,8 +789,8 @@ export default function Appearance() {
                       {profilePhotoUrl ? (
                         <img src={profilePhotoUrl} alt="" className="h-10 w-10 rounded-full object-cover mx-auto border-2 border-background shadow-sm" />
                       ) : (
-                        <div className="h-10 w-10 rounded-full mx-auto flex items-center justify-center" style={{ backgroundColor: `${persona?.primaryColor || "#3B82F6"}15` }}>
-                          <User className="h-4 w-4" style={{ color: persona?.primaryColor || "#3B82F6" }} />
+                        <div className="h-10 w-10 rounded-full mx-auto flex items-center justify-center" style={{ backgroundColor: `${primaryColor}15` }}>
+                          <User className="h-4 w-4" style={{ color: primaryColor }} />
                         </div>
                       )}
                       {tagline && <p className="text-[8px] text-muted-foreground mt-1 px-2 line-clamp-2">{tagline}</p>}
@@ -673,11 +800,11 @@ export default function Appearance() {
                   {/* Chat Area */}
                   <div className="flex-1 p-2 overflow-hidden">
                     <div className="flex gap-1.5 mb-2">
-                      <div className="h-4 w-4 rounded-full flex items-center justify-center flex-shrink-0" style={{ backgroundColor: `${persona?.primaryColor || "#3B82F6"}15` }}>
-                        <Bot className="h-2 w-2" style={{ color: persona?.primaryColor || "#3B82F6" }} />
+                      <div className="h-4 w-4 rounded-full flex items-center justify-center flex-shrink-0" style={{ backgroundColor: `${primaryColor}15` }}>
+                        <Bot className="h-2 w-2" style={{ color: primaryColor }} />
                       </div>
                       <div className={`rounded-lg px-2 py-1 max-w-[85%] ${layoutStyle === "custom" ? "bg-white/90 text-gray-900" : "bg-muted"}`}>
-                        <p className="text-[8px] leading-relaxed">{persona?.welcomeMessage || "您好！有什麼可以幫您？"}</p>
+                        <p className="text-[8px] leading-relaxed">{welcomeMessage || "您好！有什麼可以幫您？"}</p>
                       </div>
                     </div>
 
@@ -709,7 +836,7 @@ export default function Appearance() {
                   <div className={`p-1.5 border-t ${layoutStyle === "custom" ? "bg-black/20 border-white/10" : ""}`}>
                     <div className={`flex items-center gap-1 rounded-full px-2 py-1 ${layoutStyle === "custom" ? "bg-white/90" : "bg-muted"}`}>
                       <span className="text-[8px] text-muted-foreground flex-1 truncate">{chatPlaceholder}</span>
-                      <div className="h-4 w-4 rounded-full flex items-center justify-center" style={{ backgroundColor: persona?.primaryColor || "#3B82F6" }}>
+                      <div className="h-4 w-4 rounded-full flex items-center justify-center" style={{ backgroundColor: primaryColor }}>
                         <Send className="h-2 w-2 text-white" />
                       </div>
                     </div>
