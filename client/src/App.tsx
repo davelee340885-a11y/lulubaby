@@ -11,6 +11,8 @@ import Knowledge from "./pages/Knowledge";
 import Analytics from "./pages/Analytics";
 import Appearance from "./pages/Appearance";
 import Domain from "./pages/Domain";
+import Training from "./pages/Training";
+import Superpowers from "./pages/Superpowers";
 import Chat from "./pages/Chat";
 
 function DashboardRoutes() {
@@ -23,6 +25,8 @@ function DashboardRoutes() {
         <Route path="/analytics" component={Analytics} />
         <Route path="/appearance" component={Appearance} />
         <Route path="/domain" component={Domain} />
+        <Route path="/training" component={Training} />
+        <Route path="/superpowers" component={Superpowers} />
         <Route component={NotFound} />
       </Switch>
     </DashboardLayout>
@@ -42,6 +46,8 @@ function Router() {
       <Route path="/analytics" component={DashboardRoutes} />
       <Route path="/appearance" component={DashboardRoutes} />
       <Route path="/domain" component={DashboardRoutes} />
+      <Route path="/training" component={DashboardRoutes} />
+      <Route path="/superpowers" component={DashboardRoutes} />
       
       <Route path="/404" component={NotFound} />
       <Route component={NotFound} />

@@ -416,3 +416,78 @@ export async function getRecentConversations(personaId: number, limit: number = 
   
   return result;
 }
+
+
+// ==================== AI Training Operations ====================
+import { aiTraining, InsertAiTraining, AiTraining, superpowers, InsertSuperpower, Superpower } from "../drizzle/schema";
+
+export async function getTrainingByUserId(userId: number): Promise<AiTraining | undefined> {
+  const db = await getDb();
+  if (!db) return undefined;
+  const result = await db.select().from(aiTraining).where(eq(aiTraining.userId, userId)).limit(1);
+  return result.length > 0 ? result[0] : undefined;
+}
+
+export async function upsertTraining(data: InsertAiTraining): Promise<AiTraining | undefined> {
+  const db = await getDb();
+  if (!db) return undefined;
+
+  const updateSet: Record<string, unknown> = {};
+  Object.entries(data).forEach(([key, value]) => {
+    if (key !== 'userId' && key !== 'id' && value !== undefined) {
+      updateSet[key] = value;
+    }
+  });
+
+  // If no update values, just set a timestamp to avoid "No values to set" error
+  if (Object.keys(updateSet).length === 0) {
+    updateSet.updatedAt = new Date();
+  }
+
+  await db.insert(aiTraining).values(data).onDuplicateKeyUpdate({
+    set: updateSet,
+  });
+
+  return getTrainingByUserId(data.userId);
+}
+
+// ==================== Superpowers Operations ====================
+export async function getSuperpowersByUserId(userId: number): Promise<Superpower | undefined> {
+  const db = await getDb();
+  if (!db) return undefined;
+  const result = await db.select().from(superpowers).where(eq(superpowers.userId, userId)).limit(1);
+  return result.length > 0 ? result[0] : undefined;
+}
+
+export async function upsertSuperpowers(data: InsertSuperpower): Promise<Superpower | undefined> {
+  const db = await getDb();
+  if (!db) return undefined;
+
+  const updateSet: Record<string, unknown> = {};
+  Object.entries(data).forEach(([key, value]) => {
+    if (key !== 'userId' && key !== 'id' && value !== undefined) {
+      updateSet[key] = value;
+    }
+  });
+
+  // If no update values, just set a timestamp to avoid "No values to set" error
+  if (Object.keys(updateSet).length === 0) {
+    updateSet.updatedAt = new Date();
+  }
+
+  await db.insert(superpowers).values(data).onDuplicateKeyUpdate({
+    set: updateSet,
+  });
+
+  return getSuperpowersByUserId(data.userId);
+}
+
+// Update superpower stats
+export async function incrementSuperpowerStats(userId: number, stat: 'totalConversationsHandled' | 'customersRemembered' | 'afterHoursMessages' | 'researchReportsGenerated' | 'predictionsAccurate'): Promise<void> {
+  const db = await getDb();
+  if (!db) return;
+
+  await db.execute(
+    sql`UPDATE superpowers SET ${sql.identifier(stat)} = ${sql.identifier(stat)} + 1 WHERE userId = ${userId}`
+  );
+}

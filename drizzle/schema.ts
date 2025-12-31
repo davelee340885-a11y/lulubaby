@@ -100,3 +100,151 @@ export const conversations = mysqlTable("conversations", {
 
 export type Conversation = typeof conversations.$inferSelect;
 export type InsertConversation = typeof conversations.$inferInsert;
+
+/**
+ * AI Training configuration - 8 dimensions with 1-5 ratings
+ * 訓練智能體 - 8大維度評分系統
+ */
+export const aiTraining = mysqlTable("ai_training", {
+  id: int("id").autoincrement().primaryKey(),
+  userId: int("userId").notNull().unique(),
+  
+  // 當前使用的人設模板
+  activePersonaTemplate: varchar("activePersonaTemplate", { length: 50 }),
+  
+  // 💬 說話風格 (Speaking Style) - 6 items
+  humorLevel: int("humorLevel").default(3).notNull(), // 幽默度 1-5
+  friendlinessLevel: int("friendlinessLevel").default(3).notNull(), // 親切度 1-5
+  formalityLevel: int("formalityLevel").default(3).notNull(), // 正式度 1-5
+  enthusiasmLevel: int("enthusiasmLevel").default(3).notNull(), // 熱情度 1-5
+  patienceLevel: int("patienceLevel").default(3).notNull(), // 耐心度 1-5
+  empathyLevel: int("empathyLevel").default(3).notNull(), // 同理心 1-5
+  
+  // 📝 回應方式 (Response Method) - 6 items
+  responseLength: int("responseLength").default(3).notNull(), // 回覆長度 1-5
+  responseDepth: int("responseDepth").default(3).notNull(), // 回覆深度 1-5
+  exampleUsage: int("exampleUsage").default(3).notNull(), // 舉例頻率 1-5
+  dataUsage: int("dataUsage").default(3).notNull(), // 數據使用 1-5
+  metaphorUsage: int("metaphorUsage").default(3).notNull(), // 比喻使用 1-5
+  structuredResponse: int("structuredResponse").default(3).notNull(), // 結構化程度 1-5
+  
+  // 🤝 溝通態度 (Communication Attitude) - 6 items
+  proactiveness: int("proactiveness").default(3).notNull(), // 主動性 1-5
+  questioningStyle: int("questioningStyle").default(3).notNull(), // 提問頻率 1-5
+  suggestionFrequency: int("suggestionFrequency").default(3).notNull(), // 建議頻率 1-5
+  humilityLevel: int("humilityLevel").default(3).notNull(), // 謙遜度 1-5
+  persistenceLevel: int("persistenceLevel").default(3).notNull(), // 堅持度 1-5
+  careLevel: int("careLevel").default(3).notNull(), // 關心度 1-5
+  
+  // 💼 銷售風格 (Sales Style) - 6 items
+  pushIntensity: int("pushIntensity").default(3).notNull(), // 推銷強度 1-5
+  urgencyCreation: int("urgencyCreation").default(3).notNull(), // 緊迫感 1-5
+  priceSensitivity: int("priceSensitivity").default(3).notNull(), // 價格敏感度 1-5
+  comparisonUsage: int("comparisonUsage").default(3).notNull(), // 比較使用 1-5
+  closingIntensity: int("closingIntensity").default(3).notNull(), // 成交強度 1-5
+  followUpFrequency: int("followUpFrequency").default(3).notNull(), // 跟進頻率 1-5
+  
+  // 🎓 專業表現 (Professional Performance) - 6 items
+  terminologyUsage: int("terminologyUsage").default(3).notNull(), // 術語使用 1-5
+  regulationAwareness: int("regulationAwareness").default(3).notNull(), // 法規意識 1-5
+  riskWarningLevel: int("riskWarningLevel").default(3).notNull(), // 風險提示 1-5
+  caseStudyUsage: int("caseStudyUsage").default(3).notNull(), // 案例使用 1-5
+  marketAnalysis: int("marketAnalysis").default(3).notNull(), // 市場分析 1-5
+  educationalContent: int("educationalContent").default(3).notNull(), // 教育內容 1-5
+  
+  // 😊 情緒處理 (Emotion Handling) - 6 items
+  soothingAbility: int("soothingAbility").default(3).notNull(), // 安撫能力 1-5
+  praiseFrequency: int("praiseFrequency").default(3).notNull(), // 讚美頻率 1-5
+  encouragementLevel: int("encouragementLevel").default(3).notNull(), // 鼓勵程度 1-5
+  negativeHandling: int("negativeHandling").default(3).notNull(), // 負面處理 1-5
+  optimismLevel: int("optimismLevel").default(3).notNull(), // 樂觀程度 1-5
+  humorInTension: int("humorInTension").default(3).notNull(), // 緊張時幽默 1-5
+  
+  // 🗣️ 語言習慣 (Language Habits) - 6 items
+  emojiUsage: int("emojiUsage").default(3).notNull(), // Emoji使用 1-5
+  colloquialLevel: int("colloquialLevel").default(3).notNull(), // 口語化程度 1-5
+  cantoneseUsage: int("cantoneseUsage").default(3).notNull(), // 廣東話使用 1-5
+  englishMixing: int("englishMixing").default(3).notNull(), // 中英夾雜 1-5
+  exclamationUsage: int("exclamationUsage").default(3).notNull(), // 感嘆詞使用 1-5
+  addressingStyle: int("addressingStyle").default(3).notNull(), // 稱呼方式 1-5
+  
+  // ⚠️ 服務邊界 (Service Boundaries) - 6 items
+  topicRange: int("topicRange").default(3).notNull(), // 話題範圍 1-5
+  privacyAwareness: int("privacyAwareness").default(3).notNull(), // 隱私意識 1-5
+  promiseCaution: int("promiseCaution").default(3).notNull(), // 承諾謹慎 1-5
+  referralWillingness: int("referralWillingness").default(3).notNull(), // 轉介意願 1-5
+  uncertaintyHandling: int("uncertaintyHandling").default(3).notNull(), // 不確定處理 1-5
+  complaintHandling: int("complaintHandling").default(3).notNull(), // 投訴處理 1-5
+  
+  // ✍️ 自訂指令 (Custom Instructions)
+  behaviorInstructions: text("behaviorInstructions"), // AI行為指令
+  prohibitedActions: text("prohibitedActions"), // 絕對禁止事項
+  customGreeting: text("customGreeting"), // 自訂開場白
+  customClosing: text("customClosing"), // 自訂結束語
+  customPhrases: text("customPhrases"), // 常用句式 JSON array
+  
+  // 訓練進度
+  trainingProgress: int("trainingProgress").default(0).notNull(), // 訓練完成度 0-100
+  intelligenceScore: int("intelligenceScore").default(50).notNull(), // 智能指數 0-100
+  
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+
+export type AiTraining = typeof aiTraining.$inferSelect;
+export type InsertAiTraining = typeof aiTraining.$inferInsert;
+
+/**
+ * AI Superpowers configuration
+ * 開發超能力 - Toggle開關設定
+ */
+export const superpowers = mysqlTable("superpowers", {
+  id: int("id").autoincrement().primaryKey(),
+  userId: int("userId").notNull().unique(),
+  
+  // 🧠 超級大腦 (Super Brain)
+  instantResearch: boolean("instantResearch").default(false).notNull(), // 即時研究報告
+  globalComparison: boolean("globalComparison").default(false).notNull(), // 全球產品比較
+  legalInterpretation: boolean("legalInterpretation").default(false).notNull(), // 即時法規解讀
+  caseSearch: boolean("caseSearch").default(false).notNull(), // 案例庫搜索
+  
+  // ⏰ 時間掌控 (Time Control)
+  cloneAbility: boolean("cloneAbility").default(true).notNull(), // 分身術
+  perfectMemory: boolean("perfectMemory").default(true).notNull(), // 時光倒流/完美記憶
+  alwaysOnline: boolean("alwaysOnline").default(true).notNull(), // 24小時在線
+  instantReply: boolean("instantReply").default(true).notNull(), // 秒速回覆
+  
+  // 🔮 預知未來 (Future Prediction)
+  needsPrediction: boolean("needsPrediction").default(false).notNull(), // 需求預測
+  riskWarning: boolean("riskWarning").default(false).notNull(), // 風險預警
+  bestTiming: boolean("bestTiming").default(false).notNull(), // 最佳時機
+  
+  // 🌍 全球視野 (Global Vision)
+  marketRadar: boolean("marketRadar").default(false).notNull(), // 即時市場雷達
+  multiLanguage: boolean("multiLanguage").default(true).notNull(), // 多語言瞬譯
+  globalInfo: boolean("globalInfo").default(false).notNull(), // 全球資訊
+  
+  // 💬 讀心術 (Mind Reading)
+  emotionSense: boolean("emotionSense").default(false).notNull(), // 情緒透視
+  persuasionMaster: boolean("persuasionMaster").default(false).notNull(), // 說服大師
+  styleAdaptation: boolean("styleAdaptation").default(false).notNull(), // 風格適應
+  
+  // Settings for specific superpowers
+  researchDepth: mysqlEnum("researchDepth", ["quick", "standard", "deep"]).default("standard"), // 研究報告深度
+  followUpIntensity: int("followUpIntensity").default(3), // 跟進強度 1-5
+  persuasionStyle: mysqlEnum("persuasionStyle", ["gentle", "balanced", "aggressive"]).default("balanced"), // 說服風格
+  
+  // Superpower level and stats
+  superpowerLevel: int("superpowerLevel").default(1).notNull(), // 超能力等級 1-5
+  totalConversationsHandled: int("totalConversationsHandled").default(0).notNull(),
+  customersRemembered: int("customersRemembered").default(0).notNull(),
+  afterHoursMessages: int("afterHoursMessages").default(0).notNull(),
+  researchReportsGenerated: int("researchReportsGenerated").default(0).notNull(),
+  predictionsAccurate: int("predictionsAccurate").default(0).notNull(),
+  
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+
+export type Superpower = typeof superpowers.$inferSelect;
+export type InsertSuperpower = typeof superpowers.$inferInsert;
