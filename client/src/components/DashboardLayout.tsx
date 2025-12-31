@@ -21,7 +21,7 @@ import {
 } from "@/components/ui/sidebar";
 import { getLoginUrl } from "@/const";
 import { useIsMobile } from "@/hooks/useMobile";
-import { LayoutDashboard, LogOut, PanelLeft, Settings, FileText, Zap, Bot, BarChart3 } from "lucide-react";
+import { LayoutDashboard, LogOut, PanelLeft, Settings, FileText, Zap, Bot, BarChart3, Palette } from "lucide-react";
 import { CSSProperties, useEffect, useRef, useState } from "react";
 import { useLocation } from "wouter";
 import { DashboardLayoutSkeleton } from './DashboardLayoutSkeleton';
@@ -31,6 +31,7 @@ const menuItems = [
   { icon: LayoutDashboard, label: "儀表板", path: "/" },
   { icon: BarChart3, label: "數據分析", path: "/analytics" },
   { icon: Settings, label: "AI設定", path: "/settings" },
+  { icon: Palette, label: "版面設定", path: "/appearance" },
   { icon: FileText, label: "知識庫", path: "/knowledge" },
   { icon: Zap, label: "快捷按鈕", path: "/buttons" },
 ];

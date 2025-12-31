@@ -127,6 +127,13 @@ export async function upsertPersona(data: InsertAiPersona): Promise<AiPersona | 
       welcomeMessage: data.welcomeMessage,
       systemPrompt: data.systemPrompt,
       primaryColor: data.primaryColor,
+      layoutStyle: data.layoutStyle,
+      backgroundImageUrl: data.backgroundImageUrl,
+      profilePhotoUrl: data.profilePhotoUrl,
+      tagline: data.tagline,
+      suggestedQuestions: data.suggestedQuestions,
+      showQuickButtons: data.showQuickButtons,
+      chatPlaceholder: data.chatPlaceholder,
     },
   });
 
@@ -300,21 +307,29 @@ export async function getDailyStats(personaId: number, days: number = 7): Promis
   const now = new Date();
   const startDate = new Date(now.getTime() - days * 24 * 60 * 60 * 1000);
   
-  const result = await db.select({
-    date: sql<string>`DATE(${conversations.createdAt})`,
-    count: count(),
-  })
-    .from(conversations)
-    .where(and(
-      eq(conversations.personaId, personaId),
-      eq(conversations.role, "user"),
-      gte(conversations.createdAt, startDate)
-    ))
-    .groupBy(sql`DATE(${conversations.createdAt})`)
-    .orderBy(sql`DATE(${conversations.createdAt})`);
+  // Use raw SQL to avoid GROUP BY issues with MySQL strict mode
+  const rawResult = await db.execute(
+    sql`SELECT DATE(createdAt) as date, COUNT(*) as count 
+        FROM conversations 
+        WHERE personaId = ${personaId} 
+        AND role = 'user' 
+        AND createdAt >= ${startDate}
+        GROUP BY DATE(createdAt)
+        ORDER BY DATE(createdAt)`
+  );
+  
+  // MySQL2 returns [rows, fields], extract rows
+  const rows = Array.isArray(rawResult) && rawResult.length > 0 ? rawResult[0] : [];
+  const result = (Array.isArray(rows) ? rows : []) as { date: string; count: number | bigint }[];
   
   // Fill in missing dates with 0
-  const statsMap = new Map(result.map(r => [r.date, r.count]));
+  const statsMap = new Map<string, number>();
+  for (const r of result) {
+    const dateVal = r.date as unknown;
+    const dateStr = dateVal instanceof Date ? dateVal.toISOString().split('T')[0] : String(r.date);
+    statsMap.set(dateStr, Number(r.count));
+  }
+  
   const dailyStats: DailyStats[] = [];
   
   for (let i = days - 1; i >= 0; i--) {

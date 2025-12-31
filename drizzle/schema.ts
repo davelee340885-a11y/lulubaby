@@ -20,6 +20,7 @@ export type InsertUser = typeof users.$inferInsert;
 
 /**
  * AI Persona configuration for each user
+ * Includes layout and appearance settings for the chat page
  */
 export const aiPersonas = mysqlTable("ai_personas", {
   id: int("id").autoincrement().primaryKey(),
@@ -29,6 +30,16 @@ export const aiPersonas = mysqlTable("ai_personas", {
   welcomeMessage: text("welcomeMessage"),
   systemPrompt: text("systemPrompt"),
   primaryColor: varchar("primaryColor", { length: 20 }).default("#3B82F6"),
+  
+  // Layout and appearance settings
+  layoutStyle: mysqlEnum("layoutStyle", ["minimal", "professional", "custom"]).default("minimal").notNull(),
+  backgroundImageUrl: varchar("backgroundImageUrl", { length: 512 }),
+  profilePhotoUrl: varchar("profilePhotoUrl", { length: 512 }),
+  tagline: varchar("tagline", { length: 255 }),
+  suggestedQuestions: text("suggestedQuestions"), // JSON array of suggested questions
+  showQuickButtons: boolean("showQuickButtons").default(true).notNull(),
+  chatPlaceholder: varchar("chatPlaceholder", { length: 255 }).default("輸入您的問題..."),
+  
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
 });

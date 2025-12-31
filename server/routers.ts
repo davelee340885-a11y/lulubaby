@@ -39,6 +39,13 @@ export const appRouter = router({
         welcomeMessage: z.string().optional().nullable(),
         systemPrompt: z.string().optional().nullable(),
         primaryColor: z.string().optional(),
+        layoutStyle: z.enum(["minimal", "professional", "custom"]).optional(),
+        backgroundImageUrl: z.string().optional().nullable(),
+        profilePhotoUrl: z.string().optional().nullable(),
+        tagline: z.string().optional().nullable(),
+        suggestedQuestions: z.string().optional().nullable(),
+        showQuickButtons: z.boolean().optional(),
+        chatPlaceholder: z.string().optional().nullable(),
       }))
       .mutation(async ({ ctx, input }) => {
         return upsertPersona({
@@ -48,6 +55,13 @@ export const appRouter = router({
           welcomeMessage: input.welcomeMessage ?? undefined,
           systemPrompt: input.systemPrompt ?? undefined,
           primaryColor: input.primaryColor,
+          layoutStyle: input.layoutStyle,
+          backgroundImageUrl: input.backgroundImageUrl ?? undefined,
+          profilePhotoUrl: input.profilePhotoUrl ?? undefined,
+          tagline: input.tagline ?? undefined,
+          suggestedQuestions: input.suggestedQuestions ?? undefined,
+          showQuickButtons: input.showQuickButtons,
+          chatPlaceholder: input.chatPlaceholder ?? undefined,
         });
       }),
       
@@ -60,19 +74,36 @@ export const appRouter = router({
         const buttons = await getQuickButtonsByUserId(persona.userId);
         const activeButtons = buttons.filter(b => b.isActive);
         
+        // Parse suggested questions from JSON string
+        let suggestedQuestions: string[] = [];
+        if (persona.suggestedQuestions) {
+          try {
+            suggestedQuestions = JSON.parse(persona.suggestedQuestions);
+          } catch (e) {
+            suggestedQuestions = [];
+          }
+        }
+        
         return {
           id: persona.id,
           agentName: persona.agentName,
           avatarUrl: persona.avatarUrl,
           welcomeMessage: persona.welcomeMessage || "您好！我是您的專屬AI助手，請問有什麼可以幫您？",
           primaryColor: persona.primaryColor,
-          quickButtons: activeButtons.map(b => ({
+          layoutStyle: persona.layoutStyle,
+          backgroundImageUrl: persona.backgroundImageUrl,
+          profilePhotoUrl: persona.profilePhotoUrl,
+          tagline: persona.tagline,
+          suggestedQuestions,
+          showQuickButtons: persona.showQuickButtons,
+          chatPlaceholder: persona.chatPlaceholder,
+          quickButtons: persona.showQuickButtons ? activeButtons.map(b => ({
             id: b.id,
             label: b.label,
             icon: b.icon,
             actionType: b.actionType,
             actionValue: b.actionValue,
-          })),
+          })) : [],
         };
       }),
   }),

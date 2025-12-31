@@ -1,7 +1,7 @@
 {
   "version": "5",
   "dialect": "mysql",
-  "id": "c499d64c-66a3-47ed-883f-5084cb9dcca2",
+  "id": "8d1ff16a-0f7b-428d-b477-1fde39be4caa",
   "prevId": "00000000-0000-0000-0000-000000000000",
   "tables": {
     "ai_personas": {
@@ -57,6 +57,58 @@
           "notNull": false,
           "autoincrement": false,
           "default": "'#3B82F6'"
+        },
+        "layoutStyle": {
+          "name": "layoutStyle",
+          "type": "enum('minimal','professional','custom')",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": "'minimal'"
+        },
+        "backgroundImageUrl": {
+          "name": "backgroundImageUrl",
+          "type": "varchar(512)",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "profilePhotoUrl": {
+          "name": "profilePhotoUrl",
+          "type": "varchar(512)",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "tagline": {
+          "name": "tagline",
+          "type": "varchar(255)",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "suggestedQuestions": {
+          "name": "suggestedQuestions",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "showQuickButtons": {
+          "name": "showQuickButtons",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": true
+        },
+        "chatPlaceholder": {
+          "name": "chatPlaceholder",
+          "type": "varchar(255)",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false,
+          "default": "'輸入您的問題...'"
         },
         "createdAt": {
           "name": "createdAt",
