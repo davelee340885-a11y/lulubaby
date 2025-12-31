@@ -6,7 +6,7 @@ import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Loader2, Upload, X, Plus, Trash2, Image as ImageIcon, Bot, Send, MessageSquare, User, Package, Calendar, Phone, HelpCircle, Search, Link, Building2, FileText, Mail, ExternalLink, ShoppingBag, Star, Info, GripVertical, Palette, Zap } from "lucide-react";
+import { Loader2, Upload, X, Plus, Trash2, Image as ImageIcon, Bot, Send, MessageSquare, User, Package, Calendar, Phone, HelpCircle, Search, Link, Building2, FileText, Mail, ExternalLink, ShoppingBag, Star, Info, Palette, Zap, MessageCircle } from "lucide-react";
 import { toast } from "sonner";
 import { useState, useRef, useEffect } from "react";
 import {
@@ -138,7 +138,7 @@ export default function Appearance() {
 
   const upsertMutation = trpc.persona.upsert.useMutation({
     onSuccess: () => {
-      toast.success("版面設定已保存");
+      toast.success("設定已保存");
       utils.persona.get.invalidate();
     },
     onError: (error) => {
@@ -224,7 +224,7 @@ export default function Appearance() {
     setSuggestedQuestions(suggestedQuestions.filter((_, i) => i !== index));
   };
 
-  const handleSaveAppearance = () => {
+  const handleSave = () => {
     if (!persona?.agentName) {
       toast.error("請先在AI設定中設定助手名稱");
       return;
@@ -326,13 +326,13 @@ export default function Appearance() {
     <div className="space-y-6">
       <div>
         <h1 className="text-2xl font-bold tracking-tight">版面設定</h1>
-        <p className="text-muted-foreground mt-1">自訂您的AI對話頁面外觀、風格和功能按鈕</p>
+        <p className="text-muted-foreground mt-1">自訂您的AI對話頁面外觀、功能按鈕和對話設定</p>
       </div>
 
       <div className="grid lg:grid-cols-[1fr,280px] gap-6">
         {/* Left: Settings with Tabs */}
         <Tabs defaultValue="appearance" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-2">
+          <TabsList className="grid w-full grid-cols-3">
             <TabsTrigger value="appearance" className="gap-2">
               <Palette className="h-4 w-4" />
               外觀風格
@@ -341,9 +341,13 @@ export default function Appearance() {
               <Zap className="h-4 w-4" />
               快捷按鈕
             </TabsTrigger>
+            <TabsTrigger value="chat" className="gap-2">
+              <MessageCircle className="h-4 w-4" />
+              對話設定
+            </TabsTrigger>
           </TabsList>
 
-          {/* Appearance Tab */}
+          {/* ===== 外觀風格 Tab ===== */}
           <TabsContent value="appearance" className="space-y-6">
             {/* Layout Style Selection */}
             <Card>
@@ -420,14 +424,14 @@ export default function Appearance() {
                 <CardContent>
                   {backgroundImageUrl ? (
                     <div className="relative rounded-lg overflow-hidden">
-                      <img src={backgroundImageUrl} alt="Background" className="w-full h-20 object-cover" />
+                      <img src={backgroundImageUrl} alt="Background" className="w-full h-24 object-cover" />
                       <button onClick={() => setBackgroundImageUrl("")} className="absolute top-2 right-2 h-6 w-6 rounded-full bg-black/50 text-white flex items-center justify-center hover:bg-black/70">
                         <X className="h-3 w-3" />
                       </button>
                     </div>
                   ) : (
-                    <div onClick={() => backgroundInputRef.current?.click()} className="h-20 rounded-lg border-2 border-dashed border-muted-foreground/25 flex flex-col items-center justify-center cursor-pointer hover:border-primary/50 transition-colors">
-                      {uploadingBackground ? <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" /> : <><ImageIcon className="h-5 w-5 text-muted-foreground mb-1" /><p className="text-xs text-muted-foreground">點擊上傳</p></>}
+                    <div onClick={() => backgroundInputRef.current?.click()} className="h-24 rounded-lg border-2 border-dashed border-muted-foreground/25 flex flex-col items-center justify-center cursor-pointer hover:border-primary/50 transition-colors">
+                      {uploadingBackground ? <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" /> : <><ImageIcon className="h-5 w-5 text-muted-foreground mb-1" /><p className="text-xs text-muted-foreground">點擊上傳背景圖片</p></>}
                     </div>
                   )}
                   <input ref={backgroundInputRef} type="file" accept="image/*" className="hidden" onChange={(e) => { const file = e.target.files?.[0]; if (file) handleImageUpload(file, "background"); }} />
@@ -435,66 +439,15 @@ export default function Appearance() {
               </Card>
             )}
 
-            {/* Chat Settings */}
-            <Card>
-              <CardHeader className="pb-3">
-                <CardTitle className="text-base">對話設定</CardTitle>
-                <CardDescription>自訂對話框的顯示方式</CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="space-y-2">
-                  <Label htmlFor="placeholder">輸入框提示文字</Label>
-                  <Input id="placeholder" value={chatPlaceholder} onChange={(e) => setChatPlaceholder(e.target.value)} placeholder="輸入您的問題..." maxLength={100} />
-                </div>
-                <div className="flex items-center justify-between">
-                  <div className="space-y-0.5">
-                    <Label>顯示快捷按鈕</Label>
-                    <p className="text-xs text-muted-foreground">在對話頁面顯示您配置的快捷功能按鈕</p>
-                  </div>
-                  <Switch checked={showQuickButtons} onCheckedChange={setShowQuickButtons} />
-                </div>
-              </CardContent>
-            </Card>
-
-            {/* Suggested Questions */}
-            <Card>
-              <CardHeader className="pb-3">
-                <CardTitle className="text-base">引導問題</CardTitle>
-                <CardDescription>設定常見問題，幫助客戶快速開始對話（最多6個）</CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-3">
-                <div className="flex gap-2">
-                  <Input value={newQuestion} onChange={(e) => setNewQuestion(e.target.value)} placeholder="例如：你們有什麼保險產品？" maxLength={100} onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); handleAddQuestion(); } }} />
-                  <Button onClick={handleAddQuestion} disabled={!newQuestion.trim() || suggestedQuestions.length >= 6} size="icon">
-                    <Plus className="h-4 w-4" />
-                  </Button>
-                </div>
-                {suggestedQuestions.length > 0 && (
-                  <div className="space-y-1.5">
-                    {suggestedQuestions.map((question, index) => (
-                      <div key={index} className="flex items-center gap-2 p-2 rounded-lg bg-muted/50">
-                        <MessageSquare className="h-3.5 w-3.5 text-muted-foreground flex-shrink-0" />
-                        <span className="flex-1 text-sm truncate">{question}</span>
-                        <button onClick={() => handleRemoveQuestion(index)} className="h-5 w-5 rounded flex items-center justify-center text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-colors flex-shrink-0">
-                          <Trash2 className="h-3.5 w-3.5" />
-                        </button>
-                      </div>
-                    ))}
-                  </div>
-                )}
-                {suggestedQuestions.length === 0 && <p className="text-sm text-muted-foreground text-center py-2">尚未添加引導問題</p>}
-              </CardContent>
-            </Card>
-
             <div className="flex justify-end">
-              <Button onClick={handleSaveAppearance} disabled={upsertMutation.isPending}>
+              <Button onClick={handleSave} disabled={upsertMutation.isPending}>
                 {upsertMutation.isPending && <Loader2 className="h-4 w-4 animate-spin mr-2" />}
                 保存外觀設定
               </Button>
             </div>
           </TabsContent>
 
-          {/* Buttons Tab */}
+          {/* ===== 快捷按鈕 Tab ===== */}
           <TabsContent value="buttons" className="space-y-6">
             {/* Quick Templates */}
             <Card>
@@ -580,6 +533,88 @@ export default function Appearance() {
                 )}
               </CardContent>
             </Card>
+
+            {/* Show Quick Buttons Toggle */}
+            <Card>
+              <CardHeader className="pb-3">
+                <CardTitle className="text-base">按鈕顯示設定</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="flex items-center justify-between">
+                  <div className="space-y-0.5">
+                    <Label>在對話頁面顯示快捷按鈕</Label>
+                    <p className="text-xs text-muted-foreground">關閉後，客戶將不會看到快捷功能按鈕</p>
+                  </div>
+                  <Switch checked={showQuickButtons} onCheckedChange={setShowQuickButtons} />
+                </div>
+                <div className="flex justify-end mt-4">
+                  <Button onClick={handleSave} disabled={upsertMutation.isPending} size="sm">
+                    {upsertMutation.isPending && <Loader2 className="h-4 w-4 animate-spin mr-2" />}
+                    保存設定
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          {/* ===== 對話設定 Tab ===== */}
+          <TabsContent value="chat" className="space-y-6">
+            {/* Chat Input Settings */}
+            <Card>
+              <CardHeader className="pb-3">
+                <CardTitle className="text-base">輸入框設定</CardTitle>
+                <CardDescription>自訂對話輸入框的顯示方式</CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="space-y-2">
+                  <Label htmlFor="placeholder">輸入框提示文字</Label>
+                  <Input id="placeholder" value={chatPlaceholder} onChange={(e) => setChatPlaceholder(e.target.value)} placeholder="輸入您的問題..." maxLength={100} />
+                  <p className="text-xs text-muted-foreground">這段文字會顯示在輸入框內，引導客戶輸入問題</p>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Suggested Questions */}
+            <Card>
+              <CardHeader className="pb-3">
+                <CardTitle className="text-base">引導問題</CardTitle>
+                <CardDescription>設定常見問題，幫助客戶快速開始對話（最多6個）</CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-3">
+                <div className="flex gap-2">
+                  <Input value={newQuestion} onChange={(e) => setNewQuestion(e.target.value)} placeholder="例如：你們有什麼保險產品？" maxLength={100} onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); handleAddQuestion(); } }} />
+                  <Button onClick={handleAddQuestion} disabled={!newQuestion.trim() || suggestedQuestions.length >= 6} size="icon">
+                    <Plus className="h-4 w-4" />
+                  </Button>
+                </div>
+                {suggestedQuestions.length > 0 ? (
+                  <div className="space-y-1.5">
+                    {suggestedQuestions.map((question, index) => (
+                      <div key={index} className="flex items-center gap-2 p-2.5 rounded-lg bg-muted/50">
+                        <MessageSquare className="h-3.5 w-3.5 text-muted-foreground flex-shrink-0" />
+                        <span className="flex-1 text-sm truncate">{question}</span>
+                        <button onClick={() => handleRemoveQuestion(index)} className="h-6 w-6 rounded flex items-center justify-center text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-colors flex-shrink-0">
+                          <Trash2 className="h-3.5 w-3.5" />
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="text-center py-4 text-muted-foreground">
+                    <MessageSquare className="h-8 w-8 mx-auto mb-2 opacity-50" />
+                    <p className="text-sm">尚未添加引導問題</p>
+                    <p className="text-xs mt-1">添加引導問題可以幫助客戶快速開始對話</p>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+
+            <div className="flex justify-end">
+              <Button onClick={handleSave} disabled={upsertMutation.isPending}>
+                {upsertMutation.isPending && <Loader2 className="h-4 w-4 animate-spin mr-2" />}
+                保存對話設定
+              </Button>
+            </div>
           </TabsContent>
         </Tabs>
 
