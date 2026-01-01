@@ -248,3 +248,114 @@ export const superpowers = mysqlTable("superpowers", {
 
 export type Superpower = typeof superpowers.$inferSelect;
 export type InsertSuperpower = typeof superpowers.$inferInsert;
+
+
+/**
+ * Subscription plans for users
+ * 用戶訂閱計劃
+ */
+export const subscriptions = mysqlTable("subscriptions", {
+  id: int("id").autoincrement().primaryKey(),
+  userId: int("userId").notNull().unique(),
+  
+  // 計劃類型
+  plan: mysqlEnum("plan", ["free", "basic", "premium"]).default("free").notNull(),
+  
+  // 訂閱狀態
+  status: mysqlEnum("status", ["active", "cancelled", "expired", "past_due"]).default("active").notNull(),
+  
+  // 訂閱期間
+  startDate: timestamp("startDate").defaultNow().notNull(),
+  endDate: timestamp("endDate"),
+  
+  // Stripe整合（未來使用）
+  stripeCustomerId: varchar("stripeCustomerId", { length: 255 }),
+  stripeSubscriptionId: varchar("stripeSubscriptionId", { length: 255 }),
+  stripePriceId: varchar("stripePriceId", { length: 255 }),
+  
+  // 取消信息
+  cancelledAt: timestamp("cancelledAt"),
+  cancelReason: text("cancelReason"),
+  
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+
+export type Subscription = typeof subscriptions.$inferSelect;
+export type InsertSubscription = typeof subscriptions.$inferInsert;
+
+/**
+ * Daily usage logs for tracking limits
+ * 每日使用量記錄
+ */
+export const usageLogs = mysqlTable("usage_logs", {
+  id: int("id").autoincrement().primaryKey(),
+  userId: int("userId").notNull(),
+  
+  // 日期（用於每日限額追蹤）
+  date: varchar("date", { length: 10 }).notNull(), // YYYY-MM-DD format
+  
+  // 對話統計
+  messageCount: int("messageCount").default(0).notNull(), // 當日對話數
+  tokenCount: int("tokenCount").default(0).notNull(), // 當日Token數（估算）
+  
+  // 知識庫統計
+  knowledgeBaseSizeBytes: int("knowledgeBaseSizeBytes").default(0).notNull(), // 知識庫總大小
+  knowledgeBaseFileCount: int("knowledgeBaseFileCount").default(0).notNull(), // 知識庫文件數
+  
+  // Widget統計
+  widgetViews: int("widgetViews").default(0).notNull(), // Widget瀏覽次數
+  widgetConversations: int("widgetConversations").default(0).notNull(), // Widget對話數
+  
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+
+export type UsageLog = typeof usageLogs.$inferSelect;
+export type InsertUsageLog = typeof usageLogs.$inferInsert;
+
+/**
+ * Plan limits configuration
+ * 計劃限額配置（常量，不存數據庫）
+ */
+export const PLAN_LIMITS = {
+  free: {
+    dailyMessages: 20,
+    monthlyMessages: 300,
+    knowledgeBaseSizeMB: 1,
+    knowledgeBaseFiles: 3,
+    conversationRetentionDays: 7,
+    superpowersEnabled: false,
+    widgetEnabled: false,
+    customDomain: false,
+    trainingDimensions: 2, // 只能調整2個維度
+    analyticsLevel: 'basic' as const,
+  },
+  basic: {
+    dailyMessages: 200,
+    monthlyMessages: 6000,
+    knowledgeBaseSizeMB: 50,
+    knowledgeBaseFiles: 20,
+    conversationRetentionDays: 90,
+    superpowersEnabled: true, // 5項基礎超能力
+    widgetEnabled: true,
+    customDomain: false,
+    trainingDimensions: 8, // 全部8個維度
+    analyticsLevel: 'detailed' as const,
+  },
+  premium: {
+    dailyMessages: -1, // -1 = 無限制
+    monthlyMessages: 50000, // 公平使用上限
+    knowledgeBaseSizeMB: 500,
+    knowledgeBaseFiles: 100,
+    conversationRetentionDays: -1, // -1 = 永久
+    superpowersEnabled: true, // 全部17項
+    widgetEnabled: true,
+    customDomain: true,
+    trainingDimensions: 8,
+    analyticsLevel: 'advanced' as const,
+  },
+} as const;
+
+export type PlanType = keyof typeof PLAN_LIMITS;
+export type PlanLimits = typeof PLAN_LIMITS[PlanType];

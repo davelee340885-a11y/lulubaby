@@ -14,6 +14,8 @@ import Domain from "./pages/Domain";
 import Training from "./pages/Training";
 import Superpowers from "./pages/Superpowers";
 import Extensions from "./pages/Extensions";
+import Account from "./pages/Account";
+import Pricing from "./pages/Pricing";
 import Chat from "./pages/Chat";
 
 function DashboardRoutes() {
@@ -29,6 +31,8 @@ function DashboardRoutes() {
         <Route path="/training" component={Training} />
         <Route path="/superpowers" component={Superpowers} />
         <Route path="/extensions" component={Extensions} />
+        <Route path="/account" component={Account} />
+        <Route path="/pricing" component={Pricing} />
         <Route component={NotFound} />
       </Switch>
     </DashboardLayout>
@@ -51,6 +55,8 @@ function Router() {
       <Route path="/training" component={DashboardRoutes} />
       <Route path="/superpowers" component={DashboardRoutes} />
       <Route path="/extensions" component={DashboardRoutes} />
+      <Route path="/account" component={DashboardRoutes} />
+      <Route path="/pricing" component={DashboardRoutes} />
       
       <Route path="/404" component={NotFound} />
       <Route component={NotFound} />

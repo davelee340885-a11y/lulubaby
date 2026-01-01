@@ -491,3 +491,374 @@ export async function incrementSuperpowerStats(userId: number, stat: 'totalConve
     sql`UPDATE superpowers SET ${sql.identifier(stat)} = ${sql.identifier(stat)} + 1 WHERE userId = ${userId}`
   );
 }
+
+
+// ==================== Subscription Operations ====================
+import { subscriptions, InsertSubscription, Subscription, usageLogs, InsertUsageLog, UsageLog, PLAN_LIMITS, PlanType } from "../drizzle/schema";
+
+export async function getSubscriptionByUserId(userId: number): Promise<Subscription | undefined> {
+  const db = await getDb();
+  if (!db) return undefined;
+  const result = await db.select().from(subscriptions).where(eq(subscriptions.userId, userId)).limit(1);
+  return result.length > 0 ? result[0] : undefined;
+}
+
+export async function createOrGetSubscription(userId: number): Promise<Subscription> {
+  const db = await getDb();
+  if (!db) {
+    // Return a default free subscription if DB is not available
+    return {
+      id: 0,
+      userId,
+      plan: "free",
+      status: "active",
+      startDate: new Date(),
+      endDate: null,
+      stripeCustomerId: null,
+      stripeSubscriptionId: null,
+      stripePriceId: null,
+      cancelledAt: null,
+      cancelReason: null,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    };
+  }
+
+  // Try to get existing subscription
+  const existing = await getSubscriptionByUserId(userId);
+  if (existing) return existing;
+
+  // Create new free subscription
+  await db.insert(subscriptions).values({
+    userId,
+    plan: "free",
+    status: "active",
+  });
+
+  const result = await getSubscriptionByUserId(userId);
+  return result!;
+}
+
+export async function updateSubscription(userId: number, data: Partial<InsertSubscription>): Promise<Subscription | undefined> {
+  const db = await getDb();
+  if (!db) return undefined;
+
+  const updateSet: Record<string, unknown> = {};
+  Object.entries(data).forEach(([key, value]) => {
+    if (key !== 'userId' && key !== 'id' && value !== undefined) {
+      updateSet[key] = value;
+    }
+  });
+
+  if (Object.keys(updateSet).length === 0) return getSubscriptionByUserId(userId);
+
+  await db.update(subscriptions)
+    .set(updateSet)
+    .where(eq(subscriptions.userId, userId));
+
+  return getSubscriptionByUserId(userId);
+}
+
+// ==================== Usage Log Operations ====================
+
+function getTodayDateString(): string {
+  return new Date().toISOString().split('T')[0]; // YYYY-MM-DD
+}
+
+function getMonthStartDateString(): string {
+  const now = new Date();
+  return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-01`;
+}
+
+export async function getTodayUsage(userId: number): Promise<UsageLog | undefined> {
+  const db = await getDb();
+  if (!db) return undefined;
+  
+  const today = getTodayDateString();
+  const result = await db.select()
+    .from(usageLogs)
+    .where(and(
+      eq(usageLogs.userId, userId),
+      eq(usageLogs.date, today)
+    ))
+    .limit(1);
+  
+  return result.length > 0 ? result[0] : undefined;
+}
+
+export async function getOrCreateTodayUsage(userId: number): Promise<UsageLog> {
+  const db = await getDb();
+  const today = getTodayDateString();
+  
+  if (!db) {
+    return {
+      id: 0,
+      userId,
+      date: today,
+      messageCount: 0,
+      tokenCount: 0,
+      knowledgeBaseSizeBytes: 0,
+      knowledgeBaseFileCount: 0,
+      widgetViews: 0,
+      widgetConversations: 0,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    };
+  }
+
+  const existing = await getTodayUsage(userId);
+  if (existing) return existing;
+
+  // Create new usage log for today
+  await db.insert(usageLogs).values({
+    userId,
+    date: today,
+    messageCount: 0,
+    tokenCount: 0,
+    knowledgeBaseSizeBytes: 0,
+    knowledgeBaseFileCount: 0,
+    widgetViews: 0,
+    widgetConversations: 0,
+  });
+
+  const result = await getTodayUsage(userId);
+  return result!;
+}
+
+export async function incrementMessageCount(userId: number, tokenEstimate: number = 0): Promise<void> {
+  const db = await getDb();
+  if (!db) return;
+
+  const today = getTodayDateString();
+  
+  // Ensure today's usage log exists
+  await getOrCreateTodayUsage(userId);
+  
+  // Increment message count
+  await db.execute(
+    sql`UPDATE usage_logs 
+        SET messageCount = messageCount + 1, 
+            tokenCount = tokenCount + ${tokenEstimate},
+            updatedAt = NOW()
+        WHERE userId = ${userId} AND date = ${today}`
+  );
+}
+
+export async function getMonthlyMessageCount(userId: number): Promise<number> {
+  const db = await getDb();
+  if (!db) return 0;
+
+  const monthStart = getMonthStartDateString();
+  
+  const result = await db.select({
+    total: sql<number>`SUM(messageCount)`,
+  })
+    .from(usageLogs)
+    .where(and(
+      eq(usageLogs.userId, userId),
+      sql`date >= ${monthStart}`
+    ));
+  
+  return result[0]?.total || 0;
+}
+
+export async function getTotalMessageCount(userId: number): Promise<number> {
+  const db = await getDb();
+  if (!db) return 0;
+
+  const result = await db.select({
+    total: sql<number>`SUM(messageCount)`,
+  })
+    .from(usageLogs)
+    .where(eq(usageLogs.userId, userId));
+  
+  return result[0]?.total || 0;
+}
+
+export async function getActiveDaysCount(userId: number): Promise<number> {
+  const db = await getDb();
+  if (!db) return 0;
+
+  const result = await db.select({
+    count: sql<number>`COUNT(DISTINCT date)`,
+  })
+    .from(usageLogs)
+    .where(and(
+      eq(usageLogs.userId, userId),
+      sql`messageCount > 0`
+    ));
+  
+  return result[0]?.count || 0;
+}
+
+export async function updateKnowledgeBaseUsage(userId: number): Promise<void> {
+  const db = await getDb();
+  if (!db) return;
+
+  // Calculate total knowledge base size and count
+  const kbStats = await db.select({
+    totalSize: sql<number>`COALESCE(SUM(fileSize), 0)`,
+    fileCount: sql<number>`COUNT(*)`,
+  })
+    .from(knowledgeBases)
+    .where(eq(knowledgeBases.userId, userId));
+
+  const today = getTodayDateString();
+  await getOrCreateTodayUsage(userId);
+
+  await db.update(usageLogs)
+    .set({
+      knowledgeBaseSizeBytes: kbStats[0]?.totalSize || 0,
+      knowledgeBaseFileCount: kbStats[0]?.fileCount || 0,
+    })
+    .where(and(
+      eq(usageLogs.userId, userId),
+      eq(usageLogs.date, today)
+    ));
+}
+
+// ==================== Usage Limit Checking ====================
+
+export type UsageLimitCheck = {
+  allowed: boolean;
+  reason?: 'daily_limit' | 'monthly_limit' | 'storage_limit' | 'file_count_limit';
+  remaining?: number;
+  limit?: number;
+  current?: number;
+};
+
+export async function checkMessageLimit(userId: number): Promise<UsageLimitCheck> {
+  const subscription = await createOrGetSubscription(userId);
+  const limits = PLAN_LIMITS[subscription.plan as PlanType];
+  
+  // Check daily limit
+  const todayUsage = await getOrCreateTodayUsage(userId);
+  if (limits.dailyMessages !== -1 && todayUsage.messageCount >= limits.dailyMessages) {
+    return {
+      allowed: false,
+      reason: 'daily_limit',
+      remaining: 0,
+      limit: limits.dailyMessages,
+      current: todayUsage.messageCount,
+    };
+  }
+  
+  // Check monthly limit
+  const monthlyCount = await getMonthlyMessageCount(userId);
+  const monthlyLimit = limits.monthlyMessages as number;
+  if (monthlyLimit !== -1 && monthlyCount >= monthlyLimit) {
+    return {
+      allowed: false,
+      reason: 'monthly_limit',
+      remaining: 0,
+      limit: monthlyLimit,
+      current: monthlyCount,
+    };
+  }
+  
+  const dailyRemaining = limits.dailyMessages === -1 ? Infinity : limits.dailyMessages - todayUsage.messageCount;
+  const monthlyRemaining = monthlyLimit === -1 ? Infinity : monthlyLimit - monthlyCount;
+  
+  return {
+    allowed: true,
+    remaining: Math.min(dailyRemaining, monthlyRemaining),
+  };
+}
+
+export async function checkKnowledgeBaseLimit(userId: number, newFileSize: number = 0): Promise<UsageLimitCheck> {
+  const subscription = await createOrGetSubscription(userId);
+  const limits = PLAN_LIMITS[subscription.plan as PlanType];
+  
+  const db = await getDb();
+  if (!db) return { allowed: true };
+
+  // Get current knowledge base stats
+  const kbStats = await db.select({
+    totalSize: sql<number>`COALESCE(SUM(fileSize), 0)`,
+    fileCount: sql<number>`COUNT(*)`,
+  })
+    .from(knowledgeBases)
+    .where(eq(knowledgeBases.userId, userId));
+
+  const currentSize = kbStats[0]?.totalSize || 0;
+  const currentCount = kbStats[0]?.fileCount || 0;
+  const limitBytes = limits.knowledgeBaseSizeMB * 1024 * 1024;
+
+  // Check file count limit
+  if (currentCount >= limits.knowledgeBaseFiles) {
+    return {
+      allowed: false,
+      reason: 'file_count_limit',
+      limit: limits.knowledgeBaseFiles,
+      current: currentCount,
+    };
+  }
+
+  // Check storage limit
+  if (currentSize + newFileSize > limitBytes) {
+    return {
+      allowed: false,
+      reason: 'storage_limit',
+      limit: limitBytes,
+      current: currentSize,
+    };
+  }
+
+  return { allowed: true };
+}
+
+// ==================== Usage Summary ====================
+
+export type UsageSummary = {
+  todayMessages: number;
+  monthMessages: number;
+  totalMessages: number;
+  knowledgeBaseSizeBytes: number;
+  knowledgeBaseFileCount: number;
+  widgetViews: number;
+  daysActive: number;
+};
+
+export async function getUsageSummary(userId: number): Promise<UsageSummary> {
+  const todayUsage = await getOrCreateTodayUsage(userId);
+  const monthMessages = await getMonthlyMessageCount(userId);
+  const totalMessages = await getTotalMessageCount(userId);
+  const daysActive = await getActiveDaysCount(userId);
+  
+  // Get latest knowledge base stats
+  const db = await getDb();
+  let kbSize = 0;
+  let kbCount = 0;
+  let widgetViews = 0;
+  
+  if (db) {
+    const kbStats = await db.select({
+      totalSize: sql<number>`COALESCE(SUM(fileSize), 0)`,
+      fileCount: sql<number>`COUNT(*)`,
+    })
+      .from(knowledgeBases)
+      .where(eq(knowledgeBases.userId, userId));
+    
+    kbSize = kbStats[0]?.totalSize || 0;
+    kbCount = kbStats[0]?.fileCount || 0;
+    
+    // Get total widget views
+    const widgetStats = await db.select({
+      total: sql<number>`COALESCE(SUM(widgetViews), 0)`,
+    })
+      .from(usageLogs)
+      .where(eq(usageLogs.userId, userId));
+    
+    widgetViews = widgetStats[0]?.total || 0;
+  }
+
+  return {
+    todayMessages: todayUsage.messageCount,
+    monthMessages,
+    totalMessages,
+    knowledgeBaseSizeBytes: kbSize,
+    knowledgeBaseFileCount: kbCount,
+    widgetViews,
+    daysActive,
+  };
+}

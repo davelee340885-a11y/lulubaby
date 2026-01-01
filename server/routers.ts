@@ -10,7 +10,8 @@ import {
   getConversationsBySession, createConversation, getUserById,
   getAnalyticsStats, getDailyStats, getPopularQuestions, getRecentConversations,
   getTrainingByUserId, upsertTraining,
-  getSuperpowersByUserId, upsertSuperpowers
+  getSuperpowersByUserId, upsertSuperpowers,
+  createOrGetSubscription, updateSubscription, getUsageSummary, checkMessageLimit, incrementMessageCount
 } from "./db";
 import { invokeLLM } from "./_core/llm";
 import { storagePut } from "./storage";
@@ -215,6 +216,21 @@ export const appRouter = router({
           throw new Error("Persona not found");
         }
         
+        // Check message limit for the persona owner
+        const limitCheck = await checkMessageLimit(persona.userId);
+        if (!limitCheck.allowed) {
+          const errorMessages: Record<string, string> = {
+            daily_limit: "您今日的對話次數已達上限，請明天再試或升級您的計劃。",
+            monthly_limit: "您本月的對話次數已達上限，請升級您的計劃以獲得更多對話次數。",
+            storage_limit: "知識庫存儲空間已達上限。",
+            file_count_limit: "知識庫文件數量已達上限。",
+          };
+          throw new Error(errorMessages[limitCheck.reason!] || "對話次數已達上限");
+        }
+        
+        // Increment message count for usage tracking
+        await incrementMessageCount(persona.userId, 500); // Estimate 500 tokens per message
+        
         // Save user message
         await createConversation({
           personaId: input.personaId,
@@ -405,6 +421,34 @@ ${knowledgeContent.substring(0, 10000)}
         return upsertSuperpowers({
           userId: ctx.user.id,
           ...input,
+        });
+      }),
+  }),
+
+  // Subscription management
+  subscription: router({
+    get: protectedProcedure.query(async ({ ctx }) => {
+      return createOrGetSubscription(ctx.user.id);
+    }),
+    
+    getUsage: protectedProcedure.query(async ({ ctx }) => {
+      return getUsageSummary(ctx.user.id);
+    }),
+    
+    checkLimit: protectedProcedure.query(async ({ ctx }) => {
+      return checkMessageLimit(ctx.user.id);
+    }),
+    
+    // Note: Actual plan upgrade will be handled by Stripe webhook
+    // This is just for testing/admin purposes
+    updatePlan: protectedProcedure
+      .input(z.object({
+        plan: z.enum(["free", "basic", "premium"]),
+      }))
+      .mutation(async ({ ctx, input }) => {
+        return updateSubscription(ctx.user.id, {
+          plan: input.plan,
+          status: "active",
         });
       }),
   }),

@@ -1,0 +1,9 @@
+{
+  "query": "CREATE TABLE IF NOT EXISTS usage_logs (\n  id INT AUTO_INCREMENT PRIMARY KEY,\n  userId INT NOT NULL,\n  date VARCHAR(10) NOT NULL,\n  messageCount INT NOT NULL DEFAULT 0,\n  tokenCount INT NOT NULL DEFAULT 0,\n  knowledgeBaseSizeBytes INT NOT NULL DEFAULT 0,\n  knowledgeBaseFileCount INT NOT NULL DEFAULT 0,\n  widgetViews INT NOT NULL DEFAULT 0,\n  widgetConversations INT NOT NULL DEFAULT 0,\n  createdAt TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,\n  updatedAt TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,\n  UNIQUE KEY unique_user_date (userId, date)\n);",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user VqBKoEwKfw4feq4.6cd8cd1ff95f --database aavW9BLbZ6sZHaPEemayyD --execute CREATE TABLE IF NOT EXISTS usage_logs (\n  id INT AUTO_INCREMENT PRIMARY KEY,\n  userId INT NOT NULL,\n  date VARCHAR(10) NOT NULL,\n  messageCount INT NOT NULL DEFAULT 0,\n  tokenCount INT NOT NULL DEFAULT 0,\n  knowledgeBaseSizeBytes INT NOT NULL DEFAULT 0,\n  knowledgeBaseFileCount INT NOT NULL DEFAULT 0,\n  widgetViews INT NOT NULL DEFAULT 0,\n  widgetConversations INT NOT NULL DEFAULT 0,\n  createdAt TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,\n  updatedAt TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,\n  UNIQUE KEY unique_user_date (userId, date)\n);",
+  "rows": [],
+  "messages": [],
+  "stdout": "",
+  "stderr": "",
+  "execution_time_ms": 1647
+}
