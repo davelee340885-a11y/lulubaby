@@ -442,7 +442,7 @@ function MinimalLayout({
 
       {/* Main Content Area */}
       <div className="flex-1 flex flex-col">
-        {/* Welcome State - Vertically Centered */}
+        {/* Welcome State - Everything Vertically Centered */}
         {!hasMessages && (
           <div className="flex-1 flex flex-col items-center justify-center px-4">
             <div className="w-full max-w-sm text-center">
@@ -481,6 +481,28 @@ function MinimalLayout({
                   />
                 </div>
               )}
+
+              {/* Input Area - Centered with welcome content */}
+              <div className="flex gap-1.5 items-center mt-2">
+                <Input
+                  ref={inputRef}
+                  placeholder={chatPlaceholder}
+                  value={input}
+                  onChange={(e) => setInput(e.target.value)}
+                  onKeyDown={handleKeyDown}
+                  disabled={isTyping}
+                  className="rounded-full h-8 text-xs px-3"
+                />
+                <Button
+                  onClick={() => handleSend()}
+                  disabled={!input.trim() || isTyping}
+                  size="icon"
+                  className="rounded-full h-8 w-8 shrink-0"
+                  style={{ backgroundColor: primaryColor }}
+                >
+                  {isTyping ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Send className="h-3.5 w-3.5" />}
+                </Button>
+              </div>
             </div>
           </div>
         )}
@@ -548,43 +570,45 @@ function MinimalLayout({
         )}
       </div>
 
-      {/* Input Area - Centered and Compact */}
-      <div className={`${hasMessages ? 'sticky bottom-0 border-t bg-background' : 'w-full'}`}>
-        <div className="container max-w-sm mx-auto py-2 px-4">
-          {/* Quick Buttons - Show when chatting */}
-          {hasMessages && showQuickButtons && persona.quickButtons.length > 0 && (
-            <div className="mb-1.5">
-              <QuickButtonGroup
-                buttons={persona.quickButtons}
-                displayMode={buttonDisplayMode}
-                primaryColor={primaryColor}
-                onButtonClick={handleQuickButton}
-              />
-            </div>
-          )}
+      {/* Input Area - Only show at bottom when chatting */}
+      {hasMessages && (
+        <div className="sticky bottom-0 border-t bg-background">
+          <div className="container max-w-sm mx-auto py-2 px-4">
+            {/* Quick Buttons - Show when chatting */}
+            {showQuickButtons && persona.quickButtons.length > 0 && (
+              <div className="mb-1.5">
+                <QuickButtonGroup
+                  buttons={persona.quickButtons}
+                  displayMode={buttonDisplayMode}
+                  primaryColor={primaryColor}
+                  onButtonClick={handleQuickButton}
+                />
+              </div>
+            )}
 
-          <div className="flex gap-1.5 items-center">
-            <Input
-              ref={inputRef}
-              placeholder={chatPlaceholder}
-              value={input}
-              onChange={(e) => setInput(e.target.value)}
-              onKeyDown={handleKeyDown}
-              disabled={isTyping}
-              className="rounded-full h-8 text-xs px-3"
-            />
-            <Button
-              onClick={() => handleSend()}
-              disabled={!input.trim() || isTyping}
-              size="icon"
-              className="rounded-full h-8 w-8 shrink-0"
-              style={{ backgroundColor: primaryColor }}
-            >
-              {isTyping ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Send className="h-3.5 w-3.5" />}
-            </Button>
+            <div className="flex gap-1.5 items-center">
+              <Input
+                ref={inputRef}
+                placeholder={chatPlaceholder}
+                value={input}
+                onChange={(e) => setInput(e.target.value)}
+                onKeyDown={handleKeyDown}
+                disabled={isTyping}
+                className="rounded-full h-8 text-xs px-3"
+              />
+              <Button
+                onClick={() => handleSend()}
+                disabled={!input.trim() || isTyping}
+                size="icon"
+                className="rounded-full h-8 w-8 shrink-0"
+                style={{ backgroundColor: primaryColor }}
+              >
+                {isTyping ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Send className="h-3.5 w-3.5" />}
+              </Button>
+            </div>
           </div>
         </div>
-      </div>
+      )}
     </div>
   );
 }
