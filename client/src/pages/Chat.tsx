@@ -442,42 +442,46 @@ function MinimalLayout({
 
       {/* Main Content Area */}
       <div className="flex-1 flex flex-col">
-        {/* Welcome State - Centered */}
+        {/* Welcome State - Vertically Centered */}
         {!hasMessages && (
-          <div className="flex-1 flex flex-col items-center justify-center px-4 py-8">
-            <Avatar className="h-14 w-14 mb-3">
-              <AvatarImage src={persona.avatarUrl || undefined} />
-              <AvatarFallback style={{ backgroundColor: `${primaryColor}15`, color: primaryColor }}>
-                <Bot className="h-7 w-7" />
-              </AvatarFallback>
-            </Avatar>
-            <h2 className="text-lg font-semibold mb-1">{persona.agentName}</h2>
-            <p className="text-sm text-muted-foreground text-center max-w-sm mb-6">{persona.welcomeMessage}</p>
-            
-            {/* Suggested Questions - More compact */}
-            {suggestedQuestions.length > 0 && (
-              <div className="w-full max-w-md space-y-1.5 mb-4">
-                {suggestedQuestions.map((question, index) => (
-                  <button
-                    key={index}
-                    onClick={() => handleSuggestedQuestion(question)}
-                    className="w-full text-left px-3 py-2 rounded-lg border hover:bg-muted/50 transition-colors text-sm"
-                  >
-                    {question}
-                  </button>
-                ))}
-              </div>
-            )}
+          <div className="flex-1 flex flex-col items-center justify-center px-4">
+            <div className="w-full max-w-md text-center">
+              <Avatar className="h-16 w-16 mx-auto mb-4">
+                <AvatarImage src={persona.avatarUrl || undefined} />
+                <AvatarFallback style={{ backgroundColor: `${primaryColor}15`, color: primaryColor }}>
+                  <Bot className="h-8 w-8" />
+                </AvatarFallback>
+              </Avatar>
+              <h2 className="text-xl font-semibold mb-2">{persona.agentName}</h2>
+              <p className="text-sm text-muted-foreground mb-6">{persona.welcomeMessage}</p>
+              
+              {/* Suggested Questions - Compact cards */}
+              {suggestedQuestions.length > 0 && (
+                <div className="space-y-2 mb-5">
+                  {suggestedQuestions.map((question, index) => (
+                    <button
+                      key={index}
+                      onClick={() => handleSuggestedQuestion(question)}
+                      className="w-full text-left px-4 py-2.5 rounded-xl border hover:bg-muted/50 hover:border-primary/30 transition-all text-sm"
+                    >
+                      {question}
+                    </button>
+                  ))}
+                </div>
+              )}
 
-            {/* Quick Buttons */}
-            {showQuickButtons && persona.quickButtons.length > 0 && (
-              <QuickButtonGroup
-                buttons={persona.quickButtons}
-                displayMode={buttonDisplayMode}
-                primaryColor={primaryColor}
-                onButtonClick={handleQuickButton}
-              />
-            )}
+              {/* Quick Buttons */}
+              {showQuickButtons && persona.quickButtons.length > 0 && (
+                <div className="mb-6">
+                  <QuickButtonGroup
+                    buttons={persona.quickButtons}
+                    displayMode={buttonDisplayMode}
+                    primaryColor={primaryColor}
+                    onButtonClick={handleQuickButton}
+                  />
+                </div>
+              )}
+            </div>
           </div>
         )}
 
@@ -544,9 +548,9 @@ function MinimalLayout({
         )}
       </div>
 
-      {/* Input Area - Centered and Compact */}
-      <div className="sticky bottom-0 border-t bg-background">
-        <div className="container max-w-2xl py-3">
+      {/* Input Area - Centered */}
+      <div className={`${hasMessages ? 'sticky bottom-0 border-t bg-background' : 'w-full'}`}>
+        <div className="container max-w-xl mx-auto py-3 px-4">
           {/* Quick Buttons - Show when chatting */}
           {hasMessages && showQuickButtons && persona.quickButtons.length > 0 && (
             <div className="mb-2">
@@ -559,7 +563,7 @@ function MinimalLayout({
             </div>
           )}
 
-          <div className="flex gap-2 items-center">
+          <div className="flex gap-2 items-center max-w-lg mx-auto">
             <Input
               ref={inputRef}
               placeholder={chatPlaceholder}
@@ -567,13 +571,13 @@ function MinimalLayout({
               onChange={(e) => setInput(e.target.value)}
               onKeyDown={handleKeyDown}
               disabled={isTyping}
-              className="rounded-full h-9 text-sm"
+              className="rounded-full h-10 text-sm px-4"
             />
             <Button
               onClick={() => handleSend()}
               disabled={!input.trim() || isTyping}
               size="icon"
-              className="rounded-full h-9 w-9 shrink-0"
+              className="rounded-full h-10 w-10 shrink-0"
               style={{ backgroundColor: primaryColor }}
             >
               {isTyping ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}

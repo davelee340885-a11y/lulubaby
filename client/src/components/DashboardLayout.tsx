@@ -21,7 +21,7 @@ import {
 } from "@/components/ui/sidebar";
 import { getLoginUrl } from "@/const";
 import { useIsMobile } from "@/hooks/useMobile";
-import { LayoutDashboard, LogOut, PanelLeft, FileText, Bot, BarChart3, Palette, Globe, Brain, Zap, Puzzle, User, CreditCard } from "lucide-react";
+import { LayoutDashboard, LogOut, PanelLeft, FileText, Bot, BarChart3, Palette, Globe, Brain, Zap, Puzzle, User, CreditCard, ExternalLink, MessageCircle } from "lucide-react";
 import { CSSProperties, useEffect, useRef, useState } from "react";
 import { useLocation } from "wouter";
 import { DashboardLayoutSkeleton } from './DashboardLayoutSkeleton';
@@ -189,6 +189,24 @@ function DashboardLayoutContent({
               ) : null}
             </div>
           </SidebarHeader>
+
+          {/* Preview AI Chat Link */}
+          <div className={`px-3 pb-3 ${isCollapsed ? 'px-2' : ''}`}>
+            <a
+              href="/chat/1"
+              target="_blank"
+              rel="noopener noreferrer"
+              className={`flex items-center gap-2 px-3 py-2 rounded-lg bg-primary/10 hover:bg-primary/20 text-primary transition-colors text-sm font-medium ${isCollapsed ? 'justify-center px-2' : ''}`}
+            >
+              <MessageCircle className="h-4 w-4 shrink-0" />
+              {!isCollapsed && (
+                <>
+                  <span className="flex-1">預覽AI對話</span>
+                  <ExternalLink className="h-3 w-3 opacity-60" />
+                </>
+              )}
+            </a>
+          </div>
 
           <SidebarContent className="gap-0">
             <SidebarMenu className="px-2 py-1">
