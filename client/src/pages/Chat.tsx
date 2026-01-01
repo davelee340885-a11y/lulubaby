@@ -373,9 +373,9 @@ function QuickButtonGroup({
     );
   }
 
-  // Full mode - original style but more refined
+  // Full mode - refined and compact
   return (
-    <div className="flex flex-wrap items-center justify-center gap-2">
+    <div className="flex flex-wrap items-center justify-center gap-1.5">
       {buttons.map((button) => {
         const IconComponent = iconMap[button.icon || button.actionType] || MessageSquare;
         return (
@@ -383,12 +383,12 @@ function QuickButtonGroup({
             key={button.id}
             variant="outline"
             size="sm"
-            className="h-8 px-3 text-xs rounded-full"
+            className="h-6 px-2 text-[11px] rounded-md font-normal"
             onClick={() => onButtonClick(button)}
           >
-            <IconComponent className="h-3.5 w-3.5 mr-1.5" />
+            <IconComponent className="h-3 w-3 mr-1" />
             {button.label}
-            {button.actionType === "link" && <ExternalLink className="h-2.5 w-2.5 ml-1 opacity-50" />}
+            {button.actionType === "link" && <ExternalLink className="h-2 w-2 ml-0.5 opacity-50" />}
           </Button>
         );
       })}
@@ -419,21 +419,21 @@ function MinimalLayout({
 
   return (
     <div className="min-h-screen flex flex-col bg-background">
-      {/* Compact Header */}
-      <header className="sticky top-0 z-10 border-b bg-background/95 backdrop-blur">
-        <div className="container max-w-2xl py-2">
-          <div className="flex items-center gap-2">
-            <Avatar className="h-7 w-7">
+      {/* Minimal Header */}
+      <header className="sticky top-0 z-10 border-b border-border/40 bg-background/95 backdrop-blur">
+        <div className="container max-w-sm mx-auto py-1.5 px-4">
+          <div className="flex items-center gap-1.5">
+            <Avatar className="h-5 w-5">
               <AvatarImage src={persona.avatarUrl || undefined} />
               <AvatarFallback style={{ backgroundColor: `${primaryColor}15`, color: primaryColor }}>
-                <Bot className="h-3.5 w-3.5" />
+                <Bot className="h-2.5 w-2.5" />
               </AvatarFallback>
             </Avatar>
             <div className="flex-1 min-w-0">
-              <h1 className="font-medium text-sm truncate">{persona.agentName}</h1>
+              <h1 className="font-medium text-xs truncate">{persona.agentName}</h1>
             </div>
-            <span className="flex items-center gap-1 text-xs text-green-600">
-              <span className="w-1.5 h-1.5 rounded-full bg-green-500" />
+            <span className="flex items-center gap-0.5 text-[10px] text-green-600">
+              <span className="w-1 h-1 rounded-full bg-green-500" />
               在線
             </span>
           </div>
@@ -445,24 +445,24 @@ function MinimalLayout({
         {/* Welcome State - Vertically Centered */}
         {!hasMessages && (
           <div className="flex-1 flex flex-col items-center justify-center px-4">
-            <div className="w-full max-w-md text-center">
-              <Avatar className="h-16 w-16 mx-auto mb-4">
+            <div className="w-full max-w-sm text-center">
+              <Avatar className="h-10 w-10 mx-auto mb-2">
                 <AvatarImage src={persona.avatarUrl || undefined} />
                 <AvatarFallback style={{ backgroundColor: `${primaryColor}15`, color: primaryColor }}>
-                  <Bot className="h-8 w-8" />
+                  <Bot className="h-5 w-5" />
                 </AvatarFallback>
               </Avatar>
-              <h2 className="text-xl font-semibold mb-2">{persona.agentName}</h2>
-              <p className="text-sm text-muted-foreground mb-6">{persona.welcomeMessage}</p>
+              <h2 className="text-base font-medium mb-1">{persona.agentName}</h2>
+              <p className="text-xs text-muted-foreground mb-4">{persona.welcomeMessage}</p>
               
-              {/* Suggested Questions - Compact cards */}
+              {/* Suggested Questions - Compact */}
               {suggestedQuestions.length > 0 && (
-                <div className="space-y-2 mb-5">
+                <div className="space-y-1.5 mb-3">
                   {suggestedQuestions.map((question, index) => (
                     <button
                       key={index}
                       onClick={() => handleSuggestedQuestion(question)}
-                      className="w-full text-left px-4 py-2.5 rounded-xl border hover:bg-muted/50 hover:border-primary/30 transition-all text-sm"
+                      className="w-full text-left px-3 py-1.5 rounded-lg border border-border/60 hover:bg-muted/40 hover:border-primary/20 transition-all text-xs text-muted-foreground hover:text-foreground"
                     >
                       {question}
                     </button>
@@ -472,7 +472,7 @@ function MinimalLayout({
 
               {/* Quick Buttons */}
               {showQuickButtons && persona.quickButtons.length > 0 && (
-                <div className="mb-6">
+                <div className="mb-4">
                   <QuickButtonGroup
                     buttons={persona.quickButtons}
                     displayMode={buttonDisplayMode}
@@ -548,12 +548,12 @@ function MinimalLayout({
         )}
       </div>
 
-      {/* Input Area - Centered */}
+      {/* Input Area - Centered and Compact */}
       <div className={`${hasMessages ? 'sticky bottom-0 border-t bg-background' : 'w-full'}`}>
-        <div className="container max-w-xl mx-auto py-3 px-4">
+        <div className="container max-w-sm mx-auto py-2 px-4">
           {/* Quick Buttons - Show when chatting */}
           {hasMessages && showQuickButtons && persona.quickButtons.length > 0 && (
-            <div className="mb-2">
+            <div className="mb-1.5">
               <QuickButtonGroup
                 buttons={persona.quickButtons}
                 displayMode={buttonDisplayMode}
@@ -563,7 +563,7 @@ function MinimalLayout({
             </div>
           )}
 
-          <div className="flex gap-2 items-center max-w-lg mx-auto">
+          <div className="flex gap-1.5 items-center">
             <Input
               ref={inputRef}
               placeholder={chatPlaceholder}
@@ -571,16 +571,16 @@ function MinimalLayout({
               onChange={(e) => setInput(e.target.value)}
               onKeyDown={handleKeyDown}
               disabled={isTyping}
-              className="rounded-full h-10 text-sm px-4"
+              className="rounded-full h-8 text-xs px-3"
             />
             <Button
               onClick={() => handleSend()}
               disabled={!input.trim() || isTyping}
               size="icon"
-              className="rounded-full h-10 w-10 shrink-0"
+              className="rounded-full h-8 w-8 shrink-0"
               style={{ backgroundColor: primaryColor }}
             >
-              {isTyping ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
+              {isTyping ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Send className="h-3.5 w-3.5" />}
             </Button>
           </div>
         </div>
