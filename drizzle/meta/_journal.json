@@ -36,6 +36,13 @@
       "when": 1767261468168,
       "tag": "0004_legal_lord_hawal",
       "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "5",
+      "when": 1767275879741,
+      "tag": "0005_long_plazm",
+      "breakpoints": true
     }
   ]
 }

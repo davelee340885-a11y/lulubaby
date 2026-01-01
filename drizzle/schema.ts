@@ -360,3 +360,166 @@ export const PLAN_LIMITS = {
 
 export type PlanType = keyof typeof PLAN_LIMITS;
 export type PlanLimits = typeof PLAN_LIMITS[PlanType];
+
+
+/**
+ * Teams table for team/company plans
+ * 團隊/公司表
+ */
+export const teams = mysqlTable("teams", {
+  id: int("id").autoincrement().primaryKey(),
+  name: varchar("name", { length: 100 }).notNull(),
+  description: text("description"),
+  logoUrl: varchar("logoUrl", { length: 512 }),
+  ownerId: int("ownerId").notNull(), // 團隊擁有者的userId
+  
+  // 團隊計劃
+  plan: mysqlEnum("plan", ["team_basic", "team_pro", "enterprise"]).default("team_basic").notNull(),
+  maxMembers: int("maxMembers").default(5).notNull(),
+  
+  // 團隊狀態
+  status: mysqlEnum("status", ["active", "suspended", "cancelled"]).default("active").notNull(),
+  
+  // Stripe整合
+  stripeCustomerId: varchar("stripeCustomerId", { length: 255 }),
+  stripeSubscriptionId: varchar("stripeSubscriptionId", { length: 255 }),
+  
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+
+export type Team = typeof teams.$inferSelect;
+export type InsertTeam = typeof teams.$inferInsert;
+
+/**
+ * Team members table
+ * 團隊成員表
+ */
+export const teamMembers = mysqlTable("team_members", {
+  id: int("id").autoincrement().primaryKey(),
+  teamId: int("teamId").notNull(),
+  userId: int("userId").notNull(),
+  
+  // 成員角色
+  role: mysqlEnum("role", ["owner", "admin", "member"]).default("member").notNull(),
+  
+  // 知識訪問權限
+  knowledgeAccess: mysqlEnum("knowledgeAccess", ["full", "partial", "none"]).default("full").notNull(),
+  
+  // 邀請狀態
+  inviteStatus: mysqlEnum("inviteStatus", ["pending", "accepted", "declined"]).default("accepted").notNull(),
+  inviteEmail: varchar("inviteEmail", { length: 320 }),
+  inviteToken: varchar("inviteToken", { length: 64 }),
+  
+  joinedAt: timestamp("joinedAt").defaultNow().notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+
+export type TeamMember = typeof teamMembers.$inferSelect;
+export type InsertTeamMember = typeof teamMembers.$inferInsert;
+
+/**
+ * Team knowledge base (Team Brain)
+ * 團隊知識庫（團隊大腦）
+ */
+export const teamKnowledge = mysqlTable("team_knowledge", {
+  id: int("id").autoincrement().primaryKey(),
+  teamId: int("teamId").notNull(),
+  
+  // 知識分類
+  category: mysqlEnum("category", [
+    "company_info",    // 公司資料
+    "products",        // 產品目錄
+    "services",        // 服務項目
+    "history",         // 公司歷史
+    "faq",             // 常見問題
+    "sales_scripts",   // 銷售話術
+    "case_studies",    // 案例研究
+    "policies",        // 政策規定
+    "training",        // 培訓資料
+    "other"            // 其他
+  ]).default("other").notNull(),
+  
+  title: varchar("title", { length: 200 }).notNull(),
+  content: text("content").notNull(),
+  
+  // 分享設定
+  isShared: boolean("isShared").default(true).notNull(), // 是否分享給成員
+  
+  // 創建者
+  createdBy: int("createdBy").notNull(),
+  
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+
+export type TeamKnowledge = typeof teamKnowledge.$inferSelect;
+export type InsertTeamKnowledge = typeof teamKnowledge.$inferInsert;
+
+/**
+ * Team knowledge access control
+ * 團隊知識訪問權限控制（細粒度）
+ */
+export const teamKnowledgeAccess = mysqlTable("team_knowledge_access", {
+  id: int("id").autoincrement().primaryKey(),
+  knowledgeId: int("knowledgeId").notNull(),
+  memberId: int("memberId").notNull(),
+  canAccess: boolean("canAccess").default(true).notNull(),
+  
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
+
+export type TeamKnowledgeAccess = typeof teamKnowledgeAccess.$inferSelect;
+export type InsertTeamKnowledgeAccess = typeof teamKnowledgeAccess.$inferInsert;
+
+/**
+ * Team plan limits configuration
+ * 團隊計劃限額配置
+ */
+export const TEAM_PLAN_LIMITS = {
+  team_basic: {
+    maxMembers: 5,
+    knowledgeBaseSizeMB: 100,
+    knowledgeBaseItems: 50,
+    monthlyPrice: 299,
+    features: [
+      "團隊大腦（共享知識庫）",
+      "最多5位成員",
+      "基本成員管理",
+      "團隊統計報表",
+    ],
+  },
+  team_pro: {
+    maxMembers: 15,
+    knowledgeBaseSizeMB: 500,
+    knowledgeBaseItems: 200,
+    monthlyPrice: 599,
+    features: [
+      "團隊大腦（進階知識庫）",
+      "最多15位成員",
+      "進階權限控制",
+      "細粒度知識分享",
+      "詳細數據分析",
+      "優先客服支援",
+    ],
+  },
+  enterprise: {
+    maxMembers: -1, // 無限制
+    knowledgeBaseSizeMB: 2000,
+    knowledgeBaseItems: -1, // 無限制
+    monthlyPrice: 1299,
+    features: [
+      "團隊大腦（企業級知識庫）",
+      "無限成員",
+      "完整權限控制",
+      "API存取",
+      "自訂整合",
+      "專屬客戶經理",
+      "SLA保證",
+    ],
+  },
+} as const;
+
+export type TeamPlanType = keyof typeof TEAM_PLAN_LIMITS;
+export type TeamPlanLimits = typeof TEAM_PLAN_LIMITS[TeamPlanType];

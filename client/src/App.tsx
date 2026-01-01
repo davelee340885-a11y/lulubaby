@@ -17,6 +17,7 @@ import Extensions from "./pages/Extensions";
 import Account from "./pages/Account";
 import Pricing from "./pages/Pricing";
 import Chat from "./pages/Chat";
+import Team from "./pages/Team";
 
 function DashboardRoutes() {
   return (
@@ -33,6 +34,7 @@ function DashboardRoutes() {
         <Route path="/extensions" component={Extensions} />
         <Route path="/account" component={Account} />
         <Route path="/pricing" component={Pricing} />
+        <Route path="/team" component={Team} />
         <Route component={NotFound} />
       </Switch>
     </DashboardLayout>
@@ -57,6 +59,7 @@ function Router() {
       <Route path="/extensions" component={DashboardRoutes} />
       <Route path="/account" component={DashboardRoutes} />
       <Route path="/pricing" component={DashboardRoutes} />
+      <Route path="/team" component={DashboardRoutes} />
       
       <Route path="/404" component={NotFound} />
       <Route component={NotFound} />

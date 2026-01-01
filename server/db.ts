@@ -862,3 +862,449 @@ export async function getUsageSummary(userId: number): Promise<UsageSummary> {
     daysActive,
   };
 }
+
+
+// ==================== Team Operations ====================
+import { 
+  teams, InsertTeam, Team,
+  teamMembers, InsertTeamMember, TeamMember,
+  teamKnowledge, InsertTeamKnowledge, TeamKnowledge,
+  teamKnowledgeAccess, InsertTeamKnowledgeAccess, TeamKnowledgeAccess,
+  TEAM_PLAN_LIMITS, TeamPlanType
+} from "../drizzle/schema";
+
+// Get team by ID
+export async function getTeamById(teamId: number): Promise<Team | undefined> {
+  const db = await getDb();
+  if (!db) return undefined;
+  const result = await db.select().from(teams).where(eq(teams.id, teamId)).limit(1);
+  return result.length > 0 ? result[0] : undefined;
+}
+
+// Get team by owner ID
+export async function getTeamByOwnerId(ownerId: number): Promise<Team | undefined> {
+  const db = await getDb();
+  if (!db) return undefined;
+  const result = await db.select().from(teams).where(eq(teams.ownerId, ownerId)).limit(1);
+  return result.length > 0 ? result[0] : undefined;
+}
+
+// Get teams where user is a member
+export async function getTeamsByUserId(userId: number): Promise<Array<Team & { memberRole: string }>> {
+  const db = await getDb();
+  if (!db) return [];
+  
+  const result = await db.select({
+    team: teams,
+    memberRole: teamMembers.role,
+  })
+    .from(teamMembers)
+    .innerJoin(teams, eq(teamMembers.teamId, teams.id))
+    .where(and(
+      eq(teamMembers.userId, userId),
+      eq(teamMembers.inviteStatus, "accepted")
+    ));
+  
+  return result.map(r => ({
+    ...r.team,
+    memberRole: r.memberRole,
+  }));
+}
+
+// Create a new team
+export async function createTeam(data: InsertTeam): Promise<Team | undefined> {
+  const db = await getDb();
+  if (!db) return undefined;
+
+  await db.insert(teams).values(data);
+  
+  // Get the created team
+  const result = await db.select().from(teams).where(eq(teams.ownerId, data.ownerId)).orderBy(desc(teams.createdAt)).limit(1);
+  const team = result[0];
+  
+  if (team) {
+    // Add owner as a member with owner role
+    await db.insert(teamMembers).values({
+      teamId: team.id,
+      userId: data.ownerId,
+      role: "owner",
+      knowledgeAccess: "full",
+      inviteStatus: "accepted",
+    });
+  }
+  
+  return team;
+}
+
+// Update team
+export async function updateTeam(teamId: number, data: Partial<InsertTeam>): Promise<Team | undefined> {
+  const db = await getDb();
+  if (!db) return undefined;
+
+  const updateSet: Record<string, unknown> = {};
+  Object.entries(data).forEach(([key, value]) => {
+    if (key !== 'id' && value !== undefined) {
+      updateSet[key] = value;
+    }
+  });
+
+  if (Object.keys(updateSet).length === 0) return getTeamById(teamId);
+
+  await db.update(teams).set(updateSet).where(eq(teams.id, teamId));
+  return getTeamById(teamId);
+}
+
+// Delete team
+export async function deleteTeam(teamId: number): Promise<void> {
+  const db = await getDb();
+  if (!db) return;
+
+  // Delete all related data
+  await db.delete(teamKnowledgeAccess).where(
+    sql`knowledgeId IN (SELECT id FROM team_knowledge WHERE teamId = ${teamId})`
+  );
+  await db.delete(teamKnowledge).where(eq(teamKnowledge.teamId, teamId));
+  await db.delete(teamMembers).where(eq(teamMembers.teamId, teamId));
+  await db.delete(teams).where(eq(teams.id, teamId));
+}
+
+// ==================== Team Member Operations ====================
+
+// Get all members of a team
+export async function getTeamMembers(teamId: number): Promise<Array<TeamMember & { userName?: string; userEmail?: string }>> {
+  const db = await getDb();
+  if (!db) return [];
+
+  const result = await db.select({
+    member: teamMembers,
+    userName: users.name,
+    userEmail: users.email,
+  })
+    .from(teamMembers)
+    .leftJoin(users, eq(teamMembers.userId, users.id))
+    .where(eq(teamMembers.teamId, teamId));
+
+  return result.map(r => ({
+    ...r.member,
+    userName: r.userName ?? undefined,
+    userEmail: r.userEmail ?? undefined,
+  }));
+}
+
+// Get member by ID
+export async function getTeamMemberById(memberId: number): Promise<TeamMember | undefined> {
+  const db = await getDb();
+  if (!db) return undefined;
+  const result = await db.select().from(teamMembers).where(eq(teamMembers.id, memberId)).limit(1);
+  return result.length > 0 ? result[0] : undefined;
+}
+
+// Get member by team and user
+export async function getTeamMemberByUserAndTeam(teamId: number, userId: number): Promise<TeamMember | undefined> {
+  const db = await getDb();
+  if (!db) return undefined;
+  const result = await db.select()
+    .from(teamMembers)
+    .where(and(
+      eq(teamMembers.teamId, teamId),
+      eq(teamMembers.userId, userId)
+    ))
+    .limit(1);
+  return result.length > 0 ? result[0] : undefined;
+}
+
+// Invite a member to team
+export async function inviteTeamMember(data: InsertTeamMember): Promise<TeamMember | undefined> {
+  const db = await getDb();
+  if (!db) return undefined;
+
+  // Check if already a member
+  const existing = await getTeamMemberByUserAndTeam(data.teamId, data.userId);
+  if (existing) return existing;
+
+  await db.insert(teamMembers).values({
+    ...data,
+    inviteStatus: "pending",
+  });
+
+  return getTeamMemberByUserAndTeam(data.teamId, data.userId);
+}
+
+// Accept team invitation
+export async function acceptTeamInvitation(memberId: number): Promise<TeamMember | undefined> {
+  const db = await getDb();
+  if (!db) return undefined;
+
+  await db.update(teamMembers)
+    .set({ inviteStatus: "accepted", joinedAt: new Date() })
+    .where(eq(teamMembers.id, memberId));
+
+  return getTeamMemberById(memberId);
+}
+
+// Update member role or access
+export async function updateTeamMember(memberId: number, data: Partial<InsertTeamMember>): Promise<TeamMember | undefined> {
+  const db = await getDb();
+  if (!db) return undefined;
+
+  const updateSet: Record<string, unknown> = {};
+  Object.entries(data).forEach(([key, value]) => {
+    if (key !== 'id' && key !== 'teamId' && key !== 'userId' && value !== undefined) {
+      updateSet[key] = value;
+    }
+  });
+
+  if (Object.keys(updateSet).length === 0) return getTeamMemberById(memberId);
+
+  await db.update(teamMembers).set(updateSet).where(eq(teamMembers.id, memberId));
+  return getTeamMemberById(memberId);
+}
+
+// Remove member from team
+export async function removeTeamMember(memberId: number): Promise<void> {
+  const db = await getDb();
+  if (!db) return;
+
+  // Delete knowledge access records
+  await db.delete(teamKnowledgeAccess).where(eq(teamKnowledgeAccess.memberId, memberId));
+  // Delete member
+  await db.delete(teamMembers).where(eq(teamMembers.id, memberId));
+}
+
+// Get team member count
+export async function getTeamMemberCount(teamId: number): Promise<number> {
+  const db = await getDb();
+  if (!db) return 0;
+
+  const result = await db.select({
+    count: sql<number>`COUNT(*)`,
+  })
+    .from(teamMembers)
+    .where(and(
+      eq(teamMembers.teamId, teamId),
+      eq(teamMembers.inviteStatus, "accepted")
+    ));
+
+  return result[0]?.count || 0;
+}
+
+// ==================== Team Knowledge Operations ====================
+
+// Get all knowledge items for a team
+export async function getTeamKnowledgeByTeamId(teamId: number): Promise<TeamKnowledge[]> {
+  const db = await getDb();
+  if (!db) return [];
+
+  const result = await db.select()
+    .from(teamKnowledge)
+    .where(eq(teamKnowledge.teamId, teamId))
+    .orderBy(desc(teamKnowledge.createdAt));
+
+  return result;
+}
+
+// Get knowledge item by ID
+export async function getTeamKnowledgeById(knowledgeId: number): Promise<TeamKnowledge | undefined> {
+  const db = await getDb();
+  if (!db) return undefined;
+  const result = await db.select().from(teamKnowledge).where(eq(teamKnowledge.id, knowledgeId)).limit(1);
+  return result.length > 0 ? result[0] : undefined;
+}
+
+// Create knowledge item
+export async function createTeamKnowledge(data: InsertTeamKnowledge): Promise<TeamKnowledge | undefined> {
+  const db = await getDb();
+  if (!db) return undefined;
+
+  await db.insert(teamKnowledge).values(data);
+
+  const result = await db.select()
+    .from(teamKnowledge)
+    .where(and(
+      eq(teamKnowledge.teamId, data.teamId),
+      eq(teamKnowledge.title, data.title)
+    ))
+    .orderBy(desc(teamKnowledge.createdAt))
+    .limit(1);
+
+  return result[0];
+}
+
+// Update knowledge item
+export async function updateTeamKnowledge(knowledgeId: number, data: Partial<InsertTeamKnowledge>): Promise<TeamKnowledge | undefined> {
+  const db = await getDb();
+  if (!db) return undefined;
+
+  const updateSet: Record<string, unknown> = {};
+  Object.entries(data).forEach(([key, value]) => {
+    if (key !== 'id' && key !== 'teamId' && value !== undefined) {
+      updateSet[key] = value;
+    }
+  });
+
+  if (Object.keys(updateSet).length === 0) return getTeamKnowledgeById(knowledgeId);
+
+  await db.update(teamKnowledge).set(updateSet).where(eq(teamKnowledge.id, knowledgeId));
+  return getTeamKnowledgeById(knowledgeId);
+}
+
+// Delete knowledge item
+export async function deleteTeamKnowledge(knowledgeId: number): Promise<void> {
+  const db = await getDb();
+  if (!db) return;
+
+  // Delete access records first
+  await db.delete(teamKnowledgeAccess).where(eq(teamKnowledgeAccess.knowledgeId, knowledgeId));
+  // Delete knowledge item
+  await db.delete(teamKnowledge).where(eq(teamKnowledge.id, knowledgeId));
+}
+
+// Get accessible knowledge for a member
+export async function getAccessibleTeamKnowledge(teamId: number, memberId: number): Promise<TeamKnowledge[]> {
+  const db = await getDb();
+  if (!db) return [];
+
+  // Get member's access level
+  const member = await getTeamMemberById(memberId);
+  if (!member) return [];
+
+  // If full access, return all shared knowledge
+  if (member.knowledgeAccess === "full") {
+    return db.select()
+      .from(teamKnowledge)
+      .where(and(
+        eq(teamKnowledge.teamId, teamId),
+        eq(teamKnowledge.isShared, true)
+      ))
+      .orderBy(desc(teamKnowledge.createdAt));
+  }
+
+  // If partial access, check specific permissions
+  if (member.knowledgeAccess === "partial") {
+    const result = await db.select({
+      knowledge: teamKnowledge,
+    })
+      .from(teamKnowledge)
+      .innerJoin(teamKnowledgeAccess, eq(teamKnowledge.id, teamKnowledgeAccess.knowledgeId))
+      .where(and(
+        eq(teamKnowledge.teamId, teamId),
+        eq(teamKnowledge.isShared, true),
+        eq(teamKnowledgeAccess.memberId, memberId),
+        eq(teamKnowledgeAccess.canAccess, true)
+      ))
+      .orderBy(desc(teamKnowledge.createdAt));
+
+    return result.map(r => r.knowledge);
+  }
+
+  // No access
+  return [];
+}
+
+// Get team knowledge content as string for AI context
+export async function getTeamKnowledgeContent(teamId: number, memberId?: number): Promise<string> {
+  const db = await getDb();
+  if (!db) return "";
+
+  let knowledge: TeamKnowledge[];
+  
+  if (memberId) {
+    knowledge = await getAccessibleTeamKnowledge(teamId, memberId);
+  } else {
+    // Get all shared knowledge (for admin/owner)
+    knowledge = await db.select()
+      .from(teamKnowledge)
+      .where(and(
+        eq(teamKnowledge.teamId, teamId),
+        eq(teamKnowledge.isShared, true)
+      ));
+  }
+
+  if (knowledge.length === 0) return "";
+
+  // Format knowledge for AI context
+  const sections = knowledge.map(k => {
+    const categoryLabels: Record<string, string> = {
+      company_info: "公司資料",
+      products: "產品目錄",
+      services: "服務項目",
+      history: "公司歷史",
+      faq: "常見問題",
+      sales_scripts: "銷售話術",
+      case_studies: "案例研究",
+      policies: "政策規定",
+      training: "培訓資料",
+      other: "其他",
+    };
+    return `【${categoryLabels[k.category] || k.category}】${k.title}\n${k.content}`;
+  });
+
+  return sections.join("\n\n---\n\n");
+}
+
+// ==================== Team Statistics ====================
+
+export type TeamStats = {
+  memberCount: number;
+  knowledgeCount: number;
+  totalConversations: number;
+  monthlyConversations: number;
+};
+
+export async function getTeamStats(teamId: number): Promise<TeamStats> {
+  const db = await getDb();
+  if (!db) {
+    return {
+      memberCount: 0,
+      knowledgeCount: 0,
+      totalConversations: 0,
+      monthlyConversations: 0,
+    };
+  }
+
+  // Get member count
+  const memberCount = await getTeamMemberCount(teamId);
+
+  // Get knowledge count
+  const knowledgeResult = await db.select({
+    count: sql<number>`COUNT(*)`,
+  })
+    .from(teamKnowledge)
+    .where(eq(teamKnowledge.teamId, teamId));
+  const knowledgeCount = knowledgeResult[0]?.count || 0;
+
+  // Get conversation stats (sum of all members' conversations)
+  const members = await getTeamMembers(teamId);
+  const memberIds = members.map(m => m.userId);
+  
+  let totalConversations = 0;
+  let monthlyConversations = 0;
+  
+  if (memberIds.length > 0) {
+    const monthStart = getMonthStartDateString();
+    
+    const totalResult = await db.select({
+      total: sql<number>`COALESCE(SUM(messageCount), 0)`,
+    })
+      .from(usageLogs)
+      .where(sql`userId IN (${sql.join(memberIds, sql`, `)})`);
+    totalConversations = totalResult[0]?.total || 0;
+
+    const monthlyResult = await db.select({
+      total: sql<number>`COALESCE(SUM(messageCount), 0)`,
+    })
+      .from(usageLogs)
+      .where(and(
+        sql`userId IN (${sql.join(memberIds, sql`, `)})`,
+        sql`date >= ${monthStart}`
+      ));
+    monthlyConversations = monthlyResult[0]?.total || 0;
+  }
+
+  return {
+    memberCount,
+    knowledgeCount,
+    totalConversations,
+    monthlyConversations,
+  };
+}

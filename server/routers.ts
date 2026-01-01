@@ -11,7 +11,12 @@ import {
   getAnalyticsStats, getDailyStats, getPopularQuestions, getRecentConversations,
   getTrainingByUserId, upsertTraining,
   getSuperpowersByUserId, upsertSuperpowers,
-  createOrGetSubscription, updateSubscription, getUsageSummary, checkMessageLimit, incrementMessageCount
+  createOrGetSubscription, updateSubscription, getUsageSummary, checkMessageLimit, incrementMessageCount,
+  // Team operations
+  getTeamById, getTeamByOwnerId, getTeamsByUserId, createTeam, updateTeam, deleteTeam,
+  getTeamMembers, getTeamMemberById, getTeamMemberByUserAndTeam, inviteTeamMember, acceptTeamInvitation, updateTeamMember, removeTeamMember, getTeamMemberCount,
+  getTeamKnowledgeByTeamId, getTeamKnowledgeById, createTeamKnowledge, updateTeamKnowledge, deleteTeamKnowledge, getAccessibleTeamKnowledge, getTeamKnowledgeContent,
+  getTeamStats
 } from "./db";
 import { invokeLLM } from "./_core/llm";
 import { storagePut } from "./storage";
@@ -493,6 +498,286 @@ ${knowledgeContent.substring(0, 10000)}
         const persona = await getPersonaByUserId(ctx.user.id);
         if (!persona) return [];
         return getRecentConversations(persona.id, input.limit || 10);
+      }),
+  }),
+
+  // Team management
+  team: router({
+    // Get user's teams (as owner or member)
+    list: protectedProcedure.query(async ({ ctx }) => {
+      return getTeamsByUserId(ctx.user.id);
+    }),
+
+    // Get team owned by user
+    getOwned: protectedProcedure.query(async ({ ctx }) => {
+      return getTeamByOwnerId(ctx.user.id);
+    }),
+
+    // Get team by ID (must be a member)
+    get: protectedProcedure
+      .input(z.object({ teamId: z.number() }))
+      .query(async ({ ctx, input }) => {
+        const member = await getTeamMemberByUserAndTeam(input.teamId, ctx.user.id);
+        if (!member || member.inviteStatus !== "accepted") {
+          throw new Error("Not a member of this team");
+        }
+        const team = await getTeamById(input.teamId);
+        const stats = await getTeamStats(input.teamId);
+        return { ...team, stats, memberRole: member.role };
+      }),
+
+    // Create a new team
+    create: protectedProcedure
+      .input(z.object({
+        name: z.string().min(1).max(100),
+        description: z.string().optional(),
+        plan: z.enum(["team_basic", "team_pro", "enterprise"]).default("team_basic"),
+      }))
+      .mutation(async ({ ctx, input }) => {
+        // Check if user already owns a team
+        const existingTeam = await getTeamByOwnerId(ctx.user.id);
+        if (existingTeam) {
+          throw new Error("You already own a team");
+        }
+        
+        const maxMembers = input.plan === "team_basic" ? 5 : 
+                          input.plan === "team_pro" ? 15 : 999;
+        
+        return createTeam({
+          name: input.name,
+          description: input.description,
+          ownerId: ctx.user.id,
+          plan: input.plan,
+          maxMembers,
+        });
+      }),
+
+    // Update team info (owner/admin only)
+    update: protectedProcedure
+      .input(z.object({
+        teamId: z.number(),
+        name: z.string().min(1).max(100).optional(),
+        description: z.string().optional(),
+        logoUrl: z.string().optional(),
+      }))
+      .mutation(async ({ ctx, input }) => {
+        const member = await getTeamMemberByUserAndTeam(input.teamId, ctx.user.id);
+        if (!member || (member.role !== "owner" && member.role !== "admin")) {
+          throw new Error("Not authorized to update team");
+        }
+        return updateTeam(input.teamId, {
+          name: input.name,
+          description: input.description,
+          logoUrl: input.logoUrl,
+        });
+      }),
+
+    // Delete team (owner only)
+    delete: protectedProcedure
+      .input(z.object({ teamId: z.number() }))
+      .mutation(async ({ ctx, input }) => {
+        const team = await getTeamById(input.teamId);
+        if (!team || team.ownerId !== ctx.user.id) {
+          throw new Error("Not authorized to delete team");
+        }
+        await deleteTeam(input.teamId);
+        return { success: true };
+      }),
+
+    // Get team members
+    members: protectedProcedure
+      .input(z.object({ teamId: z.number() }))
+      .query(async ({ ctx, input }) => {
+        const member = await getTeamMemberByUserAndTeam(input.teamId, ctx.user.id);
+        if (!member || member.inviteStatus !== "accepted") {
+          throw new Error("Not a member of this team");
+        }
+        return getTeamMembers(input.teamId);
+      }),
+
+    // Invite a member (owner/admin only)
+    inviteMember: protectedProcedure
+      .input(z.object({
+        teamId: z.number(),
+        email: z.string().email(),
+        role: z.enum(["admin", "member"]).default("member"),
+      }))
+      .mutation(async ({ ctx, input }) => {
+        const member = await getTeamMemberByUserAndTeam(input.teamId, ctx.user.id);
+        if (!member || (member.role !== "owner" && member.role !== "admin")) {
+          throw new Error("Not authorized to invite members");
+        }
+        
+        // Check team member limit
+        const team = await getTeamById(input.teamId);
+        if (!team) throw new Error("Team not found");
+        
+        const memberCount = await getTeamMemberCount(input.teamId);
+        if (memberCount >= team.maxMembers) {
+          throw new Error("Team member limit reached");
+        }
+        
+        // TODO: In real implementation, look up user by email and send invitation
+        // For now, we'll just create a placeholder
+        return { success: true, message: "Invitation sent" };
+      }),
+
+    // Update member role/access (owner/admin only)
+    updateMember: protectedProcedure
+      .input(z.object({
+        teamId: z.number(),
+        memberId: z.number(),
+        role: z.enum(["admin", "member"]).optional(),
+        knowledgeAccess: z.enum(["full", "partial", "none"]).optional(),
+      }))
+      .mutation(async ({ ctx, input }) => {
+        const currentMember = await getTeamMemberByUserAndTeam(input.teamId, ctx.user.id);
+        if (!currentMember || (currentMember.role !== "owner" && currentMember.role !== "admin")) {
+          throw new Error("Not authorized to update members");
+        }
+        
+        const targetMember = await getTeamMemberById(input.memberId);
+        if (!targetMember || targetMember.teamId !== input.teamId) {
+          throw new Error("Member not found");
+        }
+        
+        // Can't change owner's role
+        if (targetMember.role === "owner") {
+          throw new Error("Cannot modify owner's role");
+        }
+        
+        return updateTeamMember(input.memberId, {
+          role: input.role,
+          knowledgeAccess: input.knowledgeAccess,
+        });
+      }),
+
+    // Remove member (owner/admin only)
+    removeMember: protectedProcedure
+      .input(z.object({
+        teamId: z.number(),
+        memberId: z.number(),
+      }))
+      .mutation(async ({ ctx, input }) => {
+        const currentMember = await getTeamMemberByUserAndTeam(input.teamId, ctx.user.id);
+        if (!currentMember || (currentMember.role !== "owner" && currentMember.role !== "admin")) {
+          throw new Error("Not authorized to remove members");
+        }
+        
+        const targetMember = await getTeamMemberById(input.memberId);
+        if (!targetMember || targetMember.teamId !== input.teamId) {
+          throw new Error("Member not found");
+        }
+        
+        // Can't remove owner
+        if (targetMember.role === "owner") {
+          throw new Error("Cannot remove team owner");
+        }
+        
+        await removeTeamMember(input.memberId);
+        return { success: true };
+      }),
+
+    // Get team knowledge
+    knowledge: protectedProcedure
+      .input(z.object({ teamId: z.number() }))
+      .query(async ({ ctx, input }) => {
+        const member = await getTeamMemberByUserAndTeam(input.teamId, ctx.user.id);
+        if (!member || member.inviteStatus !== "accepted") {
+          throw new Error("Not a member of this team");
+        }
+        
+        // Admins/owners see all, members see accessible only
+        if (member.role === "owner" || member.role === "admin") {
+          return getTeamKnowledgeByTeamId(input.teamId);
+        }
+        return getAccessibleTeamKnowledge(input.teamId, member.id);
+      }),
+
+    // Add knowledge item (owner/admin only)
+    addKnowledge: protectedProcedure
+      .input(z.object({
+        teamId: z.number(),
+        category: z.enum(["company_info", "products", "services", "history", "faq", "sales_scripts", "case_studies", "policies", "training", "other"]),
+        title: z.string().min(1).max(200),
+        content: z.string().min(1),
+        isShared: z.boolean().default(true),
+      }))
+      .mutation(async ({ ctx, input }) => {
+        const member = await getTeamMemberByUserAndTeam(input.teamId, ctx.user.id);
+        if (!member || (member.role !== "owner" && member.role !== "admin")) {
+          throw new Error("Not authorized to add knowledge");
+        }
+        
+        return createTeamKnowledge({
+          teamId: input.teamId,
+          category: input.category,
+          title: input.title,
+          content: input.content,
+          isShared: input.isShared,
+          createdBy: ctx.user.id,
+        });
+      }),
+
+    // Update knowledge item (owner/admin only)
+    updateKnowledge: protectedProcedure
+      .input(z.object({
+        teamId: z.number(),
+        knowledgeId: z.number(),
+        category: z.enum(["company_info", "products", "services", "history", "faq", "sales_scripts", "case_studies", "policies", "training", "other"]).optional(),
+        title: z.string().min(1).max(200).optional(),
+        content: z.string().min(1).optional(),
+        isShared: z.boolean().optional(),
+      }))
+      .mutation(async ({ ctx, input }) => {
+        const member = await getTeamMemberByUserAndTeam(input.teamId, ctx.user.id);
+        if (!member || (member.role !== "owner" && member.role !== "admin")) {
+          throw new Error("Not authorized to update knowledge");
+        }
+        
+        const knowledge = await getTeamKnowledgeById(input.knowledgeId);
+        if (!knowledge || knowledge.teamId !== input.teamId) {
+          throw new Error("Knowledge item not found");
+        }
+        
+        return updateTeamKnowledge(input.knowledgeId, {
+          category: input.category,
+          title: input.title,
+          content: input.content,
+          isShared: input.isShared,
+        });
+      }),
+
+    // Delete knowledge item (owner/admin only)
+    deleteKnowledge: protectedProcedure
+      .input(z.object({
+        teamId: z.number(),
+        knowledgeId: z.number(),
+      }))
+      .mutation(async ({ ctx, input }) => {
+        const member = await getTeamMemberByUserAndTeam(input.teamId, ctx.user.id);
+        if (!member || (member.role !== "owner" && member.role !== "admin")) {
+          throw new Error("Not authorized to delete knowledge");
+        }
+        
+        const knowledge = await getTeamKnowledgeById(input.knowledgeId);
+        if (!knowledge || knowledge.teamId !== input.teamId) {
+          throw new Error("Knowledge item not found");
+        }
+        
+        await deleteTeamKnowledge(input.knowledgeId);
+        return { success: true };
+      }),
+
+    // Get team stats
+    stats: protectedProcedure
+      .input(z.object({ teamId: z.number() }))
+      .query(async ({ ctx, input }) => {
+        const member = await getTeamMemberByUserAndTeam(input.teamId, ctx.user.id);
+        if (!member || member.inviteStatus !== "accepted") {
+          throw new Error("Not a member of this team");
+        }
+        return getTeamStats(input.teamId);
       }),
   }),
 });
