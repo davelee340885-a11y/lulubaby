@@ -112,6 +112,7 @@ export default function Appearance() {
   const [suggestedQuestions, setSuggestedQuestions] = useState<string[]>([]);
   const [newQuestion, setNewQuestion] = useState("");
   const [showQuickButtons, setShowQuickButtons] = useState(true);
+  const [buttonDisplayMode, setButtonDisplayMode] = useState<"full" | "compact" | "icon">("full");
   const [chatPlaceholder, setChatPlaceholder] = useState("輸入您的問題...");
   const [uploadingProfile, setUploadingProfile] = useState(false);
   const [uploadingBackground, setUploadingBackground] = useState(false);
@@ -140,6 +141,7 @@ export default function Appearance() {
       setBackgroundImageUrl(persona.backgroundImageUrl || "");
       setTagline(persona.tagline || "");
       setShowQuickButtons(persona.showQuickButtons ?? true);
+      setButtonDisplayMode((persona.buttonDisplayMode as "full" | "compact" | "icon") || "full");
       setChatPlaceholder(persona.chatPlaceholder || "輸入您的問題...");
       
       if (persona.suggestedQuestions) {
@@ -259,6 +261,7 @@ export default function Appearance() {
       tagline: tagline || null,
       suggestedQuestions: JSON.stringify(suggestedQuestions),
       showQuickButtons,
+      buttonDisplayMode,
       chatPlaceholder: chatPlaceholder || null,
     });
   };
@@ -666,7 +669,7 @@ export default function Appearance() {
               <CardHeader className="pb-3">
                 <CardTitle className="text-base">按鈕顯示設定</CardTitle>
               </CardHeader>
-              <CardContent>
+              <CardContent className="space-y-4">
                 <div className="flex items-center justify-between">
                   <div className="space-y-0.5">
                     <Label>在對話頁面顯示快捷按鈕</Label>
@@ -674,7 +677,68 @@ export default function Appearance() {
                   </div>
                   <Switch checked={showQuickButtons} onCheckedChange={setShowQuickButtons} />
                 </div>
-                <div className="flex justify-end mt-4">
+
+                {/* Button Display Mode */}
+                {showQuickButtons && (
+                  <div className="space-y-2 pt-2 border-t">
+                    <Label>按鈕顯示模式</Label>
+                    <p className="text-xs text-muted-foreground mb-2">選擇快捷按鈕的顯示方式</p>
+                    <div className="grid grid-cols-3 gap-2">
+                      <button
+                        type="button"
+                        onClick={() => setButtonDisplayMode("full")}
+                        className={`p-3 rounded-lg border-2 transition-all text-center ${
+                          buttonDisplayMode === "full" ? "border-primary bg-primary/5" : "border-muted hover:border-muted-foreground/30"
+                        }`}
+                      >
+                        <div className="flex items-center justify-center gap-1 mb-1">
+                          <div className="w-6 h-6 rounded bg-muted flex items-center justify-center">
+                            <MessageSquare className="h-3 w-3" />
+                          </div>
+                          <span className="text-[10px]">按鈕</span>
+                        </div>
+                        <p className="text-xs font-medium">完整模式</p>
+                        <p className="text-[10px] text-muted-foreground">圖標+文字</p>
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setButtonDisplayMode("compact")}
+                        className={`p-3 rounded-lg border-2 transition-all text-center ${
+                          buttonDisplayMode === "compact" ? "border-primary bg-primary/5" : "border-muted hover:border-muted-foreground/30"
+                        }`}
+                      >
+                        <div className="flex items-center justify-center gap-0.5 mb-1">
+                          <div className="w-4 h-4 rounded bg-muted flex items-center justify-center">
+                            <MessageSquare className="h-2 w-2" />
+                          </div>
+                          <span className="text-[8px]">按</span>
+                        </div>
+                        <p className="text-xs font-medium">緊湊模式</p>
+                        <p className="text-[10px] text-muted-foreground">小圖標+短文字</p>
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setButtonDisplayMode("icon")}
+                        className={`p-3 rounded-lg border-2 transition-all text-center ${
+                          buttonDisplayMode === "icon" ? "border-primary bg-primary/5" : "border-muted hover:border-muted-foreground/30"
+                        }`}
+                      >
+                        <div className="flex items-center justify-center gap-1 mb-1">
+                          <div className="w-5 h-5 rounded bg-muted flex items-center justify-center">
+                            <MessageSquare className="h-2.5 w-2.5" />
+                          </div>
+                          <div className="w-5 h-5 rounded bg-muted flex items-center justify-center">
+                            <Calendar className="h-2.5 w-2.5" />
+                          </div>
+                        </div>
+                        <p className="text-xs font-medium">圖標模式</p>
+                        <p className="text-[10px] text-muted-foreground">僅圖標+懸停提示</p>
+                      </button>
+                    </div>
+                  </div>
+                )}
+
+                <div className="flex justify-end pt-2">
                   <Button onClick={handleSave} disabled={upsertMutation.isPending} size="sm">
                     {upsertMutation.isPending && <Loader2 className="h-4 w-4 animate-spin mr-2" />}
                     保存設定

@@ -48,6 +48,7 @@ export const appRouter = router({
         tagline: z.string().optional().nullable(),
         suggestedQuestions: z.string().optional().nullable(),
         showQuickButtons: z.boolean().optional(),
+        buttonDisplayMode: z.enum(["full", "compact", "icon"]).optional(),
         chatPlaceholder: z.string().optional().nullable(),
       }))
       .mutation(async ({ ctx, input }) => {
@@ -64,6 +65,7 @@ export const appRouter = router({
           tagline: input.tagline ?? undefined,
           suggestedQuestions: input.suggestedQuestions ?? undefined,
           showQuickButtons: input.showQuickButtons,
+          buttonDisplayMode: input.buttonDisplayMode,
           chatPlaceholder: input.chatPlaceholder ?? undefined,
         });
       }),
@@ -99,6 +101,7 @@ export const appRouter = router({
           tagline: persona.tagline,
           suggestedQuestions,
           showQuickButtons: persona.showQuickButtons,
+          buttonDisplayMode: persona.buttonDisplayMode || 'full',
           chatPlaceholder: persona.chatPlaceholder,
           quickButtons: persona.showQuickButtons ? activeButtons.map(b => ({
             id: b.id,

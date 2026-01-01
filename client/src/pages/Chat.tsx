@@ -3,7 +3,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Send, Loader2, Bot, User, Search, Calendar, Link as LinkIcon, MessageSquare, ExternalLink, Sparkles } from "lucide-react";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { Send, Loader2, Bot, User, Search, Calendar, Link as LinkIcon, MessageSquare, ExternalLink, Sparkles, FileText, Building2, Phone, HelpCircle, ShoppingBag, UserCircle } from "lucide-react";
 import { useState, useEffect, useRef } from "react";
 import { useParams } from "wouter";
 import { nanoid } from "nanoid";
@@ -16,12 +17,29 @@ type Message = {
   timestamp: Date;
 };
 
+// Extended icon map with more options
 const iconMap: Record<string, React.ComponentType<{ className?: string }>> = {
   search: Search,
   calendar: Calendar,
   link: LinkIcon,
   message: MessageSquare,
   sparkles: Sparkles,
+  file: FileText,
+  building: Building2,
+  phone: Phone,
+  help: HelpCircle,
+  shopping: ShoppingBag,
+  user: UserCircle,
+  // Action type to icon mapping
+  query: MessageSquare,
+  booking: Calendar,
+  product: ShoppingBag,
+  profile: UserCircle,
+  company: Building2,
+  catalog: FileText,
+  contact: Phone,
+  faq: HelpCircle,
+  custom: Sparkles,
 };
 
 export default function Chat() {
@@ -158,7 +176,7 @@ export default function Chat() {
   if (personaLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gradient-to-b from-background to-muted/30">
-        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+        <Loader2 className="h-6 w-6 animate-spin text-primary" />
       </div>
     );
   }
@@ -167,9 +185,9 @@ export default function Chat() {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gradient-to-b from-background to-muted/30">
         <div className="text-center">
-          <Bot className="h-16 w-16 mx-auto text-muted-foreground mb-4" />
-          <h1 className="text-2xl font-bold mb-2">找不到此AI助手</h1>
-          <p className="text-muted-foreground">請確認連結是否正確</p>
+          <Bot className="h-12 w-12 mx-auto text-muted-foreground mb-3" />
+          <h1 className="text-lg font-semibold mb-1">找不到此AI助手</h1>
+          <p className="text-sm text-muted-foreground">請確認連結是否正確</p>
         </div>
       </div>
     );
@@ -180,6 +198,7 @@ export default function Chat() {
   const chatPlaceholder = persona.chatPlaceholder || "輸入您的問題...";
   const suggestedQuestions = persona.suggestedQuestions || [];
   const showQuickButtons = persona.showQuickButtons ?? true;
+  const buttonDisplayMode = persona.buttonDisplayMode || "full";
 
   // Render based on layout style
   if (layoutStyle === "professional") {
@@ -189,6 +208,7 @@ export default function Chat() {
       chatPlaceholder={chatPlaceholder}
       suggestedQuestions={suggestedQuestions}
       showQuickButtons={showQuickButtons}
+      buttonDisplayMode={buttonDisplayMode}
       messages={messages}
       input={input}
       setInput={setInput}
@@ -209,6 +229,7 @@ export default function Chat() {
       chatPlaceholder={chatPlaceholder}
       suggestedQuestions={suggestedQuestions}
       showQuickButtons={showQuickButtons}
+      buttonDisplayMode={buttonDisplayMode}
       messages={messages}
       input={input}
       setInput={setInput}
@@ -229,6 +250,7 @@ export default function Chat() {
     chatPlaceholder={chatPlaceholder}
     suggestedQuestions={suggestedQuestions}
     showQuickButtons={showQuickButtons}
+    buttonDisplayMode={buttonDisplayMode}
     messages={messages}
     input={input}
     setInput={setInput}
@@ -255,6 +277,7 @@ type PersonaData = {
   tagline: string | null;
   suggestedQuestions: string[];
   showQuickButtons: boolean | null;
+  buttonDisplayMode: string | null;
   chatPlaceholder: string | null;
   quickButtons: Array<{
     id: number;
@@ -272,6 +295,7 @@ type LayoutProps = {
   chatPlaceholder: string;
   suggestedQuestions: string[];
   showQuickButtons: boolean;
+  buttonDisplayMode: string;
   messages: Message[];
   input: string;
   setInput: (value: string) => void;
@@ -284,13 +308,102 @@ type LayoutProps = {
   handleSuggestedQuestion: (question: string) => void;
 };
 
-// ==================== Minimal Layout (ChatGPT Style) ====================
+// Quick Button Component with different display modes
+function QuickButtonGroup({ 
+  buttons, 
+  displayMode, 
+  primaryColor,
+  onButtonClick 
+}: { 
+  buttons: PersonaData["quickButtons"];
+  displayMode: string;
+  primaryColor: string;
+  onButtonClick: (button: PersonaData["quickButtons"][0]) => void;
+}) {
+  if (buttons.length === 0) return null;
+
+  // Icon-only mode with tooltips
+  if (displayMode === "icon") {
+    return (
+      <TooltipProvider delayDuration={200}>
+        <div className="flex items-center justify-center gap-1">
+          {buttons.map((button) => {
+            const IconComponent = iconMap[button.icon || button.actionType] || MessageSquare;
+            return (
+              <Tooltip key={button.id}>
+                <TooltipTrigger asChild>
+                  <button
+                    onClick={() => onButtonClick(button)}
+                    className="p-2 rounded-lg hover:bg-muted/80 transition-colors group"
+                    style={{ color: primaryColor }}
+                  >
+                    <IconComponent className="h-4 w-4" />
+                  </button>
+                </TooltipTrigger>
+                <TooltipContent side="top" className="text-xs">
+                  {button.label}
+                </TooltipContent>
+              </Tooltip>
+            );
+          })}
+        </div>
+      </TooltipProvider>
+    );
+  }
+
+  // Compact mode - smaller buttons with icon + short label
+  if (displayMode === "compact") {
+    return (
+      <div className="flex flex-wrap items-center justify-center gap-1.5">
+        {buttons.map((button) => {
+          const IconComponent = iconMap[button.icon || button.actionType] || MessageSquare;
+          return (
+            <button
+              key={button.id}
+              onClick={() => onButtonClick(button)}
+              className="inline-flex items-center gap-1 px-2 py-1 text-xs rounded-md border hover:bg-muted/50 transition-colors"
+            >
+              <IconComponent className="h-3 w-3" />
+              <span className="max-w-[60px] truncate">{button.label}</span>
+              {button.actionType === "link" && <ExternalLink className="h-2.5 w-2.5 opacity-50" />}
+            </button>
+          );
+        })}
+      </div>
+    );
+  }
+
+  // Full mode - original style but more refined
+  return (
+    <div className="flex flex-wrap items-center justify-center gap-2">
+      {buttons.map((button) => {
+        const IconComponent = iconMap[button.icon || button.actionType] || MessageSquare;
+        return (
+          <Button
+            key={button.id}
+            variant="outline"
+            size="sm"
+            className="h-8 px-3 text-xs rounded-full"
+            onClick={() => onButtonClick(button)}
+          >
+            <IconComponent className="h-3.5 w-3.5 mr-1.5" />
+            {button.label}
+            {button.actionType === "link" && <ExternalLink className="h-2.5 w-2.5 ml-1 opacity-50" />}
+          </Button>
+        );
+      })}
+    </div>
+  );
+}
+
+// ==================== Minimal Layout (ChatGPT Style) - Redesigned ====================
 function MinimalLayout({
   persona,
   primaryColor,
   chatPlaceholder,
   suggestedQuestions,
   showQuickButtons,
+  buttonDisplayMode,
   messages,
   input,
   setInput,
@@ -302,144 +415,151 @@ function MinimalLayout({
   handleQuickButton,
   handleSuggestedQuestion,
 }: LayoutProps) {
+  const hasMessages = messages.length > 0;
+
   return (
     <div className="min-h-screen flex flex-col bg-background">
-      {/* Minimal Header */}
+      {/* Compact Header */}
       <header className="sticky top-0 z-10 border-b bg-background/95 backdrop-blur">
-        <div className="container max-w-3xl py-3">
-          <div className="flex items-center gap-3">
-            <Avatar className="h-9 w-9">
+        <div className="container max-w-2xl py-2">
+          <div className="flex items-center gap-2">
+            <Avatar className="h-7 w-7">
               <AvatarImage src={persona.avatarUrl || undefined} />
               <AvatarFallback style={{ backgroundColor: `${primaryColor}15`, color: primaryColor }}>
-                <Bot className="h-4 w-4" />
+                <Bot className="h-3.5 w-3.5" />
               </AvatarFallback>
             </Avatar>
-            <div>
-              <h1 className="font-medium text-sm">{persona.agentName}</h1>
-              <p className="text-xs text-muted-foreground">在線</p>
+            <div className="flex-1 min-w-0">
+              <h1 className="font-medium text-sm truncate">{persona.agentName}</h1>
             </div>
+            <span className="flex items-center gap-1 text-xs text-green-600">
+              <span className="w-1.5 h-1.5 rounded-full bg-green-500" />
+              在線
+            </span>
           </div>
         </div>
       </header>
 
-      {/* Chat Area */}
-      <div className="flex-1 container max-w-3xl">
-        <ScrollArea className="h-[calc(100vh-160px)] py-6" ref={scrollRef}>
-          <div className="space-y-6">
-            {/* Welcome State */}
-            {messages.length === 0 && (
-              <div className="flex flex-col items-center justify-center py-12 text-center">
-                <Avatar className="h-16 w-16 mb-4">
-                  <AvatarImage src={persona.avatarUrl || undefined} />
-                  <AvatarFallback style={{ backgroundColor: `${primaryColor}15`, color: primaryColor }}>
-                    <Bot className="h-8 w-8" />
-                  </AvatarFallback>
-                </Avatar>
-                <h2 className="text-xl font-semibold mb-2">{persona.agentName}</h2>
-                <p className="text-muted-foreground max-w-md mb-8">{persona.welcomeMessage}</p>
-                
-                {/* Suggested Questions */}
-                {suggestedQuestions.length > 0 && (
-                  <div className="grid gap-2 w-full max-w-md">
-                    {suggestedQuestions.map((question, index) => (
-                      <button
-                        key={index}
-                        onClick={() => handleSuggestedQuestion(question)}
-                        className="text-left p-3 rounded-xl border hover:bg-muted/50 transition-colors text-sm"
-                      >
-                        {question}
-                      </button>
-                    ))}
-                  </div>
-                )}
+      {/* Main Content Area */}
+      <div className="flex-1 flex flex-col">
+        {/* Welcome State - Centered */}
+        {!hasMessages && (
+          <div className="flex-1 flex flex-col items-center justify-center px-4 py-8">
+            <Avatar className="h-14 w-14 mb-3">
+              <AvatarImage src={persona.avatarUrl || undefined} />
+              <AvatarFallback style={{ backgroundColor: `${primaryColor}15`, color: primaryColor }}>
+                <Bot className="h-7 w-7" />
+              </AvatarFallback>
+            </Avatar>
+            <h2 className="text-lg font-semibold mb-1">{persona.agentName}</h2>
+            <p className="text-sm text-muted-foreground text-center max-w-sm mb-6">{persona.welcomeMessage}</p>
+            
+            {/* Suggested Questions - More compact */}
+            {suggestedQuestions.length > 0 && (
+              <div className="w-full max-w-md space-y-1.5 mb-4">
+                {suggestedQuestions.map((question, index) => (
+                  <button
+                    key={index}
+                    onClick={() => handleSuggestedQuestion(question)}
+                    className="w-full text-left px-3 py-2 rounded-lg border hover:bg-muted/50 transition-colors text-sm"
+                  >
+                    {question}
+                  </button>
+                ))}
               </div>
             )}
 
-            {/* Messages */}
-            {messages.map((message) => (
-              <div key={message.id} className={`flex gap-4 ${message.role === "user" ? "flex-row-reverse" : ""}`}>
-                <Avatar className="h-8 w-8 shrink-0">
-                  {message.role === "assistant" ? (
-                    <>
-                      <AvatarImage src={persona.avatarUrl || undefined} />
-                      <AvatarFallback style={{ backgroundColor: `${primaryColor}15`, color: primaryColor }}>
-                        <Bot className="h-4 w-4" />
-                      </AvatarFallback>
-                    </>
-                  ) : (
-                    <AvatarFallback className="bg-muted">
-                      <User className="h-4 w-4" />
-                    </AvatarFallback>
-                  )}
-                </Avatar>
-                <div className={`flex-1 ${message.role === "user" ? "flex justify-end" : ""}`}>
-                  <div
-                    className={`inline-block rounded-2xl px-4 py-3 max-w-[85%] ${
-                      message.role === "user"
-                        ? "bg-primary text-primary-foreground"
-                        : "bg-muted"
-                    }`}
-                  >
-                    {message.role === "assistant" ? (
-                      <div className="text-sm prose prose-sm max-w-none dark:prose-invert">
-                        <Streamdown>{message.content}</Streamdown>
-                      </div>
-                    ) : (
-                      <p className="text-sm">{message.content}</p>
-                    )}
-                  </div>
-                </div>
-              </div>
-            ))}
-
-            {/* Typing Indicator */}
-            {isTyping && (
-              <div className="flex gap-4">
-                <Avatar className="h-8 w-8 shrink-0">
-                  <AvatarImage src={persona.avatarUrl || undefined} />
-                  <AvatarFallback style={{ backgroundColor: `${primaryColor}15`, color: primaryColor }}>
-                    <Bot className="h-4 w-4" />
-                  </AvatarFallback>
-                </Avatar>
-                <div className="bg-muted rounded-2xl px-4 py-3">
-                  <div className="flex gap-1">
-                    <span className="w-2 h-2 rounded-full bg-muted-foreground/40 animate-bounce" style={{ animationDelay: "0ms" }} />
-                    <span className="w-2 h-2 rounded-full bg-muted-foreground/40 animate-bounce" style={{ animationDelay: "150ms" }} />
-                    <span className="w-2 h-2 rounded-full bg-muted-foreground/40 animate-bounce" style={{ animationDelay: "300ms" }} />
-                  </div>
-                </div>
-              </div>
+            {/* Quick Buttons */}
+            {showQuickButtons && persona.quickButtons.length > 0 && (
+              <QuickButtonGroup
+                buttons={persona.quickButtons}
+                displayMode={buttonDisplayMode}
+                primaryColor={primaryColor}
+                onButtonClick={handleQuickButton}
+              />
             )}
           </div>
-        </ScrollArea>
+        )}
+
+        {/* Chat Messages */}
+        {hasMessages && (
+          <ScrollArea className="flex-1 px-4" ref={scrollRef}>
+            <div className="container max-w-2xl py-4 space-y-4">
+              {messages.map((message) => (
+                <div key={message.id} className={`flex gap-2.5 ${message.role === "user" ? "flex-row-reverse" : ""}`}>
+                  <Avatar className="h-6 w-6 shrink-0 mt-0.5">
+                    {message.role === "assistant" ? (
+                      <>
+                        <AvatarImage src={persona.avatarUrl || undefined} />
+                        <AvatarFallback style={{ backgroundColor: `${primaryColor}15`, color: primaryColor }}>
+                          <Bot className="h-3 w-3" />
+                        </AvatarFallback>
+                      </>
+                    ) : (
+                      <AvatarFallback className="bg-muted">
+                        <User className="h-3 w-3" />
+                      </AvatarFallback>
+                    )}
+                  </Avatar>
+                  <div className={`flex-1 ${message.role === "user" ? "flex justify-end" : ""}`}>
+                    <div
+                      className={`inline-block rounded-2xl px-3 py-2 max-w-[85%] ${
+                        message.role === "user"
+                          ? "bg-primary text-primary-foreground"
+                          : "bg-muted"
+                      }`}
+                    >
+                      {message.role === "assistant" ? (
+                        <div className="text-sm prose prose-sm max-w-none dark:prose-invert">
+                          <Streamdown>{message.content}</Streamdown>
+                        </div>
+                      ) : (
+                        <p className="text-sm">{message.content}</p>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              ))}
+
+              {/* Typing Indicator */}
+              {isTyping && (
+                <div className="flex gap-2.5">
+                  <Avatar className="h-6 w-6 shrink-0">
+                    <AvatarImage src={persona.avatarUrl || undefined} />
+                    <AvatarFallback style={{ backgroundColor: `${primaryColor}15`, color: primaryColor }}>
+                      <Bot className="h-3 w-3" />
+                    </AvatarFallback>
+                  </Avatar>
+                  <div className="bg-muted rounded-2xl px-3 py-2">
+                    <div className="flex gap-1">
+                      <span className="w-1.5 h-1.5 rounded-full bg-muted-foreground/40 animate-bounce" style={{ animationDelay: "0ms" }} />
+                      <span className="w-1.5 h-1.5 rounded-full bg-muted-foreground/40 animate-bounce" style={{ animationDelay: "150ms" }} />
+                      <span className="w-1.5 h-1.5 rounded-full bg-muted-foreground/40 animate-bounce" style={{ animationDelay: "300ms" }} />
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
+          </ScrollArea>
+        )}
       </div>
 
-      {/* Input Area */}
+      {/* Input Area - Centered and Compact */}
       <div className="sticky bottom-0 border-t bg-background">
-        <div className="container max-w-3xl py-4 space-y-3">
-          {/* Quick Buttons */}
-          {showQuickButtons && persona.quickButtons.length > 0 && messages.length === 0 && (
-            <div className="flex flex-wrap gap-2">
-              {persona.quickButtons.map((button) => {
-                const IconComponent = iconMap[button.icon || "message"] || MessageSquare;
-                return (
-                  <Button
-                    key={button.id}
-                    variant="outline"
-                    size="sm"
-                    className="rounded-full"
-                    onClick={() => handleQuickButton(button)}
-                  >
-                    <IconComponent className="h-3.5 w-3.5 mr-1.5" />
-                    {button.label}
-                    {button.actionType === "link" && <ExternalLink className="h-3 w-3 ml-1" />}
-                  </Button>
-                );
-              })}
+        <div className="container max-w-2xl py-3">
+          {/* Quick Buttons - Show when chatting */}
+          {hasMessages && showQuickButtons && persona.quickButtons.length > 0 && (
+            <div className="mb-2">
+              <QuickButtonGroup
+                buttons={persona.quickButtons}
+                displayMode={buttonDisplayMode}
+                primaryColor={primaryColor}
+                onButtonClick={handleQuickButton}
+              />
             </div>
           )}
 
-          <div className="flex gap-2">
+          <div className="flex gap-2 items-center">
             <Input
               ref={inputRef}
               placeholder={chatPlaceholder}
@@ -447,13 +567,14 @@ function MinimalLayout({
               onChange={(e) => setInput(e.target.value)}
               onKeyDown={handleKeyDown}
               disabled={isTyping}
-              className="rounded-full"
+              className="rounded-full h-9 text-sm"
             />
             <Button
               onClick={() => handleSend()}
               disabled={!input.trim() || isTyping}
               size="icon"
-              className="rounded-full shrink-0"
+              className="rounded-full h-9 w-9 shrink-0"
+              style={{ backgroundColor: primaryColor }}
             >
               {isTyping ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
             </Button>
@@ -471,6 +592,7 @@ function ProfessionalLayout({
   chatPlaceholder,
   suggestedQuestions,
   showQuickButtons,
+  buttonDisplayMode,
   messages,
   input,
   setInput,
@@ -488,30 +610,30 @@ function ProfessionalLayout({
     <div className="min-h-screen flex flex-col" style={{ backgroundColor: `${primaryColor}05` }}>
       {/* Hero Section - Only show when no messages */}
       {!hasStartedChat && (
-        <div className="relative py-12 px-4" style={{ backgroundColor: primaryColor }}>
+        <div className="relative py-10 px-4" style={{ backgroundColor: primaryColor }}>
           <div className="absolute inset-0 bg-gradient-to-b from-black/10 to-black/30" />
-          <div className="relative container max-w-2xl text-center text-white">
+          <div className="relative container max-w-xl text-center text-white">
             {/* Profile Photo */}
-            <div className="mb-6">
+            <div className="mb-4">
               {persona.profilePhotoUrl ? (
                 <img
                   src={persona.profilePhotoUrl}
                   alt={persona.agentName}
-                  className="w-28 h-28 rounded-full mx-auto object-cover border-4 border-white/30 shadow-xl"
+                  className="w-20 h-20 rounded-full mx-auto object-cover border-3 border-white/30 shadow-lg"
                 />
               ) : (
-                <Avatar className="w-28 h-28 mx-auto border-4 border-white/30 shadow-xl">
+                <Avatar className="w-20 h-20 mx-auto border-3 border-white/30 shadow-lg">
                   <AvatarImage src={persona.avatarUrl || undefined} />
-                  <AvatarFallback className="text-3xl bg-white/20">
-                    <Bot className="h-12 w-12" />
+                  <AvatarFallback className="text-2xl bg-white/20">
+                    <Bot className="h-10 w-10" />
                   </AvatarFallback>
                 </Avatar>
               )}
             </div>
             
-            <h1 className="text-2xl font-bold mb-2">{persona.agentName}</h1>
+            <h1 className="text-xl font-bold mb-1">{persona.agentName}</h1>
             {persona.tagline && (
-              <p className="text-white/90 mb-4">{persona.tagline}</p>
+              <p className="text-white/90 text-sm mb-3">{persona.tagline}</p>
             )}
             <p className="text-white/80 text-sm max-w-md mx-auto">{persona.welcomeMessage}</p>
           </div>
@@ -521,26 +643,26 @@ function ProfessionalLayout({
       {/* Compact Header - Only show when chatting */}
       {hasStartedChat && (
         <header className="sticky top-0 z-10 border-b bg-background/95 backdrop-blur">
-          <div className="container max-w-3xl py-3">
-            <div className="flex items-center gap-3">
+          <div className="container max-w-2xl py-2">
+            <div className="flex items-center gap-2">
               {persona.profilePhotoUrl ? (
                 <img
                   src={persona.profilePhotoUrl}
                   alt={persona.agentName}
-                  className="w-10 h-10 rounded-full object-cover border-2"
+                  className="w-8 h-8 rounded-full object-cover border-2"
                   style={{ borderColor: primaryColor }}
                 />
               ) : (
-                <Avatar className="h-10 w-10 border-2" style={{ borderColor: primaryColor }}>
+                <Avatar className="h-8 w-8 border-2" style={{ borderColor: primaryColor }}>
                   <AvatarImage src={persona.avatarUrl || undefined} />
                   <AvatarFallback style={{ backgroundColor: `${primaryColor}15`, color: primaryColor }}>
-                    <Bot className="h-5 w-5" />
+                    <Bot className="h-4 w-4" />
                   </AvatarFallback>
                 </Avatar>
               )}
-              <div>
-                <h1 className="font-semibold">{persona.agentName}</h1>
-                {persona.tagline && <p className="text-xs text-muted-foreground">{persona.tagline}</p>}
+              <div className="flex-1 min-w-0">
+                <h1 className="font-semibold text-sm truncate">{persona.agentName}</h1>
+                {persona.tagline && <p className="text-xs text-muted-foreground truncate">{persona.tagline}</p>}
               </div>
             </div>
           </div>
@@ -548,130 +670,130 @@ function ProfessionalLayout({
       )}
 
       {/* Chat Area */}
-      <div className="flex-1 container max-w-3xl bg-background rounded-t-3xl -mt-4 relative z-10 shadow-lg">
-        <ScrollArea 
-          className={hasStartedChat ? "h-[calc(100vh-180px)] py-4" : "h-auto py-6"} 
-          ref={scrollRef}
-        >
-          <div className="space-y-4 px-4">
-            {/* Suggested Questions - Only when no messages */}
-            {!hasStartedChat && suggestedQuestions.length > 0 && (
-              <div className="py-4">
-                <p className="text-sm text-muted-foreground mb-3 text-center">常見問題</p>
-                <div className="grid gap-2">
-                  {suggestedQuestions.map((question, index) => (
-                    <button
-                      key={index}
-                      onClick={() => handleSuggestedQuestion(question)}
-                      className="text-left p-4 rounded-xl border hover:border-primary/50 hover:bg-primary/5 transition-all text-sm"
-                    >
-                      <Sparkles className="h-4 w-4 inline mr-2 text-primary" />
-                      {question}
-                    </button>
-                  ))}
-                </div>
+      <div className="flex-1 flex flex-col">
+        {/* Welcome Content */}
+        {!hasStartedChat && (
+          <div className="container max-w-xl px-4 py-6 space-y-4">
+            {/* Suggested Questions */}
+            {suggestedQuestions.length > 0 && (
+              <div className="space-y-1.5">
+                <p className="text-xs text-muted-foreground text-center mb-2">常見問題</p>
+                {suggestedQuestions.map((question, index) => (
+                  <button
+                    key={index}
+                    onClick={() => handleSuggestedQuestion(question)}
+                    className="w-full text-left px-3 py-2 rounded-lg bg-background border hover:bg-muted/50 transition-colors text-sm shadow-sm"
+                  >
+                    {question}
+                  </button>
+                ))}
               </div>
             )}
 
-            {/* Messages */}
-            {messages.map((message) => (
-              <div key={message.id} className={`flex gap-3 ${message.role === "user" ? "flex-row-reverse" : ""}`}>
-                <Avatar className="h-8 w-8 shrink-0">
-                  {message.role === "assistant" ? (
-                    persona.profilePhotoUrl ? (
-                      <AvatarImage src={persona.profilePhotoUrl} className="object-cover" />
+            {/* Quick Buttons */}
+            {showQuickButtons && persona.quickButtons.length > 0 && (
+              <div className="pt-2">
+                <QuickButtonGroup
+                  buttons={persona.quickButtons}
+                  displayMode={buttonDisplayMode}
+                  primaryColor={primaryColor}
+                  onButtonClick={handleQuickButton}
+                />
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Messages */}
+        {hasStartedChat && (
+          <ScrollArea className="flex-1 px-4" ref={scrollRef}>
+            <div className="container max-w-2xl py-4 space-y-4">
+              {messages.map((message) => (
+                <div key={message.id} className={`flex gap-2.5 ${message.role === "user" ? "flex-row-reverse" : ""}`}>
+                  <Avatar className="h-6 w-6 shrink-0 mt-0.5">
+                    {message.role === "assistant" ? (
+                      persona.profilePhotoUrl ? (
+                        <AvatarImage src={persona.profilePhotoUrl} />
+                      ) : (
+                        <>
+                          <AvatarImage src={persona.avatarUrl || undefined} />
+                          <AvatarFallback style={{ backgroundColor: `${primaryColor}15`, color: primaryColor }}>
+                            <Bot className="h-3 w-3" />
+                          </AvatarFallback>
+                        </>
+                      )
+                    ) : (
+                      <AvatarFallback className="bg-muted">
+                        <User className="h-3 w-3" />
+                      </AvatarFallback>
+                    )}
+                  </Avatar>
+                  <div className={`flex-1 ${message.role === "user" ? "flex justify-end" : ""}`}>
+                    <div
+                      className={`inline-block rounded-2xl px-3 py-2 max-w-[85%] ${
+                        message.role === "user"
+                          ? "text-white"
+                          : "bg-background border shadow-sm"
+                      }`}
+                      style={message.role === "user" ? { backgroundColor: primaryColor } : {}}
+                    >
+                      {message.role === "assistant" ? (
+                        <div className="text-sm prose prose-sm max-w-none dark:prose-invert">
+                          <Streamdown>{message.content}</Streamdown>
+                        </div>
+                      ) : (
+                        <p className="text-sm">{message.content}</p>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              ))}
+
+              {/* Typing Indicator */}
+              {isTyping && (
+                <div className="flex gap-2.5">
+                  <Avatar className="h-6 w-6 shrink-0">
+                    {persona.profilePhotoUrl ? (
+                      <AvatarImage src={persona.profilePhotoUrl} />
                     ) : (
                       <>
                         <AvatarImage src={persona.avatarUrl || undefined} />
                         <AvatarFallback style={{ backgroundColor: `${primaryColor}15`, color: primaryColor }}>
-                          <Bot className="h-4 w-4" />
+                          <Bot className="h-3 w-3" />
                         </AvatarFallback>
                       </>
-                    )
-                  ) : (
-                    <AvatarFallback className="bg-muted">
-                      <User className="h-4 w-4" />
-                    </AvatarFallback>
-                  )}
-                </Avatar>
-                <div className={`flex-1 ${message.role === "user" ? "flex justify-end" : ""}`}>
-                  <div
-                    className={`inline-block rounded-2xl px-4 py-3 max-w-[85%] ${
-                      message.role === "user"
-                        ? "rounded-tr-sm text-white"
-                        : "rounded-tl-sm bg-muted"
-                    }`}
-                    style={{
-                      backgroundColor: message.role === "user" ? primaryColor : undefined,
-                    }}
-                  >
-                    {message.role === "assistant" ? (
-                      <div className="text-sm prose prose-sm max-w-none dark:prose-invert">
-                        <Streamdown>{message.content}</Streamdown>
-                      </div>
-                    ) : (
-                      <p className="text-sm">{message.content}</p>
                     )}
+                  </Avatar>
+                  <div className="bg-background border shadow-sm rounded-2xl px-3 py-2">
+                    <div className="flex gap-1">
+                      <span className="w-1.5 h-1.5 rounded-full bg-muted-foreground/40 animate-bounce" style={{ animationDelay: "0ms" }} />
+                      <span className="w-1.5 h-1.5 rounded-full bg-muted-foreground/40 animate-bounce" style={{ animationDelay: "150ms" }} />
+                      <span className="w-1.5 h-1.5 rounded-full bg-muted-foreground/40 animate-bounce" style={{ animationDelay: "300ms" }} />
+                    </div>
                   </div>
                 </div>
-              </div>
-            ))}
-
-            {/* Typing Indicator */}
-            {isTyping && (
-              <div className="flex gap-3">
-                <Avatar className="h-8 w-8 shrink-0">
-                  {persona.profilePhotoUrl ? (
-                    <AvatarImage src={persona.profilePhotoUrl} className="object-cover" />
-                  ) : (
-                    <>
-                      <AvatarImage src={persona.avatarUrl || undefined} />
-                      <AvatarFallback style={{ backgroundColor: `${primaryColor}15`, color: primaryColor }}>
-                        <Bot className="h-4 w-4" />
-                      </AvatarFallback>
-                    </>
-                  )}
-                </Avatar>
-                <div className="bg-muted rounded-2xl rounded-tl-sm px-4 py-3">
-                  <div className="flex gap-1">
-                    <span className="w-2 h-2 rounded-full bg-muted-foreground/40 animate-bounce" style={{ animationDelay: "0ms" }} />
-                    <span className="w-2 h-2 rounded-full bg-muted-foreground/40 animate-bounce" style={{ animationDelay: "150ms" }} />
-                    <span className="w-2 h-2 rounded-full bg-muted-foreground/40 animate-bounce" style={{ animationDelay: "300ms" }} />
-                  </div>
-                </div>
-              </div>
-            )}
-          </div>
-        </ScrollArea>
+              )}
+            </div>
+          </ScrollArea>
+        )}
       </div>
 
       {/* Input Area */}
-      <div className="sticky bottom-0 border-t bg-background shadow-lg">
-        <div className="container max-w-3xl py-4 space-y-3">
-          {/* Quick Buttons */}
-          {showQuickButtons && persona.quickButtons.length > 0 && !hasStartedChat && (
-            <div className="flex flex-wrap gap-2 justify-center">
-              {persona.quickButtons.map((button) => {
-                const IconComponent = iconMap[button.icon || "message"] || MessageSquare;
-                return (
-                  <Button
-                    key={button.id}
-                    variant="outline"
-                    size="sm"
-                    className="rounded-full"
-                    onClick={() => handleQuickButton(button)}
-                    style={{ borderColor: `${primaryColor}40`, color: primaryColor }}
-                  >
-                    <IconComponent className="h-3.5 w-3.5 mr-1.5" />
-                    {button.label}
-                    {button.actionType === "link" && <ExternalLink className="h-3 w-3 ml-1" />}
-                  </Button>
-                );
-              })}
+      <div className="sticky bottom-0 border-t bg-background">
+        <div className="container max-w-2xl py-3">
+          {/* Quick Buttons when chatting */}
+          {hasStartedChat && showQuickButtons && persona.quickButtons.length > 0 && (
+            <div className="mb-2">
+              <QuickButtonGroup
+                buttons={persona.quickButtons}
+                displayMode={buttonDisplayMode}
+                primaryColor={primaryColor}
+                onButtonClick={handleQuickButton}
+              />
             </div>
           )}
 
-          <div className="flex gap-2">
+          <div className="flex gap-2 items-center">
             <Input
               ref={inputRef}
               placeholder={chatPlaceholder}
@@ -679,13 +801,13 @@ function ProfessionalLayout({
               onChange={(e) => setInput(e.target.value)}
               onKeyDown={handleKeyDown}
               disabled={isTyping}
-              className="rounded-full"
+              className="rounded-full h-9 text-sm"
             />
             <Button
               onClick={() => handleSend()}
               disabled={!input.trim() || isTyping}
               size="icon"
-              className="rounded-full shrink-0"
+              className="rounded-full h-9 w-9 shrink-0"
               style={{ backgroundColor: primaryColor }}
             >
               {isTyping ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
@@ -704,6 +826,7 @@ function CustomLayout({
   chatPlaceholder,
   suggestedQuestions,
   showQuickButtons,
+  buttonDisplayMode,
   messages,
   input,
   setInput,
@@ -716,70 +839,82 @@ function CustomLayout({
   handleSuggestedQuestion,
 }: LayoutProps) {
   const hasStartedChat = messages.length > 0;
-  const hasBackground = !!persona.backgroundImageUrl;
+  const backgroundImage = persona.backgroundImageUrl;
 
   return (
-    <div className="min-h-screen flex flex-col relative">
-      {/* Background Image */}
-      {hasBackground && (
-        <div 
-          className="fixed inset-0 bg-cover bg-center bg-no-repeat"
-          style={{ backgroundImage: `url(${persona.backgroundImageUrl})` }}
-        >
-          <div className="absolute inset-0 bg-black/40 backdrop-blur-[2px]" />
-        </div>
-      )}
+    <div 
+      className="min-h-screen flex flex-col bg-cover bg-center bg-fixed"
+      style={{ 
+        backgroundImage: backgroundImage ? `url(${backgroundImage})` : undefined,
+        backgroundColor: backgroundImage ? undefined : `${primaryColor}10`
+      }}
+    >
+      {/* Overlay */}
+      {backgroundImage && <div className="fixed inset-0 bg-black/40 -z-10" />}
 
-      {/* Content */}
-      <div className="relative z-10 min-h-screen flex flex-col">
-        {/* Hero Section - Only show when no messages */}
+      {/* Header */}
+      <header className="sticky top-0 z-10 bg-background/80 backdrop-blur border-b">
+        <div className="container max-w-2xl py-2">
+          <div className="flex items-center gap-2">
+            {persona.profilePhotoUrl ? (
+              <img
+                src={persona.profilePhotoUrl}
+                alt={persona.agentName}
+                className="w-8 h-8 rounded-full object-cover border-2 border-white/50"
+              />
+            ) : (
+              <Avatar className="h-8 w-8">
+                <AvatarImage src={persona.avatarUrl || undefined} />
+                <AvatarFallback style={{ backgroundColor: `${primaryColor}15`, color: primaryColor }}>
+                  <Bot className="h-4 w-4" />
+                </AvatarFallback>
+              </Avatar>
+            )}
+            <div className="flex-1 min-w-0">
+              <h1 className="font-semibold text-sm truncate">{persona.agentName}</h1>
+              {persona.tagline && <p className="text-xs text-muted-foreground truncate">{persona.tagline}</p>}
+            </div>
+          </div>
+        </div>
+      </header>
+
+      {/* Main Content */}
+      <div className="flex-1 flex flex-col">
+        {/* Welcome State */}
         {!hasStartedChat && (
-          <div className="flex-1 flex items-center justify-center p-4">
-            <div className="text-center max-w-lg">
-              {/* Profile */}
-              <div className="mb-6">
+          <div className="flex-1 flex flex-col items-center justify-center px-4 py-8">
+            <div className="bg-background/90 backdrop-blur rounded-2xl p-6 max-w-md w-full shadow-lg">
+              <div className="text-center mb-4">
                 {persona.profilePhotoUrl ? (
                   <img
                     src={persona.profilePhotoUrl}
                     alt={persona.agentName}
-                    className="w-32 h-32 rounded-full mx-auto object-cover border-4 border-white/50 shadow-2xl"
+                    className="w-16 h-16 rounded-full mx-auto object-cover border-3 shadow-md mb-3"
+                    style={{ borderColor: primaryColor }}
                   />
                 ) : (
-                  <Avatar className="w-32 h-32 mx-auto border-4 border-white/50 shadow-2xl">
+                  <Avatar className="w-16 h-16 mx-auto mb-3">
                     <AvatarImage src={persona.avatarUrl || undefined} />
-                    <AvatarFallback className="text-4xl" style={{ backgroundColor: primaryColor, color: "white" }}>
-                      <Bot className="h-14 w-14" />
+                    <AvatarFallback style={{ backgroundColor: `${primaryColor}15`, color: primaryColor }}>
+                      <Bot className="h-8 w-8" />
                     </AvatarFallback>
                   </Avatar>
                 )}
+                <h2 className="text-lg font-semibold">{persona.agentName}</h2>
+                {persona.tagline && <p className="text-sm text-muted-foreground">{persona.tagline}</p>}
               </div>
               
-              <h1 className={`text-3xl font-bold mb-2 ${hasBackground ? "text-white" : ""}`}>
-                {persona.agentName}
-              </h1>
-              {persona.tagline && (
-                <p className={`text-lg mb-4 ${hasBackground ? "text-white/90" : "text-muted-foreground"}`}>
-                  {persona.tagline}
-                </p>
-              )}
-              <p className={`mb-8 ${hasBackground ? "text-white/80" : "text-muted-foreground"}`}>
-                {persona.welcomeMessage}
-              </p>
+              <p className="text-sm text-center text-muted-foreground mb-4">{persona.welcomeMessage}</p>
 
               {/* Suggested Questions */}
               {suggestedQuestions.length > 0 && (
-                <div className="space-y-2">
+                <div className="space-y-1.5 mb-4">
                   {suggestedQuestions.map((question, index) => (
                     <button
                       key={index}
                       onClick={() => handleSuggestedQuestion(question)}
-                      className={`w-full text-left p-4 rounded-xl transition-all text-sm ${
-                        hasBackground 
-                          ? "bg-white/20 backdrop-blur-md text-white hover:bg-white/30 border border-white/20" 
-                          : "bg-background border hover:bg-muted"
-                      }`}
+                      className="w-full text-left px-3 py-2 rounded-lg border hover:bg-muted/50 transition-colors text-sm"
                     >
-                      <Sparkles className="h-4 w-4 inline mr-2" style={{ color: hasBackground ? "white" : primaryColor }} />
                       {question}
                     </button>
                   ))}
@@ -788,161 +923,125 @@ function CustomLayout({
 
               {/* Quick Buttons */}
               {showQuickButtons && persona.quickButtons.length > 0 && (
-                <div className="flex flex-wrap gap-2 justify-center mt-6">
-                  {persona.quickButtons.map((button) => {
-                    const IconComponent = iconMap[button.icon || "message"] || MessageSquare;
-                    return (
-                      <Button
-                        key={button.id}
-                        variant={hasBackground ? "secondary" : "outline"}
-                        size="sm"
-                        className={`rounded-full ${hasBackground ? "bg-white/20 backdrop-blur-md text-white hover:bg-white/30 border-white/20" : ""}`}
-                        onClick={() => handleQuickButton(button)}
-                      >
-                        <IconComponent className="h-3.5 w-3.5 mr-1.5" />
-                        {button.label}
-                        {button.actionType === "link" && <ExternalLink className="h-3 w-3 ml-1" />}
-                      </Button>
-                    );
-                  })}
-                </div>
+                <QuickButtonGroup
+                  buttons={persona.quickButtons}
+                  displayMode={buttonDisplayMode}
+                  primaryColor={primaryColor}
+                  onButtonClick={handleQuickButton}
+                />
               )}
             </div>
           </div>
         )}
 
-        {/* Chat Mode Header */}
+        {/* Messages */}
         {hasStartedChat && (
-          <header className={`sticky top-0 z-10 ${hasBackground ? "bg-black/30 backdrop-blur-md" : "bg-background/95 backdrop-blur border-b"}`}>
-            <div className="container max-w-3xl py-3">
-              <div className="flex items-center gap-3">
-                {persona.profilePhotoUrl ? (
-                  <img
-                    src={persona.profilePhotoUrl}
-                    alt={persona.agentName}
-                    className="w-10 h-10 rounded-full object-cover border-2 border-white/50"
-                  />
-                ) : (
-                  <Avatar className="h-10 w-10">
-                    <AvatarImage src={persona.avatarUrl || undefined} />
-                    <AvatarFallback style={{ backgroundColor: primaryColor, color: "white" }}>
-                      <Bot className="h-5 w-5" />
-                    </AvatarFallback>
-                  </Avatar>
-                )}
-                <div>
-                  <h1 className={`font-semibold ${hasBackground ? "text-white" : ""}`}>{persona.agentName}</h1>
-                  {persona.tagline && (
-                    <p className={`text-xs ${hasBackground ? "text-white/70" : "text-muted-foreground"}`}>
-                      {persona.tagline}
-                    </p>
-                  )}
-                </div>
-              </div>
-            </div>
-          </header>
-        )}
-
-        {/* Chat Messages */}
-        {hasStartedChat && (
-          <div className="flex-1 container max-w-3xl">
-            <ScrollArea className="h-[calc(100vh-160px)] py-4" ref={scrollRef}>
-              <div className="space-y-4">
-                {messages.map((message) => (
-                  <div key={message.id} className={`flex gap-3 ${message.role === "user" ? "flex-row-reverse" : ""}`}>
-                    <Avatar className="h-8 w-8 shrink-0">
-                      {message.role === "assistant" ? (
-                        persona.profilePhotoUrl ? (
-                          <AvatarImage src={persona.profilePhotoUrl} className="object-cover" />
-                        ) : (
-                          <>
-                            <AvatarImage src={persona.avatarUrl || undefined} />
-                            <AvatarFallback style={{ backgroundColor: primaryColor, color: "white" }}>
-                              <Bot className="h-4 w-4" />
-                            </AvatarFallback>
-                          </>
-                        )
-                      ) : (
-                        <AvatarFallback className="bg-white/20 text-white">
-                          <User className="h-4 w-4" />
-                        </AvatarFallback>
-                      )}
-                    </Avatar>
-                    <div className={`flex-1 ${message.role === "user" ? "flex justify-end" : ""}`}>
-                      <div
-                        className={`inline-block rounded-2xl px-4 py-3 max-w-[85%] ${
-                          message.role === "user"
-                            ? "rounded-tr-sm text-white"
-                            : `rounded-tl-sm ${hasBackground ? "bg-white/90 backdrop-blur-md" : "bg-muted"}`
-                        }`}
-                        style={{
-                          backgroundColor: message.role === "user" ? primaryColor : undefined,
-                        }}
-                      >
-                        {message.role === "assistant" ? (
-                          <div className="text-sm prose prose-sm max-w-none">
-                            <Streamdown>{message.content}</Streamdown>
-                          </div>
-                        ) : (
-                          <p className="text-sm">{message.content}</p>
-                        )}
-                      </div>
-                    </div>
-                  </div>
-                ))}
-
-                {/* Typing Indicator */}
-                {isTyping && (
-                  <div className="flex gap-3">
-                    <Avatar className="h-8 w-8 shrink-0">
-                      {persona.profilePhotoUrl ? (
-                        <AvatarImage src={persona.profilePhotoUrl} className="object-cover" />
+          <ScrollArea className="flex-1 px-4" ref={scrollRef}>
+            <div className="container max-w-2xl py-4 space-y-4">
+              {messages.map((message) => (
+                <div key={message.id} className={`flex gap-2.5 ${message.role === "user" ? "flex-row-reverse" : ""}`}>
+                  <Avatar className="h-6 w-6 shrink-0 mt-0.5">
+                    {message.role === "assistant" ? (
+                      persona.profilePhotoUrl ? (
+                        <AvatarImage src={persona.profilePhotoUrl} />
                       ) : (
                         <>
                           <AvatarImage src={persona.avatarUrl || undefined} />
-                          <AvatarFallback style={{ backgroundColor: primaryColor, color: "white" }}>
-                            <Bot className="h-4 w-4" />
+                          <AvatarFallback style={{ backgroundColor: `${primaryColor}15`, color: primaryColor }}>
+                            <Bot className="h-3 w-3" />
                           </AvatarFallback>
                         </>
+                      )
+                    ) : (
+                      <AvatarFallback className="bg-muted">
+                        <User className="h-3 w-3" />
+                      </AvatarFallback>
+                    )}
+                  </Avatar>
+                  <div className={`flex-1 ${message.role === "user" ? "flex justify-end" : ""}`}>
+                    <div
+                      className={`inline-block rounded-2xl px-3 py-2 max-w-[85%] shadow-sm ${
+                        message.role === "user"
+                          ? "text-white"
+                          : "bg-background/95 backdrop-blur"
+                      }`}
+                      style={message.role === "user" ? { backgroundColor: primaryColor } : {}}
+                    >
+                      {message.role === "assistant" ? (
+                        <div className="text-sm prose prose-sm max-w-none dark:prose-invert">
+                          <Streamdown>{message.content}</Streamdown>
+                        </div>
+                      ) : (
+                        <p className="text-sm">{message.content}</p>
                       )}
-                    </Avatar>
-                    <div className={`rounded-2xl rounded-tl-sm px-4 py-3 ${hasBackground ? "bg-white/90 backdrop-blur-md" : "bg-muted"}`}>
-                      <div className="flex gap-1">
-                        <span className="w-2 h-2 rounded-full bg-muted-foreground/40 animate-bounce" style={{ animationDelay: "0ms" }} />
-                        <span className="w-2 h-2 rounded-full bg-muted-foreground/40 animate-bounce" style={{ animationDelay: "150ms" }} />
-                        <span className="w-2 h-2 rounded-full bg-muted-foreground/40 animate-bounce" style={{ animationDelay: "300ms" }} />
-                      </div>
                     </div>
                   </div>
-                )}
-              </div>
-            </ScrollArea>
-          </div>
-        )}
+                </div>
+              ))}
 
-        {/* Input Area */}
-        <div className={`sticky bottom-0 ${hasBackground ? "bg-black/30 backdrop-blur-md" : "bg-background border-t"}`}>
-          <div className="container max-w-3xl py-4">
-            <div className="flex gap-2">
-              <Input
-                ref={inputRef}
-                placeholder={chatPlaceholder}
-                value={input}
-                onChange={(e) => setInput(e.target.value)}
-                onKeyDown={handleKeyDown}
-                disabled={isTyping}
-                className={`rounded-full ${hasBackground ? "bg-white/90 backdrop-blur-md border-white/20" : ""}`}
-              />
-              <Button
-                onClick={() => handleSend()}
-                disabled={!input.trim() || isTyping}
-                size="icon"
-                className="rounded-full shrink-0"
-                style={{ backgroundColor: primaryColor }}
-              >
-                {isTyping ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
-              </Button>
+              {/* Typing Indicator */}
+              {isTyping && (
+                <div className="flex gap-2.5">
+                  <Avatar className="h-6 w-6 shrink-0">
+                    {persona.profilePhotoUrl ? (
+                      <AvatarImage src={persona.profilePhotoUrl} />
+                    ) : (
+                      <>
+                        <AvatarImage src={persona.avatarUrl || undefined} />
+                        <AvatarFallback style={{ backgroundColor: `${primaryColor}15`, color: primaryColor }}>
+                          <Bot className="h-3 w-3" />
+                        </AvatarFallback>
+                      </>
+                    )}
+                  </Avatar>
+                  <div className="bg-background/95 backdrop-blur rounded-2xl px-3 py-2 shadow-sm">
+                    <div className="flex gap-1">
+                      <span className="w-1.5 h-1.5 rounded-full bg-muted-foreground/40 animate-bounce" style={{ animationDelay: "0ms" }} />
+                      <span className="w-1.5 h-1.5 rounded-full bg-muted-foreground/40 animate-bounce" style={{ animationDelay: "150ms" }} />
+                      <span className="w-1.5 h-1.5 rounded-full bg-muted-foreground/40 animate-bounce" style={{ animationDelay: "300ms" }} />
+                    </div>
+                  </div>
+                </div>
+              )}
             </div>
+          </ScrollArea>
+        )}
+      </div>
+
+      {/* Input Area */}
+      <div className="sticky bottom-0 bg-background/80 backdrop-blur border-t">
+        <div className="container max-w-2xl py-3">
+          {/* Quick Buttons when chatting */}
+          {hasStartedChat && showQuickButtons && persona.quickButtons.length > 0 && (
+            <div className="mb-2">
+              <QuickButtonGroup
+                buttons={persona.quickButtons}
+                displayMode={buttonDisplayMode}
+                primaryColor={primaryColor}
+                onButtonClick={handleQuickButton}
+              />
+            </div>
+          )}
+
+          <div className="flex gap-2 items-center">
+            <Input
+              ref={inputRef}
+              placeholder={chatPlaceholder}
+              value={input}
+              onChange={(e) => setInput(e.target.value)}
+              onKeyDown={handleKeyDown}
+              disabled={isTyping}
+              className="rounded-full h-9 text-sm bg-background"
+            />
+            <Button
+              onClick={() => handleSend()}
+              disabled={!input.trim() || isTyping}
+              size="icon"
+              className="rounded-full h-9 w-9 shrink-0"
+              style={{ backgroundColor: primaryColor }}
+            >
+              {isTyping ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
+            </Button>
           </div>
         </div>
       </div>

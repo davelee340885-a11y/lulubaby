@@ -38,6 +38,7 @@ export const aiPersonas = mysqlTable("ai_personas", {
   tagline: varchar("tagline", { length: 255 }),
   suggestedQuestions: text("suggestedQuestions"), // JSON array of suggested questions
   showQuickButtons: boolean("showQuickButtons").default(true).notNull(),
+  buttonDisplayMode: varchar("buttonDisplayMode", { length: 20 }).default("full").notNull(), // 'full' | 'icon' | 'compact'
   chatPlaceholder: varchar("chatPlaceholder", { length: 255 }).default("輸入您的問題..."),
   
   createdAt: timestamp("createdAt").defaultNow().notNull(),
