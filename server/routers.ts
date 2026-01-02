@@ -489,6 +489,186 @@ ${knowledgeContent.substring(0, 10000)}
       .query(async ({ input }) => {
         return getConversationsBySession(input.personaId, input.sessionId);
       }),
+
+    // End conversation and generate summary
+    endConversation: publicProcedure
+      .input(z.object({
+        personaId: z.number(),
+        sessionId: z.string(),
+        fingerprint: z.string().optional(),
+      }))
+      .mutation(async ({ input }) => {
+        const persona = await getPersonaById(input.personaId);
+        if (!persona) {
+          throw new Error("Persona not found");
+        }
+
+        // Get customer
+        const customer = await getOrCreateCustomer(input.personaId, input.sessionId, input.fingerprint);
+        if (!customer) {
+          return { success: false, message: "Customer not found" };
+        }
+
+        // Get conversation history for this session
+        const history = await getConversationsBySession(input.personaId, input.sessionId);
+        if (history.length < 2) {
+          return { success: false, message: "Not enough messages to summarize" };
+        }
+
+        // Build conversation text for LLM
+        const conversationText = history
+          .map(m => `${m.role === 'user' ? '客戶' : 'AI'}: ${m.content}`)
+          .join('\n');
+
+        // Use LLM to generate summary and extract information
+        const response = await invokeLLM({
+          messages: [
+            {
+              role: "system",
+              content: `你是一個專業的對話分析助手。請分析以下客戶對話，提取重要資訊。
+
+請返回 JSON 格式，包含以下欄位：
+- summary: 對話摘要（100字內，描述客戶的主要詢問和結果）
+- keyTopics: 關鍵話題陣列（最多5個）
+- questionsAsked: 客戶提問的主要問題陣列（最多3個）
+- outcome: 對話結果（resolved/converted/pending/escalated/abandoned 之一）
+- customerInfo: 客戶資料對象，包含:
+  - name: 客戶姓名（如果提及）
+  - email: 電郵地址（如果提及）
+  - phone: 電話號碼（如果提及）
+  - company: 公司名稱（如果提及）
+- memories: 記憶陣列，每項包含:
+  - type: 類型 (preference/fact/need/concern/purchase/feedback)
+  - key: 簡短標題
+  - value: 具體內容
+  - confidence: 確信度 0-100
+- sentiment: 客戶情緒 (positive/neutral/negative)
+
+只提取明確提及的資訊，不要猜測。`,
+            },
+            {
+              role: "user",
+              content: conversationText,
+            },
+          ],
+          response_format: {
+            type: "json_schema",
+            json_schema: {
+              name: "conversation_analysis",
+              strict: true,
+              schema: {
+                type: "object",
+                properties: {
+                  summary: { type: "string", description: "Conversation summary" },
+                  keyTopics: {
+                    type: "array",
+                    items: { type: "string" },
+                    description: "Key topics discussed",
+                  },
+                  questionsAsked: {
+                    type: "array",
+                    items: { type: "string" },
+                    description: "Main questions asked by customer",
+                  },
+                  outcome: {
+                    type: "string",
+                    enum: ["resolved", "converted", "pending", "escalated", "abandoned"],
+                    description: "Conversation outcome",
+                  },
+                  customerInfo: {
+                    type: "object",
+                    properties: {
+                      name: { type: "string" },
+                      email: { type: "string" },
+                      phone: { type: "string" },
+                      company: { type: "string" },
+                    },
+                    required: ["name", "email", "phone", "company"],
+                    additionalProperties: false,
+                  },
+                  memories: {
+                    type: "array",
+                    items: {
+                      type: "object",
+                      properties: {
+                        type: { type: "string", enum: ["preference", "fact", "need", "concern", "purchase", "feedback"] },
+                        key: { type: "string" },
+                        value: { type: "string" },
+                        confidence: { type: "number" },
+                      },
+                      required: ["type", "key", "value", "confidence"],
+                      additionalProperties: false,
+                    },
+                  },
+                  sentiment: {
+                    type: "string",
+                    enum: ["positive", "neutral", "negative"],
+                    description: "Customer sentiment",
+                  },
+                },
+                required: ["summary", "keyTopics", "questionsAsked", "outcome", "customerInfo", "memories", "sentiment"],
+                additionalProperties: false,
+              },
+            },
+          },
+        });
+
+        const content = response.choices[0]?.message?.content;
+        if (!content || typeof content !== 'string') {
+          return { success: false, message: "Failed to generate summary" };
+        }
+
+        try {
+          const analysis = JSON.parse(content);
+
+          // Save conversation summary
+          await addConversationSummary({
+            customerId: customer.id,
+            sessionId: input.sessionId,
+            summary: analysis.summary,
+            keyTopics: JSON.stringify(analysis.keyTopics),
+            questionsAsked: JSON.stringify(analysis.questionsAsked),
+            messageCount: history.length,
+            outcome: analysis.outcome,
+            conversationDate: new Date(),
+          });
+
+          // Update customer info if found
+          const updateData: Record<string, string> = {};
+          if (analysis.customerInfo.name) updateData.name = analysis.customerInfo.name;
+          if (analysis.customerInfo.email) updateData.email = analysis.customerInfo.email;
+          if (analysis.customerInfo.phone) updateData.phone = analysis.customerInfo.phone;
+          if (analysis.customerInfo.company) updateData.company = analysis.customerInfo.company;
+          if (analysis.sentiment) updateData.sentiment = analysis.sentiment;
+          
+          if (Object.keys(updateData).length > 0) {
+            await updateCustomer(customer.id, updateData);
+          }
+
+          // Add memories
+          if (analysis.memories && Array.isArray(analysis.memories)) {
+            for (const memory of analysis.memories) {
+              await addCustomerMemory({
+                customerId: customer.id,
+                memoryType: memory.type,
+                key: memory.key,
+                value: memory.value,
+                confidence: memory.confidence,
+              });
+            }
+          }
+
+          return {
+            success: true,
+            summary: analysis.summary,
+            keyTopics: analysis.keyTopics,
+            outcome: analysis.outcome,
+            memoriesExtracted: analysis.memories?.length || 0,
+          };
+        } catch {
+          return { success: false, message: "Failed to parse summary" };
+        }
+      }),
   }),
 
   // AI Training management

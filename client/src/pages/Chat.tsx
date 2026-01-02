@@ -97,6 +97,66 @@ export default function Chat() {
     },
   });
 
+  // End conversation mutation for generating summary
+  const endConversationMutation = trpc.chat.endConversation.useMutation();
+
+  // Track last activity time for auto-summary
+  const lastActivityRef = useRef<number>(Date.now());
+  const summaryGeneratedRef = useRef<boolean>(false);
+
+  // Update last activity time on each message
+  useEffect(() => {
+    if (messages.length > 0) {
+      lastActivityRef.current = Date.now();
+      summaryGeneratedRef.current = false;
+    }
+  }, [messages]);
+
+  // Auto-generate summary when user leaves or after inactivity
+  useEffect(() => {
+    const generateSummaryIfNeeded = () => {
+      // Only generate if there are enough messages and summary hasn't been generated
+      if (messages.length >= 2 && !summaryGeneratedRef.current && !isTyping) {
+        const timeSinceLastActivity = Date.now() - lastActivityRef.current;
+        // Generate summary after 5 minutes of inactivity
+        if (timeSinceLastActivity > 5 * 60 * 1000) {
+          summaryGeneratedRef.current = true;
+          endConversationMutation.mutate({ personaId, sessionId });
+        }
+      }
+    };
+
+    // Check for inactivity every minute
+    const inactivityInterval = setInterval(generateSummaryIfNeeded, 60 * 1000);
+
+    // Generate summary when user leaves the page
+    const handleBeforeUnload = () => {
+      if (messages.length >= 2 && !summaryGeneratedRef.current) {
+        summaryGeneratedRef.current = true;
+        // Use sendBeacon for reliable delivery on page unload
+        const data = JSON.stringify({ personaId, sessionId });
+        navigator.sendBeacon?.(`/api/trpc/chat.endConversation?batch=1&input=${encodeURIComponent(JSON.stringify({ "0": { json: { personaId, sessionId } } }))}`)
+      }
+    };
+
+    // Generate summary when tab becomes hidden
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'hidden' && messages.length >= 2 && !summaryGeneratedRef.current) {
+        summaryGeneratedRef.current = true;
+        endConversationMutation.mutate({ personaId, sessionId });
+      }
+    };
+
+    window.addEventListener('beforeunload', handleBeforeUnload);
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+
+    return () => {
+      clearInterval(inactivityInterval);
+      window.removeEventListener('beforeunload', handleBeforeUnload);
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+    };
+  }, [messages.length, isTyping, personaId, sessionId, endConversationMutation]);
+
   // Load history on mount
   useEffect(() => {
     if (history && history.length > 0) {
