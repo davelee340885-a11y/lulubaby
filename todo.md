@@ -277,3 +277,13 @@
 - [x] 添加域名價格參考資訊
 - [x] 清楚區分 Manus 域名費 vs Lulubaby 管理費
 - [x] 實現跳轉到 Manus Domains 面板功能
+
+
+## 方案 B：接入域名轉售 API（一站式購買）
+- [x] 研究主流域名轉售 API 選項 (Name.com, Porkbun, Cloudflare)
+- [x] 比較各 API 的價格、功能、門檻
+- [x] 創建詳細的接入指南文檔 (DOMAIN_RESELLER_API_GUIDE.md)
+- [x] 選擇最適合的 API 方案 (推薦 Name.com Core API)
+- [ ] 實現域名搜索功能
+- [ ] 實現域名購買功能
+- [ ] 整合 Stripe 支付
