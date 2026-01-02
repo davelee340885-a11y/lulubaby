@@ -19,6 +19,7 @@ import Pricing from "./pages/Pricing";
 import Chat from "./pages/Chat";
 import Team from "./pages/Team";
 import Customers from "./pages/Customers";
+import Widget from "./pages/Widget";
 
 function DashboardRoutes() {
   return (
@@ -37,6 +38,8 @@ function DashboardRoutes() {
         <Route path="/pricing" component={Pricing} />
         <Route path="/team" component={Team} />
         <Route path="/customers" component={Customers} />
+        <Route path="/widget" component={Widget} />
+        <Route path="/api-docs" component={Widget} />
         <Route component={NotFound} />
       </Switch>
     </DashboardLayout>
@@ -63,6 +66,8 @@ function Router() {
       <Route path="/pricing" component={DashboardRoutes} />
       <Route path="/team" component={DashboardRoutes} />
       <Route path="/customers" component={DashboardRoutes} />
+      <Route path="/widget" component={DashboardRoutes} />
+      <Route path="/api-docs" component={DashboardRoutes} />
       
       <Route path="/404" component={NotFound} />
       <Route component={NotFound} />

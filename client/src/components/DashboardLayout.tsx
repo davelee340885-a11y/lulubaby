@@ -21,7 +21,7 @@ import {
 } from "@/components/ui/sidebar";
 import { getLoginUrl } from "@/const";
 import { useIsMobile } from "@/hooks/useMobile";
-import { LayoutDashboard, LogOut, PanelLeft, FileText, Bot, Palette, Globe, Brain, Zap, User, CreditCard, ExternalLink, MessageCircle, Users, UserCircle, Monitor, Settings, Sparkles } from "lucide-react";
+import { LayoutDashboard, LogOut, PanelLeft, FileText, Bot, Palette, Globe, Brain, Zap, User, CreditCard, ExternalLink, MessageCircle, Users, UserCircle, Monitor, Settings, Sparkles, Code, Puzzle } from "lucide-react";
 import { CSSProperties, useEffect, useRef, useState } from "react";
 import { useLocation } from "wouter";
 import { DashboardLayoutSkeleton } from './DashboardLayoutSkeleton';
@@ -58,6 +58,16 @@ const navCategories = [
       { icon: Brain, label: "訓練智能體", path: "/training" },
       { icon: Zap, label: "開發超能力", path: "/superpowers" },
       { icon: FileText, label: "知識庫", path: "/knowledge" },
+    ],
+  },
+  {
+    id: "developer",
+    label: "開發者",
+    color: "bg-cyan-500/10 text-cyan-600 dark:text-cyan-400",
+    borderColor: "border-l-cyan-500",
+    items: [
+      { icon: Puzzle, label: "Widget 嵌入", path: "/widget" },
+      { icon: Code, label: "API 文檔", path: "/api-docs" },
     ],
   },
   {

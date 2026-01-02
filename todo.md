@@ -230,3 +230,10 @@
 - [x] Premium計劃價格從HK$399調整為HK$599
 - [x] 移除Email客服支援功能
 - [x] 更新對話次數額度
+
+
+## 開發者導航和Widget嵌入
+- [x] 在導航列添加「開發者」類別
+- [x] 添加Widget嵌入頁面到開發者類別
+- [x] 導入之前開發的Extensions頁面作為Widget嵌入
+- [x] 更新PROJECT_SUMMARY為完整技術文檔
