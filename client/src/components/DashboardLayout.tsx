@@ -234,7 +234,7 @@ function DashboardLayoutContent({
                 <div className="flex items-center gap-2 min-w-0">
                   <Bot className="h-5 w-5 text-primary shrink-0" />
                   <span className="font-semibold tracking-tight truncate">
-                    AI客服平台
+                    Lulubaby
                   </span>
                 </div>
               ) : null}
