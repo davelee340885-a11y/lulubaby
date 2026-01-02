@@ -541,7 +541,7 @@ ${knowledgeContent.substring(0, 10000)}
         }
         
         const maxMembers = input.plan === "team_basic" ? 5 : 
-                          input.plan === "team_pro" ? 15 : 999;
+                          input.plan === "team_pro" ? 15 : 50;
         
         return createTeam({
           name: input.name,

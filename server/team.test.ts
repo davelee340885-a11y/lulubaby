@@ -362,16 +362,16 @@ describe("Team Operations", () => {
       expect(team?.maxMembers).toBe(15);
     });
 
-    it("should allow unlimited members for enterprise plan", async () => {
+    it("should allow up to 50 members for enterprise plan", async () => {
       vi.mocked(getTeamById).mockResolvedValue({
         id: 3,
         name: "Enterprise Team",
         plan: "enterprise",
-        maxMembers: 999,
+        maxMembers: 50,
       } as any);
       
       const team = await getTeamById(3);
-      expect(team?.maxMembers).toBe(999);
+      expect(team?.maxMembers).toBe(50);
     });
   });
 
