@@ -21,26 +21,60 @@ import {
 } from "@/components/ui/sidebar";
 import { getLoginUrl } from "@/const";
 import { useIsMobile } from "@/hooks/useMobile";
-import { LayoutDashboard, LogOut, PanelLeft, FileText, Bot, BarChart3, Palette, Globe, Brain, Zap, Puzzle, User, CreditCard, ExternalLink, MessageCircle, Users, UserCircle } from "lucide-react";
+import { LayoutDashboard, LogOut, PanelLeft, FileText, Bot, Palette, Globe, Brain, Zap, User, CreditCard, ExternalLink, MessageCircle, Users, UserCircle, Monitor, Settings, Sparkles } from "lucide-react";
 import { CSSProperties, useEffect, useRef, useState } from "react";
 import { useLocation } from "wouter";
 import { DashboardLayoutSkeleton } from './DashboardLayoutSkeleton';
 import { Button } from "./ui/button";
 
-const menuItems = [
-  { icon: LayoutDashboard, label: "儀表板", path: "/" },
-  { icon: BarChart3, label: "數據分析", path: "/analytics" },
-  { icon: Palette, label: "版面設定", path: "/appearance" },
-  { icon: Brain, label: "訓練智能體", path: "/training" },
-  { icon: Zap, label: "開發超能力", path: "/superpowers" },
-  { icon: FileText, label: "知識庫", path: "/knowledge" },
-  { icon: Puzzle, label: "擴充功能", path: "/extensions" },
-  { icon: Globe, label: "專屬網址", path: "/domain" },
-  { icon: Users, label: "團隊管理", path: "/team" },
-  { icon: UserCircle, label: "客戶記憶", path: "/customers" },
-  { icon: User, label: "帳戶設定", path: "/account" },
-  { icon: CreditCard, label: "會員計劃", path: "/pricing" },
+// Navigation categories with colors
+const navCategories = [
+  {
+    id: "dashboard",
+    label: "儀表板",
+    color: "bg-blue-500/10 text-blue-600 dark:text-blue-400",
+    borderColor: "border-l-blue-500",
+    items: [
+      { icon: LayoutDashboard, label: "儀表板", path: "/" },
+    ],
+  },
+  {
+    id: "customer",
+    label: "客戶前端",
+    color: "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400",
+    borderColor: "border-l-emerald-500",
+    items: [
+      { icon: Palette, label: "版面設定", path: "/appearance" },
+      { icon: UserCircle, label: "客戶記憶", path: "/customers" },
+      { icon: Globe, label: "專屬網址", path: "/domain" },
+    ],
+  },
+  {
+    id: "ai-brain",
+    label: "AI 大腦",
+    color: "bg-violet-500/10 text-violet-600 dark:text-violet-400",
+    borderColor: "border-l-violet-500",
+    items: [
+      { icon: Brain, label: "訓練智能體", path: "/training" },
+      { icon: Zap, label: "開發超能力", path: "/superpowers" },
+      { icon: FileText, label: "知識庫", path: "/knowledge" },
+    ],
+  },
+  {
+    id: "settings",
+    label: "設定",
+    color: "bg-amber-500/10 text-amber-600 dark:text-amber-400",
+    borderColor: "border-l-amber-500",
+    items: [
+      { icon: Users, label: "團隊管理", path: "/team" },
+      { icon: User, label: "帳戶設定", path: "/account" },
+      { icon: CreditCard, label: "會員計劃", path: "/pricing" },
+    ],
+  },
 ];
+
+// Flatten menu items for finding active item
+const allMenuItems = navCategories.flatMap(cat => cat.items);
 
 const SIDEBAR_WIDTH_KEY = "sidebar-width";
 const DEFAULT_WIDTH = 260;
@@ -125,7 +159,7 @@ function DashboardLayoutContent({
   const isCollapsed = state === "collapsed";
   const [isResizing, setIsResizing] = useState(false);
   const sidebarRef = useRef<HTMLDivElement>(null);
-  const activeMenuItem = menuItems.find(item => item.path === location);
+  const activeMenuItem = allMenuItems.find(item => item.path === location);
   const isMobile = useIsMobile();
 
   useEffect(() => {
@@ -163,6 +197,11 @@ function DashboardLayoutContent({
       document.body.style.userSelect = "";
     };
   }, [isResizing, setSidebarWidth]);
+
+  // Find which category the current path belongs to
+  const getItemCategory = (path: string) => {
+    return navCategories.find(cat => cat.items.some(item => item.path === path));
+  };
 
   return (
     <>
@@ -211,26 +250,40 @@ function DashboardLayoutContent({
           </div>
 
           <SidebarContent className="gap-0">
-            <SidebarMenu className="px-2 py-1">
-              {menuItems.map(item => {
-                const isActive = location === item.path;
-                return (
-                  <SidebarMenuItem key={item.path}>
-                    <SidebarMenuButton
-                      isActive={isActive}
-                      onClick={() => setLocation(item.path)}
-                      tooltip={item.label}
-                      className={`h-10 transition-all font-normal`}
-                    >
-                      <item.icon
-                        className={`h-4 w-4 ${isActive ? "text-primary" : ""}`}
-                      />
-                      <span>{item.label}</span>
-                    </SidebarMenuButton>
-                  </SidebarMenuItem>
-                );
-              })}
-            </SidebarMenu>
+            {navCategories.map((category, categoryIndex) => (
+              <div key={category.id} className={categoryIndex > 0 ? "mt-2" : ""}>
+                {/* Category Header - only show when not collapsed */}
+                {!isCollapsed && (
+                  <div className={`px-4 py-2 flex items-center gap-2`}>
+                    <span className={`text-[10px] font-semibold uppercase tracking-wider ${category.color.split(' ').slice(1).join(' ')}`}>
+                      {category.label}
+                    </span>
+                    <div className="flex-1 h-px bg-border/50" />
+                  </div>
+                )}
+                
+                <SidebarMenu className="px-2 py-0.5">
+                  {category.items.map(item => {
+                    const isActive = location === item.path;
+                    return (
+                      <SidebarMenuItem key={item.path}>
+                        <SidebarMenuButton
+                          isActive={isActive}
+                          onClick={() => setLocation(item.path)}
+                          tooltip={item.label}
+                          className={`h-9 transition-all font-normal ${isActive ? `border-l-2 ${category.borderColor} rounded-l-none ml-0.5` : ''}`}
+                        >
+                          <item.icon
+                            className={`h-4 w-4 ${isActive ? category.color.split(' ').slice(1).join(' ') : ""}`}
+                          />
+                          <span>{item.label}</span>
+                        </SidebarMenuButton>
+                      </SidebarMenuItem>
+                    );
+                  })}
+                </SidebarMenu>
+              </div>
+            ))}
           </SidebarContent>
 
           <SidebarFooter className="p-3">

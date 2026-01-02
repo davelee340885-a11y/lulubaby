@@ -8,12 +8,12 @@ import DashboardLayout from "./components/DashboardLayout";
 import Dashboard from "./pages/Dashboard";
 // Settings page content has been merged into Appearance page
 import Knowledge from "./pages/Knowledge";
-import Analytics from "./pages/Analytics";
+// Analytics merged into Dashboard
 import Appearance from "./pages/Appearance";
 import Domain from "./pages/Domain";
 import Training from "./pages/Training";
 import Superpowers from "./pages/Superpowers";
-import Extensions from "./pages/Extensions";
+// Extensions removed - features integrated elsewhere
 import Account from "./pages/Account";
 import Pricing from "./pages/Pricing";
 import Chat from "./pages/Chat";
@@ -27,12 +27,12 @@ function DashboardRoutes() {
         <Route path="/" component={Dashboard} />
         {/* Settings merged into Appearance */}
         <Route path="/knowledge" component={Knowledge} />
-        <Route path="/analytics" component={Analytics} />
+        {/* Analytics merged into Dashboard */}
         <Route path="/appearance" component={Appearance} />
         <Route path="/domain" component={Domain} />
         <Route path="/training" component={Training} />
         <Route path="/superpowers" component={Superpowers} />
-        <Route path="/extensions" component={Extensions} />
+        {/* Extensions removed - features integrated elsewhere */}
         <Route path="/account" component={Account} />
         <Route path="/pricing" component={Pricing} />
         <Route path="/team" component={Team} />
@@ -53,12 +53,12 @@ function Router() {
       <Route path="/" component={DashboardRoutes} />
       {/* Settings merged into Appearance */}
       <Route path="/knowledge" component={DashboardRoutes} />
-      <Route path="/analytics" component={DashboardRoutes} />
+      {/* Analytics merged into Dashboard */}
       <Route path="/appearance" component={DashboardRoutes} />
       <Route path="/domain" component={DashboardRoutes} />
       <Route path="/training" component={DashboardRoutes} />
       <Route path="/superpowers" component={DashboardRoutes} />
-      <Route path="/extensions" component={DashboardRoutes} />
+      {/* Extensions removed - features integrated elsewhere */}
       <Route path="/account" component={DashboardRoutes} />
       <Route path="/pricing" component={DashboardRoutes} />
       <Route path="/team" component={DashboardRoutes} />
