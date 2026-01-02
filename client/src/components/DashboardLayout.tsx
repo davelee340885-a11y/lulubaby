@@ -21,7 +21,7 @@ import {
 } from "@/components/ui/sidebar";
 import { getLoginUrl } from "@/const";
 import { useIsMobile } from "@/hooks/useMobile";
-import { LayoutDashboard, LogOut, PanelLeft, FileText, Bot, BarChart3, Palette, Globe, Brain, Zap, Puzzle, User, CreditCard, ExternalLink, MessageCircle, Users } from "lucide-react";
+import { LayoutDashboard, LogOut, PanelLeft, FileText, Bot, BarChart3, Palette, Globe, Brain, Zap, Puzzle, User, CreditCard, ExternalLink, MessageCircle, Users, UserCircle } from "lucide-react";
 import { CSSProperties, useEffect, useRef, useState } from "react";
 import { useLocation } from "wouter";
 import { DashboardLayoutSkeleton } from './DashboardLayoutSkeleton';
@@ -37,6 +37,7 @@ const menuItems = [
   { icon: Puzzle, label: "擴充功能", path: "/extensions" },
   { icon: Globe, label: "專屬網址", path: "/domain" },
   { icon: Users, label: "團隊管理", path: "/team" },
+  { icon: UserCircle, label: "客戶記憶", path: "/customers" },
   { icon: User, label: "帳戶設定", path: "/account" },
   { icon: CreditCard, label: "會員計劃", path: "/pricing" },
 ];

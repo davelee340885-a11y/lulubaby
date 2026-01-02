@@ -1308,3 +1308,334 @@ export async function getTeamStats(teamId: number): Promise<TeamStats> {
     monthlyConversations,
   };
 }
+
+
+// ==================== Customer Memory Operations ====================
+import {
+  customers, InsertCustomer, Customer,
+  customerMemories, InsertCustomerMemory, CustomerMemory,
+  customerConversationSummaries, InsertCustomerConversationSummary, CustomerConversationSummary
+} from "../drizzle/schema";
+
+// Get or create customer by session ID
+export async function getOrCreateCustomer(personaId: number, sessionId: string, fingerprint?: string): Promise<Customer | undefined> {
+  const db = await getDb();
+  if (!db) return undefined;
+
+  // First try to find by fingerprint (more reliable for returning customers)
+  if (fingerprint) {
+    const existingByFingerprint = await db.select()
+      .from(customers)
+      .where(and(
+        eq(customers.personaId, personaId),
+        eq(customers.fingerprint, fingerprint)
+      ))
+      .limit(1);
+    
+    if (existingByFingerprint.length > 0) {
+      // Update session ID and last visit
+      await db.update(customers)
+        .set({ 
+          sessionId,
+          lastVisitAt: new Date(),
+          totalConversations: sql`${customers.totalConversations} + 1`
+        })
+        .where(eq(customers.id, existingByFingerprint[0].id));
+      
+      return { ...existingByFingerprint[0], sessionId, lastVisitAt: new Date() };
+    }
+  }
+
+  // Try to find by session ID
+  const existingBySession = await db.select()
+    .from(customers)
+    .where(and(
+      eq(customers.personaId, personaId),
+      eq(customers.sessionId, sessionId)
+    ))
+    .limit(1);
+
+  if (existingBySession.length > 0) {
+    // Update fingerprint if provided and last visit
+    const updateData: Partial<InsertCustomer> = { lastVisitAt: new Date() };
+    if (fingerprint && !existingBySession[0].fingerprint) {
+      updateData.fingerprint = fingerprint;
+    }
+    await db.update(customers)
+      .set(updateData)
+      .where(eq(customers.id, existingBySession[0].id));
+    
+    return { ...existingBySession[0], ...updateData };
+  }
+
+  // Create new customer
+  const result = await db.insert(customers).values({
+    personaId,
+    sessionId,
+    fingerprint,
+    firstVisitAt: new Date(),
+    lastVisitAt: new Date(),
+    totalConversations: 1,
+  });
+
+  const insertId = result[0].insertId;
+  const created = await db.select().from(customers).where(eq(customers.id, insertId)).limit(1);
+  return created.length > 0 ? created[0] : undefined;
+}
+
+// Get customer by ID
+export async function getCustomerById(customerId: number): Promise<Customer | undefined> {
+  const db = await getDb();
+  if (!db) return undefined;
+  const result = await db.select().from(customers).where(eq(customers.id, customerId)).limit(1);
+  return result.length > 0 ? result[0] : undefined;
+}
+
+// Get all customers for a persona
+export async function getCustomersByPersonaId(personaId: number): Promise<Customer[]> {
+  const db = await getDb();
+  if (!db) return [];
+  return db.select()
+    .from(customers)
+    .where(eq(customers.personaId, personaId))
+    .orderBy(desc(customers.lastVisitAt));
+}
+
+// Update customer info
+export async function updateCustomer(customerId: number, data: Partial<InsertCustomer>): Promise<Customer | undefined> {
+  const db = await getDb();
+  if (!db) return undefined;
+
+  const updateSet: Record<string, unknown> = {};
+  const fields = ['name', 'email', 'phone', 'company', 'title', 'preferredLanguage', 'tags', 'notes', 'sentiment', 'status'] as const;
+  
+  fields.forEach(field => {
+    if (data[field] !== undefined) {
+      updateSet[field] = data[field];
+    }
+  });
+
+  if (Object.keys(updateSet).length > 0) {
+    await db.update(customers).set(updateSet).where(eq(customers.id, customerId));
+  }
+
+  return getCustomerById(customerId);
+}
+
+// Increment customer message count
+export async function incrementCustomerMessageCount(customerId: number): Promise<void> {
+  const db = await getDb();
+  if (!db) return;
+  
+  await db.update(customers)
+    .set({ totalMessages: sql`${customers.totalMessages} + 1` })
+    .where(eq(customers.id, customerId));
+}
+
+// Delete customer
+export async function deleteCustomer(customerId: number): Promise<void> {
+  const db = await getDb();
+  if (!db) return;
+
+  // Delete related data first
+  await db.delete(customerMemories).where(eq(customerMemories.customerId, customerId));
+  await db.delete(customerConversationSummaries).where(eq(customerConversationSummaries.customerId, customerId));
+  await db.delete(customers).where(eq(customers.id, customerId));
+}
+
+// ==================== Customer Memory Operations ====================
+
+// Add a memory for a customer
+export async function addCustomerMemory(data: InsertCustomerMemory): Promise<CustomerMemory | undefined> {
+  const db = await getDb();
+  if (!db) return undefined;
+
+  // Check if similar memory exists (same customer, type, and key)
+  const existing = await db.select()
+    .from(customerMemories)
+    .where(and(
+      eq(customerMemories.customerId, data.customerId),
+      eq(customerMemories.key, data.key),
+      eq(customerMemories.isActive, true)
+    ))
+    .limit(1);
+
+  if (existing.length > 0) {
+    // Update existing memory
+    await db.update(customerMemories)
+      .set({
+        value: data.value,
+        memoryType: data.memoryType,
+        confidence: data.confidence,
+        sourceConversationId: data.sourceConversationId,
+        extractedAt: new Date(),
+      })
+      .where(eq(customerMemories.id, existing[0].id));
+    
+    return { ...existing[0], ...data, extractedAt: new Date() };
+  }
+
+  // Create new memory
+  const result = await db.insert(customerMemories).values(data);
+  const insertId = result[0].insertId;
+  const created = await db.select().from(customerMemories).where(eq(customerMemories.id, insertId)).limit(1);
+  return created.length > 0 ? created[0] : undefined;
+}
+
+// Get all memories for a customer
+export async function getCustomerMemories(customerId: number): Promise<CustomerMemory[]> {
+  const db = await getDb();
+  if (!db) return [];
+  
+  return db.select()
+    .from(customerMemories)
+    .where(and(
+      eq(customerMemories.customerId, customerId),
+      eq(customerMemories.isActive, true)
+    ))
+    .orderBy(desc(customerMemories.extractedAt));
+}
+
+// Get memories formatted for AI context
+export async function getCustomerMemoryContext(customerId: number): Promise<string> {
+  const memories = await getCustomerMemories(customerId);
+  const customer = await getCustomerById(customerId);
+  
+  if (!customer && memories.length === 0) return "";
+
+  let context = "【客戶資料】\n";
+  
+  if (customer) {
+    if (customer.name) context += `姓名：${customer.name}\n`;
+    if (customer.email) context += `電郵：${customer.email}\n`;
+    if (customer.phone) context += `電話：${customer.phone}\n`;
+    if (customer.company) context += `公司：${customer.company}\n`;
+    if (customer.title) context += `職位：${customer.title}\n`;
+    context += `訪問次數：${customer.totalConversations}\n`;
+    context += `首次訪問：${customer.firstVisitAt?.toLocaleDateString('zh-TW')}\n`;
+    if (customer.lastVisitAt) {
+      context += `上次訪問：${customer.lastVisitAt.toLocaleDateString('zh-TW')}\n`;
+    }
+  }
+
+  if (memories.length > 0) {
+    context += "\n【客戶記憶】\n";
+    
+    const memoryTypeLabels: Record<string, string> = {
+      preference: "偏好",
+      fact: "事實",
+      need: "需求",
+      concern: "顧慮",
+      interaction: "互動",
+      purchase: "購買",
+      feedback: "反饋",
+      custom: "其他",
+    };
+
+    memories.forEach(memory => {
+      const typeLabel = memoryTypeLabels[memory.memoryType] || memory.memoryType;
+      context += `- [${typeLabel}] ${memory.key}：${memory.value}\n`;
+    });
+  }
+
+  return context;
+}
+
+// Delete a memory
+export async function deleteCustomerMemory(memoryId: number): Promise<void> {
+  const db = await getDb();
+  if (!db) return;
+  await db.update(customerMemories)
+    .set({ isActive: false })
+    .where(eq(customerMemories.id, memoryId));
+}
+
+// ==================== Conversation Summary Operations ====================
+
+// Add conversation summary
+export async function addConversationSummary(data: InsertCustomerConversationSummary): Promise<CustomerConversationSummary | undefined> {
+  const db = await getDb();
+  if (!db) return undefined;
+
+  const result = await db.insert(customerConversationSummaries).values(data);
+  const insertId = result[0].insertId;
+  const created = await db.select().from(customerConversationSummaries).where(eq(customerConversationSummaries.id, insertId)).limit(1);
+  return created.length > 0 ? created[0] : undefined;
+}
+
+// Get conversation summaries for a customer
+export async function getCustomerConversationSummaries(customerId: number, limit: number = 10): Promise<CustomerConversationSummary[]> {
+  const db = await getDb();
+  if (!db) return [];
+  
+  return db.select()
+    .from(customerConversationSummaries)
+    .where(eq(customerConversationSummaries.customerId, customerId))
+    .orderBy(desc(customerConversationSummaries.conversationDate))
+    .limit(limit);
+}
+
+// Get recent conversation context for AI
+export async function getRecentConversationContext(customerId: number, limit: number = 3): Promise<string> {
+  const summaries = await getCustomerConversationSummaries(customerId, limit);
+  
+  if (summaries.length === 0) return "";
+
+  let context = "【近期對話記錄】\n";
+  
+  summaries.forEach((summary, index) => {
+    const date = summary.conversationDate?.toLocaleDateString('zh-TW') || '未知日期';
+    context += `\n對話 ${index + 1} (${date}):\n`;
+    context += `摘要：${summary.summary}\n`;
+    
+    if (summary.keyTopics) {
+      try {
+        const topics = JSON.parse(summary.keyTopics);
+        if (Array.isArray(topics) && topics.length > 0) {
+          context += `主題：${topics.join('、')}\n`;
+        }
+      } catch {}
+    }
+    
+    if (summary.questionsAsked) {
+      try {
+        const questions = JSON.parse(summary.questionsAsked);
+        if (Array.isArray(questions) && questions.length > 0) {
+          context += `客戶問題：${questions.slice(0, 3).join('；')}\n`;
+        }
+      } catch {}
+    }
+  });
+
+  return context;
+}
+
+// Get customer statistics for a persona
+export async function getCustomerStats(personaId: number): Promise<{
+  totalCustomers: number;
+  returningCustomers: number;
+  newCustomersToday: number;
+  activeCustomers: number;
+}> {
+  const db = await getDb();
+  if (!db) return { totalCustomers: 0, returningCustomers: 0, newCustomersToday: 0, activeCustomers: 0 };
+
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+
+  const allCustomers = await db.select({
+    id: customers.id,
+    totalConversations: customers.totalConversations,
+    firstVisitAt: customers.firstVisitAt,
+    status: customers.status,
+  })
+    .from(customers)
+    .where(eq(customers.personaId, personaId));
+
+  const totalCustomers = allCustomers.length;
+  const returningCustomers = allCustomers.filter(c => c.totalConversations > 1).length;
+  const newCustomersToday = allCustomers.filter(c => c.firstVisitAt && c.firstVisitAt >= today).length;
+  const activeCustomers = allCustomers.filter(c => c.status === 'active').length;
+
+  return { totalCustomers, returningCustomers, newCustomersToday, activeCustomers };
+}

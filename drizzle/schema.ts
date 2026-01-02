@@ -529,3 +529,119 @@ export const TEAM_PLAN_LIMITS = {
 
 export type TeamPlanType = keyof typeof TEAM_PLAN_LIMITS;
 export type TeamPlanLimits = typeof TEAM_PLAN_LIMITS[TeamPlanType];
+
+
+/**
+ * Customer profiles - stores customer information for memory feature
+ * 客戶檔案 - 儲存客戶資料以實現記憶功能
+ */
+export const customers = mysqlTable("customers", {
+  id: int("id").autoincrement().primaryKey(),
+  personaId: int("personaId").notNull(), // Which AI persona this customer belongs to
+  
+  // Customer identification
+  sessionId: varchar("sessionId", { length: 64 }).notNull(), // Primary identifier
+  fingerprint: varchar("fingerprint", { length: 128 }), // Browser fingerprint for cross-session identification
+  
+  // Customer basic info (collected during conversations)
+  name: varchar("name", { length: 100 }),
+  email: varchar("email", { length: 320 }),
+  phone: varchar("phone", { length: 50 }),
+  company: varchar("company", { length: 200 }),
+  title: varchar("title", { length: 100 }), // Job title
+  
+  // Customer preferences and notes
+  preferredLanguage: varchar("preferredLanguage", { length: 20 }).default("zh-TW"),
+  tags: text("tags"), // JSON array of tags for categorization
+  notes: text("notes"), // Manual notes about the customer
+  
+  // Engagement metrics
+  totalConversations: int("totalConversations").default(0).notNull(),
+  totalMessages: int("totalMessages").default(0).notNull(),
+  lastVisitAt: timestamp("lastVisitAt"),
+  firstVisitAt: timestamp("firstVisitAt").defaultNow().notNull(),
+  
+  // Customer sentiment and status
+  sentiment: mysqlEnum("sentiment", ["positive", "neutral", "negative"]).default("neutral"),
+  status: mysqlEnum("status", ["active", "inactive", "blocked"]).default("active").notNull(),
+  
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+
+export type Customer = typeof customers.$inferSelect;
+export type InsertCustomer = typeof customers.$inferInsert;
+
+/**
+ * Customer memories - stores important information extracted from conversations
+ * 客戶記憶 - 儲存從對話中提取的重要資訊
+ */
+export const customerMemories = mysqlTable("customer_memories", {
+  id: int("id").autoincrement().primaryKey(),
+  customerId: int("customerId").notNull(),
+  
+  // Memory type and content
+  memoryType: mysqlEnum("memoryType", [
+    "preference",    // 偏好（如：喜歡的產品類型）
+    "fact",          // 事實（如：家庭成員數量）
+    "need",          // 需求（如：正在尋找的解決方案）
+    "concern",       // 顧慮（如：預算限制）
+    "interaction",   // 互動記錄（如：曾經投訴過）
+    "purchase",      // 購買記錄
+    "feedback",      // 反饋意見
+    "custom"         // 自定義
+  ]).default("fact").notNull(),
+  
+  // Memory content
+  key: varchar("key", { length: 100 }).notNull(), // e.g., "budget", "family_size", "preferred_product"
+  value: text("value").notNull(), // The actual memory content
+  confidence: int("confidence").default(80).notNull(), // Confidence level 0-100
+  
+  // Source tracking
+  sourceConversationId: int("sourceConversationId"), // Which conversation this memory came from
+  extractedAt: timestamp("extractedAt").defaultNow().notNull(),
+  
+  // Memory management
+  isActive: boolean("isActive").default(true).notNull(),
+  expiresAt: timestamp("expiresAt"), // Optional expiration for time-sensitive memories
+  
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+
+export type CustomerMemory = typeof customerMemories.$inferSelect;
+export type InsertCustomerMemory = typeof customerMemories.$inferInsert;
+
+/**
+ * Customer conversation summaries - stores summarized conversation history
+ * 客戶對話摘要 - 儲存對話歷史摘要
+ */
+export const customerConversationSummaries = mysqlTable("customer_conversation_summaries", {
+  id: int("id").autoincrement().primaryKey(),
+  customerId: int("customerId").notNull(),
+  sessionId: varchar("sessionId", { length: 64 }).notNull(),
+  
+  // Conversation summary
+  summary: text("summary").notNull(), // AI-generated summary of the conversation
+  keyTopics: text("keyTopics"), // JSON array of main topics discussed
+  questionsAsked: text("questionsAsked"), // JSON array of questions the customer asked
+  
+  // Conversation metrics
+  messageCount: int("messageCount").default(0).notNull(),
+  duration: int("duration"), // Duration in seconds
+  
+  // Outcome tracking
+  outcome: mysqlEnum("outcome", [
+    "resolved",      // 問題已解決
+    "pending",       // 待跟進
+    "escalated",     // 已升級
+    "converted",     // 已轉化（購買/註冊等）
+    "abandoned"      // 客戶離開
+  ]).default("pending"),
+  
+  conversationDate: timestamp("conversationDate").defaultNow().notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
+
+export type CustomerConversationSummary = typeof customerConversationSummaries.$inferSelect;
+export type InsertCustomerConversationSummary = typeof customerConversationSummaries.$inferInsert;

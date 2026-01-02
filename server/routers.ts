@@ -16,7 +16,11 @@ import {
   getTeamById, getTeamByOwnerId, getTeamsByUserId, createTeam, updateTeam, deleteTeam,
   getTeamMembers, getTeamMemberById, getTeamMemberByUserAndTeam, inviteTeamMember, acceptTeamInvitation, updateTeamMember, removeTeamMember, getTeamMemberCount,
   getTeamKnowledgeByTeamId, getTeamKnowledgeById, createTeamKnowledge, updateTeamKnowledge, deleteTeamKnowledge, getAccessibleTeamKnowledge, getTeamKnowledgeContent,
-  getTeamStats
+  getTeamStats,
+  // Customer memory operations
+  getOrCreateCustomer, getCustomerById, getCustomersByPersonaId, updateCustomer, deleteCustomer, incrementCustomerMessageCount,
+  addCustomerMemory, getCustomerMemories, getCustomerMemoryContext, deleteCustomerMemory,
+  addConversationSummary, getCustomerConversationSummaries, getRecentConversationContext, getCustomerStats
 } from "./db";
 import { invokeLLM } from "./_core/llm";
 import { storagePut } from "./storage";
@@ -350,6 +354,7 @@ export const appRouter = router({
         personaId: z.number(),
         sessionId: z.string(),
         message: z.string().min(1),
+        fingerprint: z.string().optional(), // Browser fingerprint for customer identification
       }))
       .mutation(async ({ input }) => {
         const persona = await getPersonaById(input.personaId);
@@ -369,8 +374,17 @@ export const appRouter = router({
           throw new Error(errorMessages[limitCheck.reason!] || "對話次數已達上限");
         }
         
+        // Get or create customer for memory tracking
+        const customer = await getOrCreateCustomer(input.personaId, input.sessionId, input.fingerprint);
+        const isReturningCustomer = customer && customer.totalConversations > 1;
+        
         // Increment message count for usage tracking
         await incrementMessageCount(persona.userId, 500); // Estimate 500 tokens per message
+        
+        // Increment customer message count
+        if (customer) {
+          await incrementCustomerMessageCount(customer.id);
+        }
         
         // Save user message
         await createConversation({
@@ -386,14 +400,54 @@ export const appRouter = router({
         // Get knowledge base content
         const knowledgeContent = await getKnowledgeContentByUserId(persona.userId);
         
-        // Build system prompt
-        const systemPrompt = `你是${persona.agentName}，一個專業的AI助手。
+        // Get customer memory context if available
+        let customerContext = "";
+        let recentConversationContext = "";
+        if (customer) {
+          customerContext = await getCustomerMemoryContext(customer.id);
+          recentConversationContext = await getRecentConversationContext(customer.id, 3);
+        }
+        
+        // Build system prompt with customer memory
+        let systemPrompt = `你是${persona.agentName}，一個專業的AI助手。
 ${persona.systemPrompt || "請用友善、專業的方式回答用戶的問題。"}
+`;
 
-${knowledgeContent ? `以下是你的專業知識庫內容，請優先根據這些內容回答問題：
+        // Add customer memory context
+        if (customerContext) {
+          systemPrompt += `
+${customerContext}
+`;
+        }
+        
+        // Add recent conversation context for returning customers
+        if (isReturningCustomer && recentConversationContext) {
+          systemPrompt += `
+${recentConversationContext}
+`;
+        }
+        
+        // Add returning customer instruction
+        if (isReturningCustomer && customer?.name) {
+          systemPrompt += `
+【重要】這是一位回訪客戶，請適當稱呼客戶的名字（${customer.name}），並可以引用之前的對話內容來提供更個人化的服務。
+`;
+        } else if (isReturningCustomer) {
+          systemPrompt += `
+【重要】這是一位回訪客戶（第 ${customer?.totalConversations} 次訪問），請提供更親切的服務，並可以引用之前的對話內容。
+`;
+        }
+
+        // Add knowledge base content
+        if (knowledgeContent) {
+          systemPrompt += `
+以下是你的專業知識庫內容，請優先根據這些內容回答問題：
 ---
 ${knowledgeContent.substring(0, 10000)}
----` : ""}
+---`;
+        }
+
+        systemPrompt += `
 
 請用繁體中文回答，保持專業但親切的語氣。`;
 
@@ -911,6 +965,296 @@ ${knowledgeContent.substring(0, 10000)}
           throw new Error("Not a member of this team");
         }
         return getTeamStats(input.teamId);
+      }),
+  }),
+
+  // Customer memory management
+  customer: router({
+    // Get or create customer (for chat widget)
+    getOrCreate: publicProcedure
+      .input(z.object({
+        personaId: z.number(),
+        sessionId: z.string(),
+        fingerprint: z.string().optional(),
+      }))
+      .mutation(async ({ input }) => {
+        return getOrCreateCustomer(input.personaId, input.sessionId, input.fingerprint);
+      }),
+
+    // Get customer by ID
+    get: protectedProcedure
+      .input(z.object({ customerId: z.number() }))
+      .query(async ({ ctx, input }) => {
+        const customer = await getCustomerById(input.customerId);
+        if (!customer) return null;
+        
+        // Verify ownership through persona
+        const persona = await getPersonaById(customer.personaId);
+        if (!persona || persona.userId !== ctx.user.id) {
+          throw new Error("Unauthorized");
+        }
+        
+        return customer;
+      }),
+
+    // List all customers for user's persona
+    list: protectedProcedure.query(async ({ ctx }) => {
+      const persona = await getPersonaByUserId(ctx.user.id);
+      if (!persona) return [];
+      return getCustomersByPersonaId(persona.id);
+    }),
+
+    // Update customer info
+    update: protectedProcedure
+      .input(z.object({
+        customerId: z.number(),
+        name: z.string().optional(),
+        email: z.string().email().optional(),
+        phone: z.string().optional(),
+        company: z.string().optional(),
+        title: z.string().optional(),
+        tags: z.string().optional(),
+        notes: z.string().optional(),
+        sentiment: z.enum(["positive", "neutral", "negative"]).optional(),
+        status: z.enum(["active", "inactive", "blocked"]).optional(),
+      }))
+      .mutation(async ({ ctx, input }) => {
+        const customer = await getCustomerById(input.customerId);
+        if (!customer) throw new Error("Customer not found");
+        
+        const persona = await getPersonaById(customer.personaId);
+        if (!persona || persona.userId !== ctx.user.id) {
+          throw new Error("Unauthorized");
+        }
+        
+        const { customerId, ...data } = input;
+        return updateCustomer(customerId, data);
+      }),
+
+    // Delete customer
+    delete: protectedProcedure
+      .input(z.object({ customerId: z.number() }))
+      .mutation(async ({ ctx, input }) => {
+        const customer = await getCustomerById(input.customerId);
+        if (!customer) throw new Error("Customer not found");
+        
+        const persona = await getPersonaById(customer.personaId);
+        if (!persona || persona.userId !== ctx.user.id) {
+          throw new Error("Unauthorized");
+        }
+        
+        await deleteCustomer(input.customerId);
+        return { success: true };
+      }),
+
+    // Get customer statistics
+    stats: protectedProcedure.query(async ({ ctx }) => {
+      const persona = await getPersonaByUserId(ctx.user.id);
+      if (!persona) return { totalCustomers: 0, returningCustomers: 0, newCustomersToday: 0, activeCustomers: 0 };
+      return getCustomerStats(persona.id);
+    }),
+
+    // Get customer with full context (memories + conversation history)
+    getWithContext: protectedProcedure
+      .input(z.object({ customerId: z.number() }))
+      .query(async ({ ctx, input }) => {
+        const customer = await getCustomerById(input.customerId);
+        if (!customer) return null;
+        
+        const persona = await getPersonaById(customer.personaId);
+        if (!persona || persona.userId !== ctx.user.id) {
+          throw new Error("Unauthorized");
+        }
+        
+        const memories = await getCustomerMemories(input.customerId);
+        const conversationSummaries = await getCustomerConversationSummaries(input.customerId);
+        
+        return {
+          customer,
+          memories,
+          conversationSummaries,
+        };
+      }),
+  }),
+
+  // Customer memory management
+  memory: router({
+    // Add memory for a customer
+    add: protectedProcedure
+      .input(z.object({
+        customerId: z.number(),
+        memoryType: z.enum(["preference", "fact", "need", "concern", "interaction", "purchase", "feedback", "custom"]),
+        key: z.string(),
+        value: z.string(),
+        confidence: z.number().min(0).max(100).optional(),
+      }))
+      .mutation(async ({ ctx, input }) => {
+        const customer = await getCustomerById(input.customerId);
+        if (!customer) throw new Error("Customer not found");
+        
+        const persona = await getPersonaById(customer.personaId);
+        if (!persona || persona.userId !== ctx.user.id) {
+          throw new Error("Unauthorized");
+        }
+        
+        return addCustomerMemory({
+          customerId: input.customerId,
+          memoryType: input.memoryType,
+          key: input.key,
+          value: input.value,
+          confidence: input.confidence ?? 80,
+        });
+      }),
+
+    // Get all memories for a customer
+    list: protectedProcedure
+      .input(z.object({ customerId: z.number() }))
+      .query(async ({ ctx, input }) => {
+        const customer = await getCustomerById(input.customerId);
+        if (!customer) return [];
+        
+        const persona = await getPersonaById(customer.personaId);
+        if (!persona || persona.userId !== ctx.user.id) {
+          throw new Error("Unauthorized");
+        }
+        
+        return getCustomerMemories(input.customerId);
+      }),
+
+    // Delete a memory
+    delete: protectedProcedure
+      .input(z.object({ memoryId: z.number(), customerId: z.number() }))
+      .mutation(async ({ ctx, input }) => {
+        const customer = await getCustomerById(input.customerId);
+        if (!customer) throw new Error("Customer not found");
+        
+        const persona = await getPersonaById(customer.personaId);
+        if (!persona || persona.userId !== ctx.user.id) {
+          throw new Error("Unauthorized");
+        }
+        
+        await deleteCustomerMemory(input.memoryId);
+        return { success: true };
+      }),
+
+    // Auto-extract memories from conversation (using LLM)
+    extractFromConversation: protectedProcedure
+      .input(z.object({
+        customerId: z.number(),
+        messages: z.array(z.object({
+          role: z.enum(["user", "assistant"]),
+          content: z.string(),
+        })),
+      }))
+      .mutation(async ({ ctx, input }) => {
+        const customer = await getCustomerById(input.customerId);
+        if (!customer) throw new Error("Customer not found");
+        
+        const persona = await getPersonaById(customer.personaId);
+        if (!persona || persona.userId !== ctx.user.id) {
+          throw new Error("Unauthorized");
+        }
+
+        // Use LLM to extract memories from conversation
+        const conversationText = input.messages
+          .map(m => `${m.role === 'user' ? '客戶' : 'AI'}: ${m.content}`)
+          .join('\n');
+
+        const response = await invokeLLM({
+          messages: [
+            {
+              role: "system",
+              content: `你是一個專業的客戶資料提取助手。請從以下對話中提取客戶的重要資訊。
+
+請返回 JSON 格式，包含以下欄位：
+- name: 客戶姓名（如果提及）
+- email: 電郵地址（如果提及）
+- phone: 電話號碼（如果提及）
+- company: 公司名稱（如果提及）
+- memories: 記憶陣列，每項包含:
+  - type: 類型 (preference/fact/need/concern/purchase/feedback)
+  - key: 簡短標題
+  - value: 具體內容
+  - confidence: 確信度 0-100
+
+只提取明確提及的資訊，不要猜測。如果沒有找到任何資訊，返回空對象。`,
+            },
+            {
+              role: "user",
+              content: conversationText,
+            },
+          ],
+          response_format: {
+            type: "json_schema",
+            json_schema: {
+              name: "customer_extraction",
+              strict: true,
+              schema: {
+                type: "object",
+                properties: {
+                  name: { type: "string", description: "Customer name" },
+                  email: { type: "string", description: "Customer email" },
+                  phone: { type: "string", description: "Customer phone" },
+                  company: { type: "string", description: "Customer company" },
+                  memories: {
+                    type: "array",
+                    items: {
+                      type: "object",
+                      properties: {
+                        type: { type: "string", enum: ["preference", "fact", "need", "concern", "purchase", "feedback"] },
+                        key: { type: "string" },
+                        value: { type: "string" },
+                        confidence: { type: "number" },
+                      },
+                      required: ["type", "key", "value", "confidence"],
+                      additionalProperties: false,
+                    },
+                  },
+                },
+                required: ["name", "email", "phone", "company", "memories"],
+                additionalProperties: false,
+              },
+            },
+          },
+        });
+
+        const content = response.choices[0]?.message?.content;
+        if (!content || typeof content !== 'string') return { extracted: 0 };
+
+        try {
+          const extracted = JSON.parse(content);
+          let extractedCount = 0;
+
+          // Update customer info if found
+          const updateData: Record<string, string> = {};
+          if (extracted.name) updateData.name = extracted.name;
+          if (extracted.email) updateData.email = extracted.email;
+          if (extracted.phone) updateData.phone = extracted.phone;
+          if (extracted.company) updateData.company = extracted.company;
+          
+          if (Object.keys(updateData).length > 0) {
+            await updateCustomer(input.customerId, updateData);
+            extractedCount += Object.keys(updateData).length;
+          }
+
+          // Add memories
+          if (extracted.memories && Array.isArray(extracted.memories)) {
+            for (const memory of extracted.memories) {
+              await addCustomerMemory({
+                customerId: input.customerId,
+                memoryType: memory.type,
+                key: memory.key,
+                value: memory.value,
+                confidence: memory.confidence,
+              });
+              extractedCount++;
+            }
+          }
+
+          return { extracted: extractedCount };
+        } catch {
+          return { extracted: 0 };
+        }
       }),
   }),
 });

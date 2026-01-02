@@ -50,6 +50,13 @@
       "when": 1767323115157,
       "tag": "0006_chubby_miss_america",
       "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "5",
+      "when": 1767324091890,
+      "tag": "0007_milky_lady_bullseye",
+      "breakpoints": true
     }
   ]
 }
