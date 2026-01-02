@@ -266,7 +266,7 @@ font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
 
 ### 3.1 數據表總覽
 
-平台共有 **13 個數據表**，分為四大類別：
+平台共有 **15 個數據表**，分為五大類別：
 
 **用戶與認證**：
 - users（用戶基本資料）
@@ -288,6 +288,10 @@ font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
 - teams（團隊）
 - team_members（團隊成員）
 - team_knowledge（團隊知識庫）
+
+**自訂域名管理**：
+- user_domains（用戶自訂域名）
+- domain_health_logs（域名健康檢查日誌）
 
 ### 3.2 核心表結構詳解
 
@@ -1084,10 +1088,97 @@ pnpm dev
 | 2026-01-02 | 知識庫支援 5 種來源 | 提升知識獲取靈活性 |
 | 2026-01-02 | 對話結束自動生成摘要 | 增強客戶記憶功能 |
 | 2026-01-02 | 選定眨眼對話氣泡 Logo | 傳達友善、專業的品牌形象 |
+| 2026-01-02 | 添加自訂域名功能 | 域名管理費 HK$99/年，包含 SSL、DNS 監控 |
 
 ---
 
-## 附錄 B：給其他 AI 平台的審閱提示
+## 附錄 B：自訂域名功能詳細說明
+
+### B.1 功能概述
+
+自訂域名功能讓用戶可以綁定自己的品牌域名（如 `chat.yourbrand.com`）到 Lulubaby 平台，提供完整的品牌體驗。
+
+### B.2 定價結構
+
+| 項目 | 費用 | 說明 |
+|-----|------|------|
+| 域名管理費 | HK$99/年 | 包含 SSL、DNS 監控、到期提醒 |
+| 免費試用 | 14 天 | 全功能試用 |
+
+### B.3 數據庫結構
+
+#### user_domains - 用戶自訂域名表
+
+```sql
+CREATE TABLE user_domains (
+  id INT PRIMARY KEY AUTO_INCREMENT,
+  userId INT NOT NULL,                          -- 關聯用戶
+  domain VARCHAR(255) NOT NULL UNIQUE,          -- 完整域名
+  subdomain VARCHAR(100),                       -- 子域名部分
+  rootDomain VARCHAR(255),                      -- 根域名
+  status ENUM('pending_dns','verifying','ssl_pending','active','error'),
+  dnsRecordType VARCHAR(20),                    -- DNS 記錄類型 (CNAME)
+  dnsRecordValue VARCHAR(255),                  -- DNS 記錄值
+  dnsVerified BOOLEAN DEFAULT false,            -- DNS 驗證狀態
+  dnsVerifiedAt TIMESTAMP,                      -- DNS 驗證時間
+  sslEnabled BOOLEAN DEFAULT false,             -- SSL 啟用狀態
+  sslIssuedAt TIMESTAMP,                        -- SSL 簽發時間
+  sslExpiresAt TIMESTAMP,                       -- SSL 到期時間
+  verificationToken VARCHAR(64),                -- 驗證令牌
+  subscriptionStatus ENUM('trial','active','expired','cancelled'),
+  subscriptionStartedAt TIMESTAMP,              -- 訂閱開始時間
+  subscriptionExpiresAt TIMESTAMP,              -- 訂閱到期時間
+  annualFee INT DEFAULT 99,                     -- 年費 (HK$)
+  healthStatus ENUM('healthy','warning','error'),
+  lastHealthCheck TIMESTAMP,                    -- 最後健康檢查
+  lastErrorMessage TEXT,                        -- 最後錯誤訊息
+  createdAt TIMESTAMP DEFAULT NOW(),
+  updatedAt TIMESTAMP,
+  FOREIGN KEY (userId) REFERENCES users(id)
+);
+```
+
+#### domain_health_logs - 域名健康檢查日誌表
+
+```sql
+CREATE TABLE domain_health_logs (
+  id INT PRIMARY KEY AUTO_INCREMENT,
+  domainId INT NOT NULL,                        -- 關聯域名
+  checkType ENUM('dns','ssl','http'),           -- 檢查類型
+  status ENUM('success','warning','error'),     -- 檢查結果
+  responseTime INT,                             -- 響應時間 (ms)
+  errorMessage TEXT,                            -- 錯誤訊息
+  details TEXT,                                 -- 詳細資訊 (JSON)
+  checkedAt TIMESTAMP DEFAULT NOW(),            -- 檢查時間
+  FOREIGN KEY (domainId) REFERENCES user_domains(id)
+);
+```
+
+### B.4 API 路由
+
+| 路由 | 方法 | 說明 |
+|------|------|------|
+| `domains.list` | Query | 獲取用戶所有域名 |
+| `domains.get` | Query | 獲取單個域名詳情 |
+| `domains.add` | Mutation | 添加新域名 |
+| `domains.verifyDns` | Mutation | 驗證 DNS 設定 |
+| `domains.activateSsl` | Mutation | 啟用 SSL 證書 |
+| `domains.delete` | Mutation | 刪除域名 |
+| `domains.healthLogs` | Query | 獲取健康檢查日誌 |
+| `domains.pricing` | Query | 獲取定價資訊 |
+
+### B.5 用戶流程
+
+1. **添加域名**：用戶輸入域名（如 `chat.mybrand.com`）
+2. **獲取 DNS 指示**：系統返回 CNAME 記錄設定指示
+3. **設定 DNS**：用戶在域名註冊商添加 CNAME 記錄
+4. **驗證 DNS**：點擊「驗證 DNS」按鈕確認設定
+5. **啟用 SSL**：DNS 驗證成功後自動簽發 SSL 證書
+6. **域名生效**：用戶可通過自訂域名訪問 AI 助手
+
+---
+
+## 附錄 C：給其他 AI 平台的審閱提示
 
 如果您將此文檔提交給其他 AI 平台審閱或繼續開發，建議關注：
 
@@ -1110,5 +1201,5 @@ pnpm dev
 
 > **文檔維護提示**：此文檔應在每次重大更新後更新，確保始終反映項目最新狀態。
 >
-> **版本**：af66bf4b  
-> **最後更新**：2026年1月2日
+> **版本**：待更新（Checkpoint 後更新）  
+> **最後更新**：2026年1月2日（添加自訂域名功能）

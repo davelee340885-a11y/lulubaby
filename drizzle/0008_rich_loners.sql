@@ -1,0 +1,40 @@
+CREATE TABLE `domain_health_logs` (
+	`id` int AUTO_INCREMENT NOT NULL,
+	`domainId` int NOT NULL,
+	`checkType` enum('dns','ssl','http') NOT NULL,
+	`status` enum('success','warning','error') NOT NULL,
+	`responseTime` int,
+	`details` text,
+	`errorMessage` text,
+	`checkedAt` timestamp NOT NULL DEFAULT (now()),
+	CONSTRAINT `domain_health_logs_id` PRIMARY KEY(`id`)
+);
+--> statement-breakpoint
+CREATE TABLE `user_domains` (
+	`id` int AUTO_INCREMENT NOT NULL,
+	`userId` int NOT NULL,
+	`domain` varchar(255) NOT NULL,
+	`subdomain` varchar(100),
+	`rootDomain` varchar(255) NOT NULL,
+	`status` enum('pending_dns','verifying','active','ssl_pending','expired','error') NOT NULL DEFAULT 'pending_dns',
+	`dnsVerified` boolean NOT NULL DEFAULT false,
+	`dnsVerifiedAt` timestamp,
+	`dnsRecordType` enum('CNAME','A') DEFAULT 'CNAME',
+	`dnsRecordValue` varchar(255),
+	`verificationToken` varchar(64),
+	`sslEnabled` boolean NOT NULL DEFAULT false,
+	`sslIssuedAt` timestamp,
+	`sslExpiresAt` timestamp,
+	`subscriptionStatus` enum('trial','active','expired','cancelled') NOT NULL DEFAULT 'trial',
+	`subscriptionStartAt` timestamp,
+	`subscriptionExpiresAt` timestamp,
+	`annualFee` int NOT NULL DEFAULT 99,
+	`lastHealthCheck` timestamp,
+	`healthStatus` enum('healthy','warning','error') DEFAULT 'healthy',
+	`lastErrorMessage` text,
+	`expiryNotificationSent` boolean NOT NULL DEFAULT false,
+	`dnsErrorNotificationSent` boolean NOT NULL DEFAULT false,
+	`createdAt` timestamp NOT NULL DEFAULT (now()),
+	`updatedAt` timestamp NOT NULL DEFAULT (now()) ON UPDATE CURRENT_TIMESTAMP,
+	CONSTRAINT `user_domains_id` PRIMARY KEY(`id`)
+);

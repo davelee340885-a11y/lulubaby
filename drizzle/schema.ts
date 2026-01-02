@@ -645,3 +645,92 @@ export const customerConversationSummaries = mysqlTable("customer_conversation_s
 
 export type CustomerConversationSummary = typeof customerConversationSummaries.$inferSelect;
 export type InsertCustomerConversationSummary = typeof customerConversationSummaries.$inferInsert;
+
+
+/**
+ * User custom domains - stores domain configuration for custom URLs
+ * 用戶自訂域名 - 儲存專屬網址的域名配置
+ * 
+ * 域名管理費: HK$99/年
+ * 包含: 自動 SSL、DNS 監控、到期提醒
+ */
+export const userDomains = mysqlTable("user_domains", {
+  id: int("id").autoincrement().primaryKey(),
+  userId: int("userId").notNull(),
+  
+  // Domain information
+  domain: varchar("domain", { length: 255 }).notNull(), // e.g., "chat.mycompany.com"
+  subdomain: varchar("subdomain", { length: 100 }), // e.g., "chat" (if using subdomain)
+  rootDomain: varchar("rootDomain", { length: 255 }).notNull(), // e.g., "mycompany.com"
+  
+  // Domain status
+  status: mysqlEnum("status", [
+    "pending_dns",     // 等待 DNS 設定
+    "verifying",       // 正在驗證
+    "active",          // 已啟用
+    "ssl_pending",     // SSL 配置中
+    "expired",         // 已過期
+    "error"            // 錯誤
+  ]).default("pending_dns").notNull(),
+  
+  // DNS verification
+  dnsVerified: boolean("dnsVerified").default(false).notNull(),
+  dnsVerifiedAt: timestamp("dnsVerifiedAt"),
+  dnsRecordType: mysqlEnum("dnsRecordType", ["CNAME", "A"]).default("CNAME"),
+  dnsRecordValue: varchar("dnsRecordValue", { length: 255 }), // Target value for DNS record
+  verificationToken: varchar("verificationToken", { length: 64 }), // For TXT record verification
+  
+  // SSL status
+  sslEnabled: boolean("sslEnabled").default(false).notNull(),
+  sslIssuedAt: timestamp("sslIssuedAt"),
+  sslExpiresAt: timestamp("sslExpiresAt"),
+  
+  // Subscription and billing
+  subscriptionStatus: mysqlEnum("subscriptionStatus", [
+    "trial",           // 試用期
+    "active",          // 已付費
+    "expired",         // 已過期
+    "cancelled"        // 已取消
+  ]).default("trial").notNull(),
+  subscriptionStartAt: timestamp("subscriptionStartAt"),
+  subscriptionExpiresAt: timestamp("subscriptionExpiresAt"),
+  annualFee: int("annualFee").default(99).notNull(), // HK$99/年
+  
+  // Monitoring
+  lastHealthCheck: timestamp("lastHealthCheck"),
+  healthStatus: mysqlEnum("healthStatus", ["healthy", "warning", "error"]).default("healthy"),
+  lastErrorMessage: text("lastErrorMessage"),
+  
+  // Notifications
+  expiryNotificationSent: boolean("expiryNotificationSent").default(false).notNull(),
+  dnsErrorNotificationSent: boolean("dnsErrorNotificationSent").default(false).notNull(),
+  
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+
+export type UserDomain = typeof userDomains.$inferSelect;
+export type InsertUserDomain = typeof userDomains.$inferInsert;
+
+/**
+ * Domain health check logs - stores DNS and SSL check history
+ * 域名健康檢查記錄
+ */
+export const domainHealthLogs = mysqlTable("domain_health_logs", {
+  id: int("id").autoincrement().primaryKey(),
+  domainId: int("domainId").notNull(),
+  
+  // Check type and result
+  checkType: mysqlEnum("checkType", ["dns", "ssl", "http"]).notNull(),
+  status: mysqlEnum("status", ["success", "warning", "error"]).notNull(),
+  
+  // Check details
+  responseTime: int("responseTime"), // Response time in ms
+  details: text("details"), // JSON with detailed check results
+  errorMessage: text("errorMessage"),
+  
+  checkedAt: timestamp("checkedAt").defaultNow().notNull(),
+});
+
+export type DomainHealthLog = typeof domainHealthLogs.$inferSelect;
+export type InsertDomainHealthLog = typeof domainHealthLogs.$inferInsert;

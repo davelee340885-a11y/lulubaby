@@ -1639,3 +1639,196 @@ export async function getCustomerStats(personaId: number): Promise<{
 
   return { totalCustomers, returningCustomers, newCustomersToday, activeCustomers };
 }
+
+
+// ==================== Custom Domain Operations ====================
+import { userDomains, domainHealthLogs, InsertUserDomain, UserDomain, InsertDomainHealthLog, DomainHealthLog } from "../drizzle/schema";
+
+// Get all domains for a user
+export async function getDomainsByUserId(userId: number): Promise<UserDomain[]> {
+  const db = await getDb();
+  if (!db) return [];
+  return db.select().from(userDomains).where(eq(userDomains.userId, userId));
+}
+
+// Get a specific domain by ID
+export async function getDomainById(id: number): Promise<UserDomain | undefined> {
+  const db = await getDb();
+  if (!db) return undefined;
+  const result = await db.select().from(userDomains).where(eq(userDomains.id, id)).limit(1);
+  return result.length > 0 ? result[0] : undefined;
+}
+
+// Get domain by domain name
+export async function getDomainByName(domain: string): Promise<UserDomain | undefined> {
+  const db = await getDb();
+  if (!db) return undefined;
+  const result = await db.select().from(userDomains).where(eq(userDomains.domain, domain)).limit(1);
+  return result.length > 0 ? result[0] : undefined;
+}
+
+// Create a new domain
+export async function createDomain(data: InsertUserDomain): Promise<UserDomain | undefined> {
+  const db = await getDb();
+  if (!db) return undefined;
+  
+  const result = await db.insert(userDomains).values(data);
+  const insertId = result[0].insertId;
+  
+  const created = await db.select().from(userDomains).where(eq(userDomains.id, insertId)).limit(1);
+  return created.length > 0 ? created[0] : undefined;
+}
+
+// Update domain
+export async function updateDomain(id: number, userId: number, data: Partial<InsertUserDomain>): Promise<void> {
+  const db = await getDb();
+  if (!db) return;
+  
+  await db.update(userDomains)
+    .set(data)
+    .where(and(eq(userDomains.id, id), eq(userDomains.userId, userId)));
+}
+
+// Delete domain
+export async function deleteDomain(id: number, userId: number): Promise<void> {
+  const db = await getDb();
+  if (!db) return;
+  
+  // Also delete health logs
+  await db.delete(domainHealthLogs).where(eq(domainHealthLogs.domainId, id));
+  await db.delete(userDomains).where(and(eq(userDomains.id, id), eq(userDomains.userId, userId)));
+}
+
+// Update domain DNS verification status
+export async function updateDomainDnsStatus(id: number, verified: boolean, errorMessage?: string): Promise<void> {
+  const db = await getDb();
+  if (!db) return;
+  
+  const updateData: Partial<InsertUserDomain> = {
+    dnsVerified: verified,
+    lastHealthCheck: new Date(),
+  };
+  
+  if (verified) {
+    updateData.dnsVerifiedAt = new Date();
+    updateData.status = 'ssl_pending';
+    updateData.healthStatus = 'healthy';
+    updateData.lastErrorMessage = null;
+  } else {
+    updateData.status = 'error';
+    updateData.healthStatus = 'error';
+    updateData.lastErrorMessage = errorMessage || 'DNS verification failed';
+  }
+  
+  await db.update(userDomains).set(updateData).where(eq(userDomains.id, id));
+}
+
+// Update domain SSL status
+export async function updateDomainSslStatus(id: number, enabled: boolean, expiresAt?: Date): Promise<void> {
+  const db = await getDb();
+  if (!db) return;
+  
+  const updateData: Partial<InsertUserDomain> = {
+    sslEnabled: enabled,
+    lastHealthCheck: new Date(),
+  };
+  
+  if (enabled) {
+    updateData.sslIssuedAt = new Date();
+    updateData.sslExpiresAt = expiresAt || new Date(Date.now() + 90 * 24 * 60 * 60 * 1000); // 90 days default
+    updateData.status = 'active';
+    updateData.healthStatus = 'healthy';
+  }
+  
+  await db.update(userDomains).set(updateData).where(eq(userDomains.id, id));
+}
+
+// Update domain subscription status
+export async function updateDomainSubscription(id: number, status: 'trial' | 'active' | 'expired' | 'cancelled'): Promise<void> {
+  const db = await getDb();
+  if (!db) return;
+  
+  const updateData: Partial<InsertUserDomain> = {
+    subscriptionStatus: status,
+  };
+  
+  if (status === 'active') {
+    updateData.subscriptionStartAt = new Date();
+    updateData.subscriptionExpiresAt = new Date(Date.now() + 365 * 24 * 60 * 60 * 1000); // 1 year
+  }
+  
+  await db.update(userDomains).set(updateData).where(eq(userDomains.id, id));
+}
+
+// Create health log entry
+export async function createDomainHealthLog(data: InsertDomainHealthLog): Promise<DomainHealthLog | undefined> {
+  const db = await getDb();
+  if (!db) return undefined;
+  
+  const result = await db.insert(domainHealthLogs).values(data);
+  const insertId = result[0].insertId;
+  
+  const created = await db.select().from(domainHealthLogs).where(eq(domainHealthLogs.id, insertId)).limit(1);
+  return created.length > 0 ? created[0] : undefined;
+}
+
+// Get health logs for a domain
+export async function getDomainHealthLogs(domainId: number, limit: number = 10): Promise<DomainHealthLog[]> {
+  const db = await getDb();
+  if (!db) return [];
+  
+  return db.select()
+    .from(domainHealthLogs)
+    .where(eq(domainHealthLogs.domainId, domainId))
+    .orderBy(desc(domainHealthLogs.checkedAt))
+    .limit(limit);
+}
+
+// Get domains expiring soon (for notifications)
+export async function getDomainsExpiringSoon(daysAhead: number = 30): Promise<UserDomain[]> {
+  const db = await getDb();
+  if (!db) return [];
+  
+  const futureDate = new Date(Date.now() + daysAhead * 24 * 60 * 60 * 1000);
+  
+  return db.select()
+    .from(userDomains)
+    .where(and(
+      eq(userDomains.subscriptionStatus, 'active'),
+      eq(userDomains.expiryNotificationSent, false),
+      sql`${userDomains.subscriptionExpiresAt} <= ${futureDate}`
+    ));
+}
+
+// Get domains with DNS errors (for notifications)
+export async function getDomainsWithDnsErrors(): Promise<UserDomain[]> {
+  const db = await getDb();
+  if (!db) return [];
+  
+  return db.select()
+    .from(userDomains)
+    .where(and(
+      eq(userDomains.healthStatus, 'error'),
+      eq(userDomains.dnsErrorNotificationSent, false)
+    ));
+}
+
+// Mark expiry notification as sent
+export async function markExpiryNotificationSent(id: number): Promise<void> {
+  const db = await getDb();
+  if (!db) return;
+  
+  await db.update(userDomains)
+    .set({ expiryNotificationSent: true })
+    .where(eq(userDomains.id, id));
+}
+
+// Mark DNS error notification as sent
+export async function markDnsErrorNotificationSent(id: number): Promise<void> {
+  const db = await getDb();
+  if (!db) return;
+  
+  await db.update(userDomains)
+    .set({ dnsErrorNotificationSent: true })
+    .where(eq(userDomains.id, id));
+}
