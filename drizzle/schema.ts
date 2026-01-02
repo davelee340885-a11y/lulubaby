@@ -55,12 +55,18 @@ export const knowledgeBases = mysqlTable("knowledge_bases", {
   id: int("id").autoincrement().primaryKey(),
   userId: int("userId").notNull(),
   fileName: varchar("fileName", { length: 255 }).notNull(),
-  fileUrl: varchar("fileUrl", { length: 512 }).notNull(),
-  fileKey: varchar("fileKey", { length: 512 }).notNull(),
+  fileUrl: varchar("fileUrl", { length: 512 }),
+  fileKey: varchar("fileKey", { length: 512 }),
   fileSize: int("fileSize"),
   mimeType: varchar("mimeType", { length: 100 }),
   content: text("content"),
   status: mysqlEnum("status", ["processing", "ready", "error"]).default("processing").notNull(),
+  
+  // Knowledge source type and metadata
+  sourceType: mysqlEnum("sourceType", ["file", "youtube", "webpage", "text", "faq"]).default("file").notNull(),
+  sourceUrl: varchar("sourceUrl", { length: 1024 }), // Original URL for youtube/webpage
+  sourceMeta: text("sourceMeta"), // JSON metadata (video title, duration, webpage title, etc.)
+  
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
 });

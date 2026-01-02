@@ -2,7 +2,13 @@ import { trpc } from "@/lib/trpc";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { FileText, Upload, Trash2, Loader2, AlertCircle, CheckCircle } from "lucide-react";
+import { Textarea } from "@/components/ui/textarea";
+import { Label } from "@/components/ui/label";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { 
+  FileText, Upload, Trash2, Loader2, AlertCircle, CheckCircle, 
+  Youtube, Globe, Type, HelpCircle, Plus, X 
+} from "lucide-react";
 import { toast } from "sonner";
 import { useRef, useState } from "react";
 import {
@@ -16,13 +22,38 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 
+type SourceType = "file" | "youtube" | "webpage" | "text" | "faq";
+
+interface FAQItem {
+  question: string;
+  answer: string;
+}
+
 export default function Knowledge() {
   const { data: knowledgeBases, isLoading } = trpc.knowledge.list.useQuery();
   const utils = trpc.useUtils();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [uploading, setUploading] = useState(false);
   const [deleteId, setDeleteId] = useState<number | null>(null);
+  const [activeTab, setActiveTab] = useState<SourceType>("file");
 
+  // YouTube form state
+  const [youtubeUrl, setYoutubeUrl] = useState("");
+  const [youtubeTitle, setYoutubeTitle] = useState("");
+
+  // Webpage form state
+  const [webpageUrl, setWebpageUrl] = useState("");
+  const [webpageTitle, setWebpageTitle] = useState("");
+
+  // Text form state
+  const [textTitle, setTextTitle] = useState("");
+  const [textContent, setTextContent] = useState("");
+
+  // FAQ form state
+  const [faqTitle, setFaqTitle] = useState("");
+  const [faqItems, setFaqItems] = useState<FAQItem[]>([{ question: "", answer: "" }]);
+
+  // Mutations
   const uploadMutation = trpc.knowledge.upload.useMutation({
     onSuccess: () => {
       toast.success("文件上傳成功");
@@ -35,9 +66,65 @@ export default function Knowledge() {
     },
   });
 
+  const youtubeMutation = trpc.knowledge.addYouTube.useMutation({
+    onSuccess: () => {
+      toast.success("YouTube 影片字幕已添加");
+      utils.knowledge.list.invalidate();
+      setYoutubeUrl("");
+      setYoutubeTitle("");
+      setUploading(false);
+    },
+    onError: (error) => {
+      toast.error("添加失敗: " + error.message);
+      setUploading(false);
+    },
+  });
+
+  const webpageMutation = trpc.knowledge.addWebpage.useMutation({
+    onSuccess: () => {
+      toast.success("網頁內容已添加");
+      utils.knowledge.list.invalidate();
+      setWebpageUrl("");
+      setWebpageTitle("");
+      setUploading(false);
+    },
+    onError: (error) => {
+      toast.error("添加失敗: " + error.message);
+      setUploading(false);
+    },
+  });
+
+  const textMutation = trpc.knowledge.addText.useMutation({
+    onSuccess: () => {
+      toast.success("文字內容已添加");
+      utils.knowledge.list.invalidate();
+      setTextTitle("");
+      setTextContent("");
+      setUploading(false);
+    },
+    onError: (error) => {
+      toast.error("添加失敗: " + error.message);
+      setUploading(false);
+    },
+  });
+
+  const faqMutation = trpc.knowledge.addFAQ.useMutation({
+    onSuccess: () => {
+      toast.success("FAQ 問答已添加");
+      utils.knowledge.list.invalidate();
+      setFaqTitle("");
+      setFaqItems([{ question: "", answer: "" }]);
+      setUploading(false);
+    },
+    onError: (error) => {
+      toast.error("添加失敗: " + error.message);
+      setUploading(false);
+    },
+  });
+
   const deleteMutation = trpc.knowledge.delete.useMutation({
     onSuccess: () => {
-      toast.success("文件已刪除");
+      toast.success("知識項目已刪除");
       utils.knowledge.list.invalidate();
       setDeleteId(null);
     },
@@ -50,13 +137,11 @@ export default function Knowledge() {
     const file = e.target.files?.[0];
     if (!file) return;
 
-    // Check file size (max 5MB)
     if (file.size > 5 * 1024 * 1024) {
       toast.error("文件大小不能超過 5MB");
       return;
     }
 
-    // Check file type
     const allowedTypes = [
       "text/plain",
       "text/markdown",
@@ -72,7 +157,6 @@ export default function Knowledge() {
 
     setUploading(true);
 
-    // Read file as base64
     const reader = new FileReader();
     reader.onload = () => {
       const base64 = (reader.result as string).split(",")[1];
@@ -88,10 +172,82 @@ export default function Knowledge() {
     };
     reader.readAsDataURL(file);
 
-    // Reset input
     if (fileInputRef.current) {
       fileInputRef.current.value = "";
     }
+  };
+
+  const handleYouTubeSubmit = () => {
+    if (!youtubeUrl.trim()) {
+      toast.error("請輸入 YouTube 連結");
+      return;
+    }
+    setUploading(true);
+    youtubeMutation.mutate({
+      url: youtubeUrl.trim(),
+      title: youtubeTitle.trim() || undefined,
+    });
+  };
+
+  const handleWebpageSubmit = () => {
+    if (!webpageUrl.trim()) {
+      toast.error("請輸入網頁連結");
+      return;
+    }
+    setUploading(true);
+    webpageMutation.mutate({
+      url: webpageUrl.trim(),
+      title: webpageTitle.trim() || undefined,
+    });
+  };
+
+  const handleTextSubmit = () => {
+    if (!textTitle.trim()) {
+      toast.error("請輸入標題");
+      return;
+    }
+    if (!textContent.trim()) {
+      toast.error("請輸入內容");
+      return;
+    }
+    setUploading(true);
+    textMutation.mutate({
+      title: textTitle.trim(),
+      content: textContent.trim(),
+    });
+  };
+
+  const handleFAQSubmit = () => {
+    if (!faqTitle.trim()) {
+      toast.error("請輸入標題");
+      return;
+    }
+    const validItems = faqItems.filter(item => item.question.trim() && item.answer.trim());
+    if (validItems.length === 0) {
+      toast.error("請至少輸入一組有效的問答");
+      return;
+    }
+    setUploading(true);
+    faqMutation.mutate({
+      title: faqTitle.trim(),
+      items: validItems,
+    });
+  };
+
+  const addFAQItem = () => {
+    setFaqItems([...faqItems, { question: "", answer: "" }]);
+  };
+
+  const removeFAQItem = (index: number) => {
+    if (faqItems.length > 1) {
+      setFaqItems(faqItems.filter((_, i) => i !== index));
+    }
+  };
+
+  const updateFAQItem = (index: number, field: "question" | "answer", value: string) => {
+    const newItems = [...faqItems];
+    newItems[index][field] = value;
+    setFaqItems(newItems);
   };
 
   const formatFileSize = (bytes: number | null) => {
@@ -114,51 +270,323 @@ export default function Knowledge() {
     }
   };
 
+  const getSourceIcon = (sourceType: string | null) => {
+    switch (sourceType) {
+      case "youtube":
+        return <Youtube className="h-8 w-8 text-red-500" />;
+      case "webpage":
+        return <Globe className="h-8 w-8 text-blue-500" />;
+      case "text":
+        return <Type className="h-8 w-8 text-purple-500" />;
+      case "faq":
+        return <HelpCircle className="h-8 w-8 text-orange-500" />;
+      default:
+        return <FileText className="h-8 w-8 text-primary" />;
+    }
+  };
+
+  const getSourceLabel = (sourceType: string | null) => {
+    switch (sourceType) {
+      case "youtube":
+        return "YouTube 影片";
+      case "webpage":
+        return "網頁";
+      case "text":
+        return "文字";
+      case "faq":
+        return "FAQ 問答";
+      default:
+        return "文件";
+    }
+  };
+
   return (
     <div className="space-y-6">
       <div>
         <h1 className="text-2xl font-bold tracking-tight">知識庫管理</h1>
-        <p className="text-muted-foreground mt-1">上傳專業文件讓AI學習您的業務知識</p>
+        <p className="text-muted-foreground mt-1">上傳各種來源的內容讓AI學習您的業務知識</p>
       </div>
 
       <Card>
         <CardHeader>
-          <CardTitle>上傳文件</CardTitle>
-          <CardDescription>支持 TXT、MD、PDF、DOC、DOCX 格式，單個文件最大 5MB</CardDescription>
+          <CardTitle>添加知識</CardTitle>
+          <CardDescription>選擇適合的方式添加知識內容</CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="border-2 border-dashed rounded-lg p-8 text-center hover:border-primary/50 transition-colors">
-            <Input
-              ref={fileInputRef}
-              type="file"
-              accept=".txt,.md,.pdf,.doc,.docx"
-              onChange={handleFileSelect}
-              className="hidden"
-              id="file-upload"
-            />
-            <label htmlFor="file-upload" className="cursor-pointer">
-              <div className="flex flex-col items-center gap-3">
-                {uploading ? (
-                  <Loader2 className="h-10 w-10 text-muted-foreground animate-spin" />
-                ) : (
-                  <Upload className="h-10 w-10 text-muted-foreground" />
-                )}
-                <div>
-                  <p className="font-medium">{uploading ? "上傳中..." : "點擊或拖放文件到此處"}</p>
-                  <p className="text-sm text-muted-foreground mt-1">
-                    上傳產品資料、FAQ、公司介紹等文件
+          <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as SourceType)}>
+            <TabsList className="grid w-full grid-cols-5 mb-6">
+              <TabsTrigger value="file" className="flex items-center gap-2">
+                <FileText className="h-4 w-4" />
+                <span className="hidden sm:inline">文件上傳</span>
+              </TabsTrigger>
+              <TabsTrigger value="youtube" className="flex items-center gap-2">
+                <Youtube className="h-4 w-4" />
+                <span className="hidden sm:inline">YouTube</span>
+              </TabsTrigger>
+              <TabsTrigger value="webpage" className="flex items-center gap-2">
+                <Globe className="h-4 w-4" />
+                <span className="hidden sm:inline">網頁</span>
+              </TabsTrigger>
+              <TabsTrigger value="text" className="flex items-center gap-2">
+                <Type className="h-4 w-4" />
+                <span className="hidden sm:inline">文字</span>
+              </TabsTrigger>
+              <TabsTrigger value="faq" className="flex items-center gap-2">
+                <HelpCircle className="h-4 w-4" />
+                <span className="hidden sm:inline">FAQ</span>
+              </TabsTrigger>
+            </TabsList>
+
+            {/* File Upload Tab */}
+            <TabsContent value="file">
+              <div className="border-2 border-dashed rounded-lg p-8 text-center hover:border-primary/50 transition-colors">
+                <Input
+                  ref={fileInputRef}
+                  type="file"
+                  accept=".txt,.md,.pdf,.doc,.docx"
+                  onChange={handleFileSelect}
+                  className="hidden"
+                  id="file-upload"
+                  disabled={uploading}
+                />
+                <label htmlFor="file-upload" className="cursor-pointer">
+                  <div className="flex flex-col items-center gap-3">
+                    {uploading && activeTab === "file" ? (
+                      <Loader2 className="h-10 w-10 text-muted-foreground animate-spin" />
+                    ) : (
+                      <Upload className="h-10 w-10 text-muted-foreground" />
+                    )}
+                    <div>
+                      <p className="font-medium">{uploading && activeTab === "file" ? "上傳中..." : "點擊或拖放文件到此處"}</p>
+                      <p className="text-sm text-muted-foreground mt-1">
+                        支持 TXT、MD、PDF、DOC、DOCX 格式，最大 5MB
+                      </p>
+                    </div>
+                  </div>
+                </label>
+              </div>
+            </TabsContent>
+
+            {/* YouTube Tab */}
+            <TabsContent value="youtube">
+              <div className="space-y-4">
+                <div className="bg-red-50 dark:bg-red-950/20 border border-red-200 dark:border-red-800 rounded-lg p-4">
+                  <p className="text-sm text-red-700 dark:text-red-300">
+                    <strong>提示：</strong>輸入 YouTube 影片連結，系統將自動提取影片字幕作為知識內容。
+                    影片必須有字幕（自動生成或手動添加）才能提取。
                   </p>
                 </div>
+                <div className="space-y-2">
+                  <Label htmlFor="youtube-url">YouTube 連結 *</Label>
+                  <Input
+                    id="youtube-url"
+                    placeholder="https://www.youtube.com/watch?v=..."
+                    value={youtubeUrl}
+                    onChange={(e) => setYoutubeUrl(e.target.value)}
+                    disabled={uploading}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="youtube-title">自訂標題（選填）</Label>
+                  <Input
+                    id="youtube-title"
+                    placeholder="留空將使用影片ID作為標題"
+                    value={youtubeTitle}
+                    onChange={(e) => setYoutubeTitle(e.target.value)}
+                    disabled={uploading}
+                  />
+                </div>
+                <Button 
+                  onClick={handleYouTubeSubmit} 
+                  disabled={uploading || !youtubeUrl.trim()}
+                  className="w-full"
+                >
+                  {uploading && activeTab === "youtube" ? (
+                    <><Loader2 className="h-4 w-4 mr-2 animate-spin" />提取中...</>
+                  ) : (
+                    <><Youtube className="h-4 w-4 mr-2" />提取字幕</>
+                  )}
+                </Button>
               </div>
-            </label>
-          </div>
+            </TabsContent>
+
+            {/* Webpage Tab */}
+            <TabsContent value="webpage">
+              <div className="space-y-4">
+                <div className="bg-blue-50 dark:bg-blue-950/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4">
+                  <p className="text-sm text-blue-700 dark:text-blue-300">
+                    <strong>提示：</strong>輸入網頁連結，系統將自動抓取網頁的主要文字內容。
+                    適合抓取產品頁面、公司介紹、文章等內容。
+                  </p>
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="webpage-url">網頁連結 *</Label>
+                  <Input
+                    id="webpage-url"
+                    placeholder="https://example.com/page"
+                    value={webpageUrl}
+                    onChange={(e) => setWebpageUrl(e.target.value)}
+                    disabled={uploading}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="webpage-title">自訂標題（選填）</Label>
+                  <Input
+                    id="webpage-title"
+                    placeholder="留空將使用網頁標題"
+                    value={webpageTitle}
+                    onChange={(e) => setWebpageTitle(e.target.value)}
+                    disabled={uploading}
+                  />
+                </div>
+                <Button 
+                  onClick={handleWebpageSubmit} 
+                  disabled={uploading || !webpageUrl.trim()}
+                  className="w-full"
+                >
+                  {uploading && activeTab === "webpage" ? (
+                    <><Loader2 className="h-4 w-4 mr-2 animate-spin" />抓取中...</>
+                  ) : (
+                    <><Globe className="h-4 w-4 mr-2" />抓取內容</>
+                  )}
+                </Button>
+              </div>
+            </TabsContent>
+
+            {/* Text Tab */}
+            <TabsContent value="text">
+              <div className="space-y-4">
+                <div className="bg-purple-50 dark:bg-purple-950/20 border border-purple-200 dark:border-purple-800 rounded-lg p-4">
+                  <p className="text-sm text-purple-700 dark:text-purple-300">
+                    <strong>提示：</strong>直接輸入文字內容，適合添加產品說明、公司介紹、服務條款等。
+                  </p>
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="text-title">標題 *</Label>
+                  <Input
+                    id="text-title"
+                    placeholder="例如：公司簡介、產品說明"
+                    value={textTitle}
+                    onChange={(e) => setTextTitle(e.target.value)}
+                    disabled={uploading}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="text-content">內容 *</Label>
+                  <Textarea
+                    id="text-content"
+                    placeholder="輸入您想讓AI學習的內容..."
+                    value={textContent}
+                    onChange={(e) => setTextContent(e.target.value)}
+                    disabled={uploading}
+                    rows={8}
+                    className="resize-none"
+                  />
+                  <p className="text-xs text-muted-foreground text-right">
+                    {textContent.length.toLocaleString()} / 100,000 字元
+                  </p>
+                </div>
+                <Button 
+                  onClick={handleTextSubmit} 
+                  disabled={uploading || !textTitle.trim() || !textContent.trim()}
+                  className="w-full"
+                >
+                  {uploading && activeTab === "text" ? (
+                    <><Loader2 className="h-4 w-4 mr-2 animate-spin" />添加中...</>
+                  ) : (
+                    <><Type className="h-4 w-4 mr-2" />添加內容</>
+                  )}
+                </Button>
+              </div>
+            </TabsContent>
+
+            {/* FAQ Tab */}
+            <TabsContent value="faq">
+              <div className="space-y-4">
+                <div className="bg-orange-50 dark:bg-orange-950/20 border border-orange-200 dark:border-orange-800 rounded-lg p-4">
+                  <p className="text-sm text-orange-700 dark:text-orange-300">
+                    <strong>提示：</strong>以問答對的形式添加常見問題，AI將能更準確地回答類似問題。
+                    適合添加銷售話術、客服FAQ、產品問答等。
+                  </p>
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="faq-title">標題 *</Label>
+                  <Input
+                    id="faq-title"
+                    placeholder="例如：產品FAQ、銷售話術"
+                    value={faqTitle}
+                    onChange={(e) => setFaqTitle(e.target.value)}
+                    disabled={uploading}
+                  />
+                </div>
+                <div className="space-y-4">
+                  <Label>問答對</Label>
+                  {faqItems.map((item, index) => (
+                    <div key={index} className="border rounded-lg p-4 space-y-3 relative">
+                      {faqItems.length > 1 && (
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="absolute top-2 right-2 h-6 w-6"
+                          onClick={() => removeFAQItem(index)}
+                          disabled={uploading}
+                        >
+                          <X className="h-4 w-4" />
+                        </Button>
+                      )}
+                      <div className="space-y-2">
+                        <Label className="text-sm">問題 {index + 1}</Label>
+                        <Input
+                          placeholder="客戶可能會問的問題"
+                          value={item.question}
+                          onChange={(e) => updateFAQItem(index, "question", e.target.value)}
+                          disabled={uploading}
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label className="text-sm">答案</Label>
+                        <Textarea
+                          placeholder="您希望AI如何回答"
+                          value={item.answer}
+                          onChange={(e) => updateFAQItem(index, "answer", e.target.value)}
+                          disabled={uploading}
+                          rows={3}
+                          className="resize-none"
+                        />
+                      </div>
+                    </div>
+                  ))}
+                  <Button
+                    variant="outline"
+                    onClick={addFAQItem}
+                    disabled={uploading}
+                    className="w-full"
+                  >
+                    <Plus className="h-4 w-4 mr-2" />
+                    添加問答對
+                  </Button>
+                </div>
+                <Button 
+                  onClick={handleFAQSubmit} 
+                  disabled={uploading || !faqTitle.trim() || faqItems.every(item => !item.question.trim() || !item.answer.trim())}
+                  className="w-full"
+                >
+                  {uploading && activeTab === "faq" ? (
+                    <><Loader2 className="h-4 w-4 mr-2 animate-spin" />添加中...</>
+                  ) : (
+                    <><HelpCircle className="h-4 w-4 mr-2" />添加 FAQ</>
+                  )}
+                </Button>
+              </div>
+            </TabsContent>
+          </Tabs>
         </CardContent>
       </Card>
 
       <Card>
         <CardHeader>
-          <CardTitle>已上傳文件</CardTitle>
-          <CardDescription>AI將根據這些文件的內容回答客戶問題</CardDescription>
+          <CardTitle>知識庫內容</CardTitle>
+          <CardDescription>AI將根據這些內容回答客戶問題</CardDescription>
         </CardHeader>
         <CardContent>
           {isLoading ? (
@@ -168,7 +596,8 @@ export default function Knowledge() {
           ) : knowledgeBases?.length === 0 ? (
             <div className="text-center py-8 text-muted-foreground">
               <FileText className="h-12 w-12 mx-auto mb-3 opacity-50" />
-              <p>尚未上傳任何文件</p>
+              <p>尚未添加任何知識內容</p>
+              <p className="text-sm mt-1">使用上方的標籤頁添加各種來源的知識</p>
             </div>
           ) : (
             <div className="space-y-3">
@@ -178,12 +607,17 @@ export default function Knowledge() {
                   className="flex items-center justify-between p-4 rounded-lg border bg-card hover:bg-accent/30 transition-colors"
                 >
                   <div className="flex items-center gap-3">
-                    <FileText className="h-8 w-8 text-primary" />
+                    {getSourceIcon((kb as { sourceType?: string }).sourceType || "file")}
                     <div>
                       <p className="font-medium">{kb.fileName}</p>
                       <p className="text-sm text-muted-foreground">
-                        {formatFileSize(kb.fileSize)} · {new Date(kb.createdAt).toLocaleDateString("zh-TW")}
+                        {getSourceLabel((kb as { sourceType?: string }).sourceType || "file")} · {formatFileSize(kb.fileSize)} · {new Date(kb.createdAt).toLocaleDateString("zh-TW")}
                       </p>
+                      {(kb as { sourceUrl?: string }).sourceUrl && (
+                        <p className="text-xs text-muted-foreground truncate max-w-[300px]">
+                          {(kb as { sourceUrl?: string }).sourceUrl}
+                        </p>
+                      )}
                     </div>
                   </div>
                   <div className="flex items-center gap-3">
@@ -207,9 +641,9 @@ export default function Knowledge() {
       <AlertDialog open={deleteId !== null} onOpenChange={() => setDeleteId(null)}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>確定要刪除這個文件嗎？</AlertDialogTitle>
+            <AlertDialogTitle>確定要刪除這個知識項目嗎？</AlertDialogTitle>
             <AlertDialogDescription>
-              刪除後，AI將不再使用此文件的內容回答問題。此操作無法撤銷。
+              刪除後，AI將不再使用此內容回答問題。此操作無法撤銷。
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>

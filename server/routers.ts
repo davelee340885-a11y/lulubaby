@@ -21,6 +21,13 @@ import {
 import { invokeLLM } from "./_core/llm";
 import { storagePut } from "./storage";
 import { nanoid } from "nanoid";
+import { 
+  fetchYouTubeTranscript, 
+  fetchWebpageContent, 
+  processTextInput, 
+  processFAQInput,
+  type FAQItem 
+} from "./knowledgeSourceService";
 
 export const appRouter = router({
   system: systemRouter,
@@ -125,6 +132,7 @@ export const appRouter = router({
       return getKnowledgeBasesByUserId(ctx.user.id);
     }),
     
+    // File upload (existing)
     upload: protectedProcedure
       .input(z.object({
         fileName: z.string(),
@@ -145,7 +153,132 @@ export const appRouter = router({
           fileSize: fileBuffer.length,
           mimeType: input.mimeType,
           status: "ready",
-          content: fileBuffer.toString("utf-8").substring(0, 50000), // Store first 50k chars
+          content: fileBuffer.toString("utf-8").substring(0, 50000),
+          sourceType: "file",
+        });
+        
+        return kb;
+      }),
+    
+    // YouTube video transcript
+    addYouTube: protectedProcedure
+      .input(z.object({
+        url: z.string().min(1),
+        title: z.string().optional(),
+      }))
+      .mutation(async ({ ctx, input }) => {
+        const result = await fetchYouTubeTranscript(input.url);
+        
+        if (!result.success || !result.content) {
+          throw new Error(result.error || '獲取 YouTube 字幕失敗');
+        }
+        
+        const metadata = result.metadata as { videoId: string; duration?: number; transcriptLength: number };
+        const fileName = input.title || `YouTube-${metadata.videoId}`;
+        
+        const kb = await createKnowledgeBase({
+          userId: ctx.user.id,
+          fileName: fileName,
+          fileSize: result.content.length,
+          mimeType: "text/plain",
+          status: "ready",
+          content: result.content,
+          sourceType: "youtube",
+          sourceUrl: input.url,
+          sourceMeta: JSON.stringify(metadata),
+        });
+        
+        return kb;
+      }),
+    
+    // Webpage content
+    addWebpage: protectedProcedure
+      .input(z.object({
+        url: z.string().url(),
+        title: z.string().optional(),
+      }))
+      .mutation(async ({ ctx, input }) => {
+        const result = await fetchWebpageContent(input.url);
+        
+        if (!result.success || !result.content) {
+          throw new Error(result.error || '獲取網頁內容失敗');
+        }
+        
+        const metadata = result.metadata as { url: string; title: string; description?: string; contentLength: number };
+        const fileName = input.title || metadata.title || new URL(input.url).hostname;
+        
+        const kb = await createKnowledgeBase({
+          userId: ctx.user.id,
+          fileName: fileName,
+          fileSize: result.content.length,
+          mimeType: "text/html",
+          status: "ready",
+          content: result.content,
+          sourceType: "webpage",
+          sourceUrl: input.url,
+          sourceMeta: JSON.stringify(metadata),
+        });
+        
+        return kb;
+      }),
+    
+    // Direct text input
+    addText: protectedProcedure
+      .input(z.object({
+        title: z.string().min(1).max(255),
+        content: z.string().min(1),
+      }))
+      .mutation(async ({ ctx, input }) => {
+        const result = processTextInput(input.content, input.title);
+        
+        if (!result.success || !result.content) {
+          throw new Error(result.error || '處理文字內容失敗');
+        }
+        
+        const kb = await createKnowledgeBase({
+          userId: ctx.user.id,
+          fileName: input.title,
+          fileSize: result.content.length,
+          mimeType: "text/plain",
+          status: "ready",
+          content: result.content,
+          sourceType: "text",
+          sourceMeta: JSON.stringify(result.metadata),
+        });
+        
+        return kb;
+      }),
+    
+    // FAQ Q&A pairs
+    addFAQ: protectedProcedure
+      .input(z.object({
+        title: z.string().min(1).max(255),
+        items: z.array(z.object({
+          question: z.string().min(1),
+          answer: z.string().min(1),
+        })).min(1),
+      }))
+      .mutation(async ({ ctx, input }) => {
+        const result = processFAQInput(input.items as FAQItem[]);
+        
+        if (!result.success || !result.content) {
+          throw new Error(result.error || '處理 FAQ 內容失敗');
+        }
+        
+        const metadata = result.metadata as { itemCount: number; totalLength: number };
+        
+        const kb = await createKnowledgeBase({
+          userId: ctx.user.id,
+          fileName: input.title,
+          fileSize: result.content.length,
+          mimeType: "text/plain",
+          status: "ready",
+          content: result.content,
+          sourceType: "faq",
+          sourceMeta: JSON.stringify({
+            ...metadata,
+            items: input.items,
+          }),
         });
         
         return kb;
