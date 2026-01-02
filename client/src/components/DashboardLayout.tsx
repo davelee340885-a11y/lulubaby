@@ -115,11 +115,11 @@ export default function DashboardLayout({
       <div className="flex items-center justify-center min-h-screen bg-gradient-to-b from-background to-muted/30">
         <div className="flex flex-col items-center gap-8 p-8 max-w-md w-full">
           <div className="flex flex-col items-center gap-6">
-            <div className="h-16 w-16 rounded-2xl bg-primary/10 flex items-center justify-center">
-              <Bot className="h-8 w-8 text-primary" />
+            <div className="h-16 w-16 rounded-2xl bg-primary/10 flex items-center justify-center overflow-hidden">
+              <img src="/logo.png" alt="Lulubaby" className="h-12 w-12" />
             </div>
             <h1 className="text-2xl font-semibold tracking-tight text-center">
-              AI客服管理平台
+              Lulubaby
             </h1>
             <p className="text-sm text-muted-foreground text-center max-w-sm">
               登入後即可管理您的AI智能助手，為您的客戶提供專業的自動化服務
@@ -232,7 +232,7 @@ function DashboardLayoutContent({
               </button>
               {!isCollapsed ? (
                 <div className="flex items-center gap-2 min-w-0">
-                  <Bot className="h-5 w-5 text-primary shrink-0" />
+                  <img src="/logo.png" alt="Lulubaby" className="h-6 w-6 shrink-0" />
                   <span className="font-semibold tracking-tight truncate">
                     Lulubaby
                   </span>
