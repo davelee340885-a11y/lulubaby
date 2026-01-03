@@ -10,7 +10,8 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import { trpc } from "@/lib/trpc";
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useLocation } from "wouter";
 import {
   Dialog,
   DialogContent,
@@ -59,6 +60,25 @@ export default function Domain() {
   const [isSearching, setIsSearching] = useState(false);
   const [selectedDomain, setSelectedDomain] = useState<DomainSearchResult | null>(null);
   const [includeManagementService, setIncludeManagementService] = useState(true); // 可選的域名管理服務
+  
+  // Handle payment status from URL
+  const [location, setLocation] = useLocation();
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const paymentStatus = params.get('payment');
+    const sessionId = params.get('session_id');
+    
+    if (paymentStatus === 'success' && sessionId) {
+      toast.success('支付成功！域名正在註冊中，請稍候...');
+      // Clear URL parameters
+      window.history.replaceState({}, '', '/domain');
+      refetchDomains();
+    } else if (paymentStatus === 'cancelled') {
+      toast.error('支付已取消');
+      // Clear URL parameters
+      window.history.replaceState({}, '', '/domain');
+    }
+  }, []);
   
   const addDomainMutation = trpc.domains.add.useMutation({
     onSuccess: () => {
@@ -118,6 +138,19 @@ export default function Domain() {
     },
     onError: (error) => {
       toast.error(error.message);
+    },
+  });
+  
+  const createCheckoutSessionMutation = trpc.domains.createCheckoutSession.useMutation({
+    onSuccess: (data) => {
+      toast.success("正在跳轉到 Stripe 支付頁面...");
+      // 跳轉到 Stripe Checkout 頁面
+      if (data.url) {
+        window.location.href = data.url;
+      }
+    },
+    onError: (error) => {
+      toast.error("創建支付會話失敗: " + error.message);
     },
   });
   
@@ -270,8 +303,7 @@ export default function Domain() {
                     <TabsTrigger value="search">搜索域名</TabsTrigger>
                     <TabsTrigger value="info">費用說明</TabsTrigger>
                   </TabsList>
-                  
-                  <TabsContent value="search" className="space-y-4 mt-4">
+                  <TabsContent value="search" className="space-y-3 mt-3">
                     {/* Domain Search */}
                     <div className="space-y-3">
                       <Label>輸入您想要的域名關鍵字</Label>
@@ -303,13 +335,13 @@ export default function Domain() {
                     
                     {/* Search Results */}
                     {searchResults.length > 0 && (
-                      <div className="space-y-3">
+                    <div className="space-y-1.5">
                         <Label>搜索結果</Label>
-                        <div className="border rounded-lg divide-y max-h-[300px] overflow-y-auto">
+                        <div className="border rounded-lg divide-y max-h-[150px] overflow-y-auto">
                           {searchResults.map((result) => (
                             <div 
                               key={result.domainName}
-                              className={`flex items-center justify-between p-3 ${
+                              className={`flex items-center justify-between p-2 ${
                                 result.available 
                                   ? 'hover:bg-muted/50 cursor-pointer' 
                                   : 'opacity-60 bg-muted/30'
@@ -317,14 +349,14 @@ export default function Domain() {
                               onClick={() => handleSelectDomain(result)}
                             >
                               <div className="flex items-center gap-3">
-                                <Globe className={`h-4 w-4 ${result.available ? 'text-green-600' : 'text-muted-foreground'}`} />
+                                <Globe className={`h-3 w-3 ${result.available ? 'text-green-600' : 'text-muted-foreground'}`} />
                                 <div>
-                                  <p className="font-mono font-medium">{result.domainName}</p>
+                                  <p className="font-mono font-medium text-sm">{result.domainName}</p>
                                   <div className="flex items-center gap-2 mt-0.5">
                                     {result.available ? (
-                                      <Badge className="bg-green-500/10 text-green-600 text-xs">可購買</Badge>
+                                      <span className="text-xs text-green-600">可購買</span>
                                     ) : (
-                                      <Badge variant="secondary" className="text-xs">已被註冊</Badge>
+                                      <span className="text-xs text-muted-foreground">已被註冊</span>
                                     )}
                                     {result.premium && (
                                       <Badge variant="outline" className="text-amber-600 border-amber-300 text-xs">
@@ -337,7 +369,7 @@ export default function Domain() {
                               </div>
                               {result.available && (
                                 <div className="text-right">
-                                  <p className="font-bold text-primary">HK${result.sellingPriceHkd}/年</p>
+                                 <span className="text-base font-bold">HK${result.sellingPriceHkd}/年</span>
                                   <p className="text-xs text-muted-foreground">
                                     續費 HK${result.renewalPriceHkd}/年
                                   </p>
@@ -358,17 +390,17 @@ export default function Domain() {
                     
                     {/* Selected Domain Payment */}
                     {selectedDomain && (
-                      <div className="space-y-4 border-t pt-4">
-                        <div className="bg-green-50 dark:bg-green-950/20 border border-green-200 dark:border-green-900 rounded-lg p-4">
-                          <div className="flex items-center justify-between mb-4">
+                      <div className="space-y-3 border-t pt-3">
+                        <div className="bg-green-50 dark:bg-green-950/20 border border-green-200 dark:border-green-900 rounded-lg p-2">
+                          <div className="flex items-center justify-between mb-2">
                             <div>
-                              <p className="text-sm text-muted-foreground">已選擇域名</p>
-                              <p className="text-xl font-bold font-mono">{selectedDomain.domainName}</p>
+                              <p className="text-xs text-muted-foreground">已選擇域名</p>
+                              <p className="text-lg font-bold font-mono">{selectedDomain.domainName}</p>
                             </div>
-                            <Button variant="ghost" size="sm" onClick={() => setSelectedDomain(null)}>更換</Button>
+                            <Button variant="ghost" size="sm" className="h-7 text-xs" onClick={() => setSelectedDomain(null)}>更換</Button>
                           </div>
                           
-                          <div className="space-y-3 mb-4">
+                          <div className="space-y-2 mb-3">
                             <div className="flex justify-between items-center pb-2 border-b">
                               <span className="text-sm">域名費用</span>
                               <span className="font-mono">HK${selectedDomain.sellingPriceHkd}</span>
@@ -397,7 +429,7 @@ export default function Domain() {
                             </div>
                           </div>
                           
-                          <div className="text-xs text-muted-foreground mb-3">
+                          <div className="text-xs text-muted-foreground mb-2">
                             {includeManagementService ? (
                               <p>✓ 包含自動 SSL 證書、DNS 監控、到期提醒</p>
                             ) : (
@@ -405,9 +437,31 @@ export default function Domain() {
                             )}
                           </div>
                           
-                          <Button className="w-full gap-2" size="lg">
-                            <ShoppingCart className="h-4 w-4" />
-                            立即購買並支付
+                          <Button 
+                            className="w-full gap-2" 
+                            size="lg"
+                            onClick={() => {
+                              if (selectedDomain) {
+                                createCheckoutSessionMutation.mutate({
+                                  domainName: selectedDomain.domainName,
+                                  domainPriceHkd: selectedDomain.sellingPriceHkd,
+                                  includeManagementService: includeManagementService,
+                                });
+                              }
+                            }}
+                            disabled={createCheckoutSessionMutation.isPending}
+                          >
+                            {createCheckoutSessionMutation.isPending ? (
+                              <>
+                                <Loader2 className="h-4 w-4 animate-spin" />
+                                處理中...
+                              </>
+                            ) : (
+                              <>
+                                <ShoppingCart className="h-4 w-4" />
+                                立即購買並支付
+                              </>
+                            )}
                           </Button>
                         </div>
                       </div>
@@ -423,14 +477,16 @@ export default function Domain() {
                         </AlertDescription>
                       </Alert>
                     )}
+                    
+
                   </TabsContent>
                   
                   <TabsContent value="info" className="space-y-4 mt-4">
                     {/* Pricing Info */}
-                    <div className="space-y-4">
+                    <div className="space-y-3">
                       <div className="border rounded-lg p-4">
                         <h4 className="font-medium mb-3">域名費用（一次性）</h4>
-                        <div className="grid grid-cols-3 gap-4 text-center">
+                        <div className="grid grid-cols-2 gap-1.5 text-center">
                           <div className="p-3 bg-muted rounded-lg">
                             <span className="font-mono text-lg">.com</span>
                             <p className="text-sm text-muted-foreground mt-1">約 HK$80-120/年</p>
@@ -485,7 +541,7 @@ export default function Domain() {
                   </DialogDescription>
                 </DialogHeader>
                 <div className="space-y-4 py-4">
-                  <div className="space-y-2">
+                  <div className="space-y-4">
                     <Label htmlFor="domain">域名</Label>
                     <Input
                       id="domain"
@@ -567,7 +623,7 @@ export default function Domain() {
                   {(domain.status === 'pending_dns' || domain.status === 'verifying') && (
                     <div className="bg-muted rounded-lg p-3 space-y-2">
                       <p className="text-sm font-medium">DNS 設定指示：</p>
-                      <div className="grid grid-cols-3 gap-2 text-xs">
+                     <div className="grid gap-3 md:grid-cols-2 text-xs">
                         <div>
                           <p className="text-muted-foreground">類型</p>
                           <p className="font-mono">{domain.dnsRecordType}</p>

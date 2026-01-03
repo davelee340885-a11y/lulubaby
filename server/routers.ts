@@ -23,8 +23,11 @@ import {
   addConversationSummary, getCustomerConversationSummaries, getRecentConversationContext, getCustomerStats,
   // Domain operations
   getDomainsByUserId, getDomainById, getDomainByName, createDomain, updateDomain, deleteDomain,
-  updateDomainDnsStatus, updateDomainSslStatus, createDomainHealthLog, getDomainHealthLogs
+  updateDomainDnsStatus, updateDomainSslStatus, createDomainHealthLog, getDomainHealthLogs,
+  // Domain order operations
+  createDomainOrder, getDomainOrder, updateDomainOrderStatus
 } from "./db";
+import Stripe from "stripe";
 import { invokeLLM } from "./_core/llm";
 import { storagePut } from "./storage";
 import { nanoid } from "nanoid";
@@ -1750,7 +1753,76 @@ ${knowledgeContent.substring(0, 10000)}
         };
       }),
 
-    // Verify Name.com API connection
+    // Create Stripe payment intent for domain purchase
+    createCheckoutSession: protectedProcedure
+      .input(z.object({
+        domainName: z.string().min(1),
+        domainPriceHkd: z.number().positive(),
+        includeManagementService: z.boolean(),
+      }))
+      .mutation(async ({ ctx, input }) => {
+        try {
+          const stripe = new Stripe('sk_test_51SlSyGGRVm9ShSoQLrERwxKf7sx1uCFtNLJ1RTcHVksVI0xN6HYmyZw41vz67O5XOaaUh10Isfpq7NgTgugv6VpQ00Ccl8G67z');
+          
+          const managementFee = input.includeManagementService ? 99 : 0;
+          const totalAmount = Math.round((input.domainPriceHkd + managementFee) * 100);
+          
+          // Create domain order in database
+          const order = await createDomainOrder({
+            userId: ctx.user.id,
+            domain: input.domainName,
+            tld: input.domainName.split('.').pop() || 'com',
+            domainPrice: input.domainPriceHkd,
+            managementFee: managementFee,
+            totalPrice: (input.domainPriceHkd + managementFee),
+            currency: 'HKD',
+            status: 'pending_payment',
+          });
+          
+          // Create Stripe Checkout Session
+          const session = await stripe.checkout.sessions.create({
+            payment_method_types: ['card'],
+            line_items: [
+              {
+                price_data: {
+                  currency: 'hkd',
+                  product_data: {
+                    name: `域名註冊 - ${input.domainName}`,
+                    description: input.includeManagementService 
+                      ? '包含年度管理服務（SSL、DNS監控、到期提醒）'
+                      : '只購買域名',
+                  },
+                  unit_amount: totalAmount,
+                },
+                quantity: 1,
+              },
+            ],
+            mode: 'payment',
+            success_url: `https://3000-i0zfdzhheckbods29bz9j-bd49e366.sg1.manus.computer/domain?payment=success&session_id={CHECKOUT_SESSION_ID}`,
+            cancel_url: `https://3000-i0zfdzhheckbods29bz9j-bd49e366.sg1.manus.computer/domain?payment=cancelled`,
+            metadata: {
+              orderId: order?.id?.toString() || '',
+              domainName: input.domainName,
+              userId: ctx.user.id.toString(),
+            },
+          });
+          
+          return {
+            sessionId: session.id,
+            url: session.url,
+            orderId: order?.id,
+          };
+        } catch (error) {
+          console.error('Failed to create checkout session:', error);
+          console.error('Error details:', {
+            message: error instanceof Error ? error.message : String(error),
+            stack: error instanceof Error ? error.stack : undefined,
+          });
+          throw new Error(`無法創建支付會話：${error instanceof Error ? error.message : String(error)}`);
+        }
+      }),
+
+        // Verify Name.com API connection
     verifyApiConnection: protectedProcedure.query(async () => {
       try {
         const username = await verifyConnection();

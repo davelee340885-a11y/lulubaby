@@ -8,9 +8,7 @@ import { getDb } from '../db';
 import { updateDomainOrderStatus, getDomainOrder } from '../db';
 import { purchaseDomain } from '../namecom';
 
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || '', {
-  apiVersion: '2025-12-15.clover',
-});
+const stripe = new Stripe('sk_test_51SlSyGGRVm9ShSoQLrERwxKf7sx1uCFtNLJ1RTcHVksVI0xN6HYmyZw41vz67O5XOaaUh10Isfpq7NgTgugv6VpQ00Ccl8G67z');
 
 export interface WebhookEvent {
   id: string;
@@ -42,7 +40,7 @@ export const handlePaymentIntentSucceeded = async (paymentIntent: Stripe.Payment
     }
 
     // 驗證支付金額
-    const expectedAmount = order.domain_price + (order.include_management ? 9900 : 0);
+    const expectedAmount = order.domainPrice + (order.managementFee ? 9900 : 0);
     if (paymentIntent.amount !== expectedAmount) {
       console.error(
         `Payment amount mismatch. Expected: ${expectedAmount}, Got: ${paymentIntent.amount}`
@@ -60,9 +58,9 @@ export const handlePaymentIntentSucceeded = async (paymentIntent: Stripe.Payment
       // 準備域名購買請求
       const purchaseRequest = {
         domain: {
-          domainName: order.domain_name,
+          domainName: order.domain,
         },
-        purchasePrice: order.domain_price / 100, // 轉換為美元
+        purchasePrice: order.domainPrice / 100, // 轉換為美元
         years: 1,
       };
 
@@ -72,25 +70,9 @@ export const handlePaymentIntentSucceeded = async (paymentIntent: Stripe.Payment
       await updateDomainOrderStatus(orderId, 'registered');
 
       // 保存 Name.com 註冊信息
-      const db = await getDb();
-      if (db) {
-        // 使用原始 SQL 更新（因為 Drizzle 可能沒有直接支持）
-        await db.execute(
-          `UPDATE domain_orders SET 
-            registrar_order_id = ?, 
-            expiration_date = ?, 
-            status = ? 
-          WHERE id = ?`,
-          [
-            registrationResult.orderId || 'namecom_' + orderId,
-            new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString(),
-            'registered',
-            orderId,
-          ]
-        );
-      }
+      console.log(`Domain registration result:`, registrationResult);
 
-      console.log(`Domain registered successfully: ${order.domain_name}`);
+      console.log(`Domain registered successfully: ${order.domain}`);
     } catch (error) {
       console.error(`Failed to register domain with Name.com: ${error}`);
       // 更新訂單狀態為註冊失敗

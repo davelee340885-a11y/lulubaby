@@ -346,3 +346,31 @@
   - [x] 驗證 Name.com 測試環境中的域名購買
   - [x] 驗證訂單狀態的正確更新
   - [x] 驗證錯誤處理和重試機制
+
+
+## 優化域名購買頁面佈局和支付流程（Phase 4）
+- [ ] 使用 Stripe Payment Link 替代自建支付表單
+- [ ] 移除 StripePaymentForm 組件
+- [ ] 創建 Stripe Checkout Session API
+- [ ] 優化自訂網域頁面佈局以避免滾動
+- [ ] 減少內容高度和間距
+- [ ] 測試完整的支付流程
+- [ ] 保存檢查點
+
+- [ ] 進一步優化搜索結果頁面佈局，確保 just fit one page
+- [ ] 減少搜索結果列表高度
+- [ ] 縮小字體和間距
+- [ ] 優化選中域名支付摘要卡片大小
+
+- [ ] 修復點擊域名後沒有顯示購買按鈕的問題
+- [ ] 檢查 handleSelectDomain 函數
+- [ ] 檢查 selectedDomain 狀態設置
+
+- [ ] 修復 Stripe Checkout 完成後的 404 錯誤
+- [ ] 添加支付成功頁面
+- [ ] 添加支付取消頁面
+- [ ] 更新 Stripe Checkout Session 的回調 URL
+
+- [x] 更新 Stripe Keys 為 Lulubaby 沙盒環境
+- [x] 更新後端 Secret Key
+- [x] 更新前端 Publishable Key
