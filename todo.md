@@ -317,3 +317,32 @@
 - [ ] 7. 完整支付流程測試
   - [ ] 端到端測試：搜索 → 選擇 → 支付 → 註冊 → 確認
   - [ ] 驗證所有支付邏輯正確後才進行真實支付
+
+
+## 完整的端到端支付和域名購買測試（Phase 3）
+- [x] 1. 配置 Name.com 測試環境和 Stripe Webhook
+  - [x] 配置 Name.com 測試環境 API 端點（https://api.dev.name.com）
+  - [x] 創建 Stripe Webhook 端點監聽 payment_intent.succeeded
+  - [x] 實現支付成功後的自動觸發機制
+- [x] 2. 實現支付成功後自動調用 Name.com 購買 API
+  - [x] 創建 registerDomainWithNamecom 函數
+  - [x] 在 Webhook 中調用 Name.com 購買 API
+  - [x] 處理購買失敗的重試邏輯
+  - [x] 更新訂單狀態為已註冊
+- [x] 3. 驗證 Stripe 支付金額和 30% 分成
+  - [x] 驗證 Stripe 支付金額計算正確
+  - [x] 驗證 30% 分成已正確應用
+  - [x] 驗證分成分配到正確的 Stripe 賬戶
+  - [x] 測試不同金額的支付計算
+- [x] 4. 創建完整的端到端集成測試
+  - [x] 搜索域名測試
+  - [x] 選擇域名測試
+  - [x] 創建支付意圖測試
+  - [x] Stripe 支付測試
+  - [x] Name.com 購買測試
+  - [x] 訂單狀態驗證測試
+- [x] 5. 測試和驗證完整流程
+  - [x] 使用 Stripe 測試卡號進行完整流程測試
+  - [x] 驗證 Name.com 測試環境中的域名購買
+  - [x] 驗證訂單狀態的正確更新
+  - [x] 驗證錯誤處理和重試機制
