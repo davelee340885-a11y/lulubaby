@@ -6,7 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { 
   Globe, Crown, ChevronRight, Sparkles, Copy, ExternalLink, Check, 
   Plus, Trash2, RefreshCw, Shield, AlertCircle, CheckCircle2, Clock,
-  Info, ShoppingCart, ArrowRight, Search, Loader2
+  Info, ShoppingCart, ArrowRight, Search, Loader2, Link as LinkIcon
 } from "lucide-react";
 import { toast } from "sonner";
 import { trpc } from "@/lib/trpc";
@@ -58,6 +58,7 @@ export default function Domain() {
   const [searchResults, setSearchResults] = useState<DomainSearchResult[]>([]);
   const [isSearching, setIsSearching] = useState(false);
   const [selectedDomain, setSelectedDomain] = useState<DomainSearchResult | null>(null);
+  const [includeManagementService, setIncludeManagementService] = useState(true); // 可選的域名管理服務
   
   const addDomainMutation = trpc.domains.add.useMutation({
     onSuccess: () => {
@@ -249,15 +250,15 @@ export default function Domain() {
             <Dialog open={isBuyDialogOpen} onOpenChange={setIsBuyDialogOpen}>
               <DialogTrigger asChild>
                 <Button size="sm" variant="outline" className="gap-2">
-                  <ShoppingCart className="h-4 w-4" />
-                  購買新域名
+                  <Plus className="h-4 w-4" />
+                  自訂網域
                 </Button>
               </DialogTrigger>
               <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
                 <DialogHeader>
                   <DialogTitle className="flex items-center gap-2">
-                    <ShoppingCart className="h-5 w-5" />
-                    購買新域名
+                    <Plus className="h-5 w-5" />
+                    自訂網域
                   </DialogTitle>
                   <DialogDescription>
                     搜索並購買您的專屬品牌域名
@@ -372,14 +373,36 @@ export default function Domain() {
                               <span className="text-sm">域名費用</span>
                               <span className="font-mono">HK${selectedDomain.sellingPriceHkd}</span>
                             </div>
-                            <div className="flex justify-between items-center pb-2 border-b">
-                              <span className="text-sm">年度管理費</span>
-                              <span className="font-mono">HK$99</span>
+                            
+                            {/* Management Service Toggle */}
+                            <div className="flex items-center justify-between pb-2 border-b">
+                              <div className="flex items-center gap-2">
+                                <input
+                                  type="checkbox"
+                                  checked={includeManagementService}
+                                  onChange={(e) => setIncludeManagementService(e.target.checked)}
+                                  className="rounded border-gray-300"
+                                  id="management-service"
+                                />
+                                <label htmlFor="management-service" className="text-sm cursor-pointer">
+                                  年度管理費
+                                </label>
+                              </div>
+                              <span className="font-mono">{includeManagementService ? 'HK$99' : 'HK$0'}</span>
                             </div>
+                            
                             <div className="flex justify-between items-center text-lg font-bold text-primary">
                               <span>總計</span>
-                              <span className="font-mono">HK${selectedDomain.sellingPriceHkd + 99}</span>
+                              <span className="font-mono">HK${selectedDomain.sellingPriceHkd + (includeManagementService ? 99 : 0)}</span>
                             </div>
+                          </div>
+                          
+                          <div className="text-xs text-muted-foreground mb-3">
+                            {includeManagementService ? (
+                              <p>✓ 包含自動 SSL 證書、DNS 監控、到期提醒</p>
+                            ) : (
+                              <p>✗ 只購買域名，不提供管理服務</p>
+                            )}
                           </div>
                           
                           <Button className="w-full gap-2" size="lg">
@@ -450,13 +473,13 @@ export default function Domain() {
             <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
               <DialogTrigger asChild>
                 <Button size="sm" className="gap-2">
-                  <Plus className="h-4 w-4" />
-                  連接現有域名
+                  <LinkIcon className="h-4 w-4" />
+                  連接現有網域
                 </Button>
               </DialogTrigger>
               <DialogContent>
                 <DialogHeader>
-                  <DialogTitle>連接現有域名</DialogTitle>
+                  <DialogTitle>連接現有網域</DialogTitle>
                   <DialogDescription>
                     輸入您已擁有的域名，我們將提供 DNS 設定指示
                   </DialogDescription>
