@@ -64,6 +64,13 @@
       "when": 1767334331278,
       "tag": "0008_rich_loners",
       "breakpoints": true
+    },
+    {
+      "idx": 9,
+      "version": "5",
+      "when": 1767434157890,
+      "tag": "0009_lyrical_hercules",
+      "breakpoints": true
     }
   ]
 }

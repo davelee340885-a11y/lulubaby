@@ -29,6 +29,15 @@ import { invokeLLM } from "./_core/llm";
 import { storagePut } from "./storage";
 import { nanoid } from "nanoid";
 import { 
+  searchDomainsWithPricing, 
+  checkDomainAvailability, 
+  getDomainPricing,
+  purchaseDomain,
+  setDnsRecords,
+  verifyConnection,
+  type ContactInfo
+} from "./namecom";
+import { 
   fetchYouTubeTranscript, 
   fetchWebpageContent, 
   processTextInput, 
@@ -1621,7 +1630,135 @@ ${knowledgeContent.substring(0, 10000)}
         trialDays: 14,
       };
     }),
+
+    // Search domains with pricing (Name.com API)
+    search: protectedProcedure
+      .input(z.object({
+        keyword: z.string().min(1).max(63),
+        tlds: z.array(z.string()).optional(),
+      }))
+      .mutation(async ({ input }) => {
+        const tlds = input.tlds || ['com', 'net', 'org', 'io', 'co', 'ai'];
+        return searchDomainsWithPricing(input.keyword, tlds);
+      }),
+
+    // Check single domain availability
+    checkAvailability: protectedProcedure
+      .input(z.object({
+        domain: z.string().min(1),
+      }))
+      .query(async ({ input }) => {
+        return getDomainPricing(input.domain);
+      }),
+
+    // Purchase domain via Name.com
+    purchase: protectedProcedure
+      .input(z.object({
+        domainName: z.string().min(1),
+        years: z.number().min(1).max(10).default(1),
+        contact: z.object({
+          firstName: z.string().min(1),
+          lastName: z.string().min(1),
+          email: z.string().email(),
+          phone: z.string().min(1),
+          address1: z.string().min(1),
+          city: z.string().min(1),
+          state: z.string().min(1),
+          zip: z.string().min(1),
+          country: z.string().min(2).max(2), // ISO 3166-1 alpha-2
+          companyName: z.string().optional(),
+        }),
+      }))
+      .mutation(async ({ ctx, input }) => {
+        // First check if domain is available
+        const pricing = await getDomainPricing(input.domainName);
+        if (!pricing.available) {
+          throw new Error('此域名已被註冊，無法購買');
+        }
+
+        // Prepare contact info
+        const contactInfo: ContactInfo = {
+          firstName: input.contact.firstName,
+          lastName: input.contact.lastName,
+          email: input.contact.email,
+          phone: input.contact.phone,
+          address1: input.contact.address1,
+          city: input.contact.city,
+          state: input.contact.state,
+          zip: input.contact.zip,
+          country: input.contact.country,
+          companyName: input.contact.companyName,
+        };
+
+        // Purchase domain via Name.com API
+        const result = await purchaseDomain({
+          domain: {
+            domainName: input.domainName,
+          },
+          purchasePrice: pricing.originalPriceUsd,
+          years: input.years,
+          contacts: {
+            registrant: contactInfo,
+            admin: contactInfo,
+            tech: contactInfo,
+            billing: contactInfo,
+          },
+        });
+
+        // Create domain record in our database
+        const domainParts = input.domainName.toLowerCase().split('.');
+        const rootDomain = domainParts.slice(-2).join('.');
+        const subdomain = domainParts.length > 2 ? domainParts.slice(0, -2).join('.') : null;
+        const verificationToken = nanoid(32);
+
+        const newDomain = await createDomain({
+          userId: ctx.user.id,
+          domain: input.domainName.toLowerCase(),
+          subdomain,
+          rootDomain,
+          status: 'active',
+          dnsRecordType: 'CNAME',
+          dnsRecordValue: 'lulubaby.manus.space',
+          verificationToken,
+          subscriptionStatus: 'active',
+          annualFee: pricing.sellingPriceHkd,
+        });
+
+        // Set DNS records to point to Lulubaby
+        try {
+          await setDnsRecords(input.domainName, [
+            {
+              host: '',
+              type: 'CNAME',
+              answer: 'lulubaby.manus.space',
+              ttl: 300,
+            },
+          ]);
+        } catch (dnsError) {
+          console.error('Failed to set DNS records:', dnsError);
+          // Domain is still purchased, just DNS setup failed
+        }
+
+        return {
+          success: true,
+          domain: newDomain,
+          namecomDomain: result,
+          pricing: {
+            originalPriceUsd: pricing.originalPriceUsd,
+            sellingPriceHkd: pricing.sellingPriceHkd,
+          },
+        };
+      }),
+
+    // Verify Name.com API connection
+    verifyApiConnection: protectedProcedure.query(async () => {
+      try {
+        const username = await verifyConnection();
+        return { connected: true, username };
+      } catch (error) {
+        return { connected: false, error: String(error) };
+      }
+    }),
   }),
 });
-
 export type AppRouter = typeof appRouter;

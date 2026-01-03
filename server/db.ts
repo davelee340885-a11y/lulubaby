@@ -1832,3 +1832,122 @@ export async function markDnsErrorNotificationSent(id: number): Promise<void> {
     .set({ dnsErrorNotificationSent: true })
     .where(eq(userDomains.id, id));
 }
+
+// ==================== Domain Orders Operations ====================
+import { DomainOrder, InsertDomainOrder, domainOrders, StripePayment, InsertStripePayment, stripePayments } from "../drizzle/schema";
+
+export async function createDomainOrder(data: InsertDomainOrder): Promise<DomainOrder | undefined> {
+  const db = await getDb();
+  if (!db) return undefined;
+  
+  const result = await db.insert(domainOrders).values(data);
+  const insertId = result[0].insertId;
+  
+  const created = await db.select().from(domainOrders).where(eq(domainOrders.id, insertId)).limit(1);
+  return created.length > 0 ? created[0] : undefined;
+}
+
+export async function getDomainOrder(id: number): Promise<DomainOrder | undefined> {
+  const db = await getDb();
+  if (!db) return undefined;
+  
+  const result = await db.select().from(domainOrders).where(eq(domainOrders.id, id)).limit(1);
+  return result.length > 0 ? result[0] : undefined;
+}
+
+export async function getDomainOrdersByUser(userId: number): Promise<DomainOrder[]> {
+  const db = await getDb();
+  if (!db) return [];
+  
+  return db.select()
+    .from(domainOrders)
+    .where(eq(domainOrders.userId, userId))
+    .orderBy(desc(domainOrders.createdAt));
+}
+
+export async function getDomainOrderByStripePaymentIntent(paymentIntentId: string): Promise<DomainOrder | undefined> {
+  const db = await getDb();
+  if (!db) return undefined;
+  
+  const result = await db.select()
+    .from(domainOrders)
+    .where(eq(domainOrders.stripePaymentIntentId, paymentIntentId))
+    .limit(1);
+  
+  return result.length > 0 ? result[0] : undefined;
+}
+
+export async function updateDomainOrder(id: number, data: Partial<InsertDomainOrder>): Promise<void> {
+  const db = await getDb();
+  if (!db) return;
+  
+  await db.update(domainOrders).set(data).where(eq(domainOrders.id, id));
+}
+
+export async function updateDomainOrderStatus(id: number, status: string): Promise<void> {
+  const db = await getDb();
+  if (!db) return;
+  
+  await db.update(domainOrders)
+    .set({ status: status as any, updatedAt: new Date() })
+    .where(eq(domainOrders.id, id));
+}
+
+// ==================== Stripe Payments Operations ====================
+
+export async function createStripePayment(data: InsertStripePayment): Promise<StripePayment | undefined> {
+  const db = await getDb();
+  if (!db) return undefined;
+  
+  const result = await db.insert(stripePayments).values(data);
+  const insertId = result[0].insertId;
+  
+  const created = await db.select().from(stripePayments).where(eq(stripePayments.id, insertId)).limit(1);
+  return created.length > 0 ? created[0] : undefined;
+}
+
+export async function getStripePayment(id: number): Promise<StripePayment | undefined> {
+  const db = await getDb();
+  if (!db) return undefined;
+  
+  const result = await db.select().from(stripePayments).where(eq(stripePayments.id, id)).limit(1);
+  return result.length > 0 ? result[0] : undefined;
+}
+
+export async function getStripePaymentByPaymentIntentId(paymentIntentId: string): Promise<StripePayment | undefined> {
+  const db = await getDb();
+  if (!db) return undefined;
+  
+  const result = await db.select()
+    .from(stripePayments)
+    .where(eq(stripePayments.stripePaymentIntentId, paymentIntentId))
+    .limit(1);
+  
+  return result.length > 0 ? result[0] : undefined;
+}
+
+export async function getStripePaymentsByUser(userId: number): Promise<StripePayment[]> {
+  const db = await getDb();
+  if (!db) return [];
+  
+  return db.select()
+    .from(stripePayments)
+    .where(eq(stripePayments.userId, userId))
+    .orderBy(desc(stripePayments.createdAt));
+}
+
+export async function updateStripePayment(id: number, data: Partial<InsertStripePayment>): Promise<void> {
+  const db = await getDb();
+  if (!db) return;
+  
+  await db.update(stripePayments).set(data).where(eq(stripePayments.id, id));
+}
+
+export async function updateStripePaymentStatus(paymentIntentId: string, status: string): Promise<void> {
+  const db = await getDb();
+  if (!db) return;
+  
+  await db.update(stripePayments)
+    .set({ status: status as any, updatedAt: new Date() })
+    .where(eq(stripePayments.stripePaymentIntentId, paymentIntentId));
+}

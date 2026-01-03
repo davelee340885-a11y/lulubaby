@@ -734,3 +734,103 @@ export const domainHealthLogs = mysqlTable("domain_health_logs", {
 
 export type DomainHealthLog = typeof domainHealthLogs.$inferSelect;
 export type InsertDomainHealthLog = typeof domainHealthLogs.$inferInsert;
+
+/**
+ * Domain orders - stores domain purchase orders
+ * 域名訂單 - 儲存域名購買訂單
+ */
+export const domainOrders = mysqlTable("domain_orders", {
+  id: int("id").autoincrement().primaryKey(),
+  userId: int("userId").notNull(),
+  
+  // Domain information
+  domain: varchar("domain", { length: 255 }).notNull(), // e.g., "mycompany.com"
+  tld: varchar("tld", { length: 20 }).notNull(), // e.g., ".com"
+  registrar: varchar("registrar", { length: 100 }).default("namecom").notNull(), // Domain registrar
+  registrarOrderId: varchar("registrarOrderId", { length: 255 }), // Order ID from registrar (e.g., Name.com)
+  
+  // Pricing
+  domainPrice: int("domainPrice").notNull(), // Price in HK cents (e.g., 1001 = HK$10.01)
+  managementFee: int("managementFee").default(9900).notNull(), // HK$99/year in cents
+  totalPrice: int("totalPrice").notNull(), // Total price in HK cents
+  currency: varchar("currency", { length: 3 }).default("HKD").notNull(),
+  
+  // Payment information
+  stripePaymentIntentId: varchar("stripePaymentIntentId", { length: 255 }), // Stripe payment intent ID
+  stripeInvoiceId: varchar("stripeInvoiceId", { length: 255 }), // Stripe invoice ID
+  
+  // Order status
+  status: mysqlEnum("status", [
+    "pending_payment",    // 待支付
+    "payment_processing", // 支付處理中
+    "payment_failed",     // 支付失敗
+    "payment_completed",  // 支付完成
+    "registering",        // 正在註冊
+    "registered",         // 已註冊
+    "failed",             // 註冊失敗
+    "cancelled"           // 已取消
+  ]).default("pending_payment").notNull(),
+  
+  // Registration details
+  registrationDate: timestamp("registrationDate"), // When domain was registered
+  expirationDate: timestamp("expirationDate"), // Domain expiration date
+  autoRenewal: boolean("autoRenewal").default(true).notNull(),
+  
+  // Error tracking
+  lastErrorMessage: text("lastErrorMessage"),
+  failureReason: text("failureReason"),
+  
+  // Metadata
+  metadata: text("metadata"), // JSON with additional info
+  
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+export type DomainOrder = typeof domainOrders.$inferSelect;
+export type InsertDomainOrder = typeof domainOrders.$inferInsert;
+
+/**
+ * Stripe payments - stores Stripe payment records
+ * Stripe 支付記錄
+ */
+export const stripePayments = mysqlTable("stripe_payments", {
+  id: int("id").autoincrement().primaryKey(),
+  userId: int("userId").notNull(),
+  
+  // Stripe IDs
+  stripePaymentIntentId: varchar("stripePaymentIntentId", { length: 255 }).notNull().unique(),
+  stripeCustomerId: varchar("stripeCustomerId", { length: 255 }),
+  stripeInvoiceId: varchar("stripeInvoiceId", { length: 255 }),
+  
+  // Payment details
+  amount: int("amount").notNull(), // Amount in HK cents
+  currency: varchar("currency", { length: 3 }).default("HKD").notNull(),
+  description: text("description"),
+  
+  // Payment status
+  status: mysqlEnum("status", [
+    "requires_payment_method",
+    "requires_confirmation",
+    "requires_action",
+    "processing",
+    "requires_capture",
+    "canceled",
+    "succeeded"
+  ]).notNull(),
+  
+  // Related entity
+  relatedType: mysqlEnum("relatedType", [
+    "domain_order",
+    "subscription",
+    "other"
+  ]).default("domain_order"),
+  relatedId: int("relatedId"), // ID of related entity (e.g., domain_orders.id)
+  
+  // Metadata
+  metadata: text("metadata"), // JSON with additional info
+  
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+export type StripePayment = typeof stripePayments.$inferSelect;
+export type InsertStripePayment = typeof stripePayments.$inferInsert;

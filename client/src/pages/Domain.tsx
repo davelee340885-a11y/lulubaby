@@ -6,7 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { 
   Globe, Crown, ChevronRight, Sparkles, Copy, ExternalLink, Check, 
   Plus, Trash2, RefreshCw, Shield, AlertCircle, CheckCircle2, Clock,
-  Info, ShoppingCart, ArrowRight
+  Info, ShoppingCart, ArrowRight, Search, Loader2
 } from "lucide-react";
 import { toast } from "sonner";
 import { trpc } from "@/lib/trpc";
@@ -25,6 +25,21 @@ import {
   AlertDescription,
   AlertTitle,
 } from "@/components/ui/alert";
+import {
+  Tabs,
+  TabsContent,
+  TabsList,
+  TabsTrigger,
+} from "@/components/ui/tabs";
+
+interface DomainSearchResult {
+  domainName: string;
+  available: boolean;
+  premium: boolean;
+  originalPriceUsd: number;
+  sellingPriceHkd: number;
+  renewalPriceHkd: number;
+}
 
 export default function Domain() {
   const { data: persona } = trpc.persona.get.useQuery();
@@ -38,8 +53,14 @@ export default function Domain() {
   const [verifyingId, setVerifyingId] = useState<number | null>(null);
   const [activatingId, setActivatingId] = useState<number | null>(null);
   
+  // Domain search states
+  const [searchKeyword, setSearchKeyword] = useState("");
+  const [searchResults, setSearchResults] = useState<DomainSearchResult[]>([]);
+  const [isSearching, setIsSearching] = useState(false);
+  const [selectedDomain, setSelectedDomain] = useState<DomainSearchResult | null>(null);
+  
   const addDomainMutation = trpc.domains.add.useMutation({
-    onSuccess: (data) => {
+    onSuccess: () => {
       toast.success("域名已添加，請按照指示設定 DNS 記錄");
       setNewDomain("");
       setIsAddDialogOpen(false);
@@ -47,6 +68,17 @@ export default function Domain() {
     },
     onError: (error) => {
       toast.error(error.message);
+    },
+  });
+  
+  const searchDomainsMutation = trpc.domains.search.useMutation({
+    onSuccess: (data) => {
+      setSearchResults(data);
+      setIsSearching(false);
+    },
+    onError: (error) => {
+      toast.error("搜索失敗：" + error.message);
+      setIsSearching(false);
     },
   });
   
@@ -139,10 +171,28 @@ export default function Domain() {
     activateSslMutation.mutate({ id });
   };
   
-  const handleOpenManusDomains = () => {
-    // Open Manus Management UI Domains panel in new tab
-    window.open('https://manus.im/domains', '_blank');
-    toast.info("已在新分頁開啟 Manus 域名商店，購買完成後請返回此頁面連接域名");
+  const handleSearchDomains = () => {
+    if (!searchKeyword.trim()) {
+      toast.error("請輸入要搜索的域名關鍵字");
+      return;
+    }
+    // Clean the keyword - remove spaces and special characters
+    const cleanKeyword = searchKeyword.trim().toLowerCase().replace(/[^a-z0-9-]/g, '');
+    if (!cleanKeyword) {
+      toast.error("請輸入有效的域名關鍵字（只能包含英文字母、數字和連字符）");
+      return;
+    }
+    setIsSearching(true);
+    setSearchResults([]);
+    searchDomainsMutation.mutate({ keyword: cleanKeyword });
+  };
+  
+  const handleSelectDomain = (domain: DomainSearchResult) => {
+    if (!domain.available) {
+      toast.error("此域名已被註冊，無法購買");
+      return;
+    }
+    setSelectedDomain(domain);
   };
 
   return (
@@ -203,112 +253,199 @@ export default function Domain() {
                   購買新域名
                 </Button>
               </DialogTrigger>
-              <DialogContent className="max-w-lg">
+              <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
                 <DialogHeader>
                   <DialogTitle className="flex items-center gap-2">
                     <ShoppingCart className="h-5 w-5" />
                     購買新域名
                   </DialogTitle>
                   <DialogDescription>
-                    只需 3 個簡單步驟，即可擁有專屬品牌域名
+                    搜索並購買您的專屬品牌域名
                   </DialogDescription>
                 </DialogHeader>
-                <div className="space-y-4 py-4">
-                  {/* Step 1 */}
-                  <div className="border rounded-lg p-4 space-y-3">
-                    <div className="flex items-center gap-3">
-                      <div className="h-8 w-8 rounded-full bg-primary flex items-center justify-center flex-shrink-0">
-                        <span className="text-sm font-bold text-primary-foreground">1</span>
+                
+                <Tabs defaultValue="search" className="w-full">
+                  <TabsList className="grid w-full grid-cols-2">
+                    <TabsTrigger value="search">搜索域名</TabsTrigger>
+                    <TabsTrigger value="info">費用說明</TabsTrigger>
+                  </TabsList>
+                  
+                  <TabsContent value="search" className="space-y-4 mt-4">
+                    {/* Domain Search */}
+                    <div className="space-y-3">
+                      <Label>輸入您想要的域名關鍵字</Label>
+                      <div className="flex gap-2">
+                        <Input
+                          placeholder="例如：mybrand"
+                          value={searchKeyword}
+                          onChange={(e) => setSearchKeyword(e.target.value)}
+                          onKeyDown={(e) => e.key === 'Enter' && handleSearchDomains()}
+                          className="flex-1"
+                        />
+                        <Button 
+                          onClick={handleSearchDomains} 
+                          disabled={isSearching}
+                          className="gap-2"
+                        >
+                          {isSearching ? (
+                            <Loader2 className="h-4 w-4 animate-spin" />
+                          ) : (
+                            <Search className="h-4 w-4" />
+                          )}
+                          搜索
+                        </Button>
                       </div>
-                      <div>
-                        <p className="font-medium">搜索並購買域名</p>
-                        <p className="text-sm text-muted-foreground">在 Manus 域名商店搜索您想要的域名</p>
-                      </div>
-                    </div>
-                    <div className="ml-11 space-y-2">
                       <p className="text-xs text-muted-foreground">
-                        💡 建議選擇簡短易記的域名，如 <span className="font-mono">chat.yourbrand.com</span>
+                        我們會自動搜索 .com、.net、.org、.io、.co、.ai 等常見後綴
                       </p>
-                      <div className="bg-muted rounded-lg p-3 text-xs">
-                        <p className="font-medium mb-2">參考價格（由 Manus 收取）：</p>
-                        <div className="grid grid-cols-3 gap-2">
-                          <div className="text-center">
-                            <span className="font-mono">.com</span>
-                            <p className="text-muted-foreground">~HK$80-120/年</p>
+                    </div>
+                    
+                    {/* Search Results */}
+                    {searchResults.length > 0 && (
+                      <div className="space-y-3">
+                        <Label>搜索結果</Label>
+                        <div className="border rounded-lg divide-y max-h-[300px] overflow-y-auto">
+                          {searchResults.map((result) => (
+                            <div 
+                              key={result.domainName}
+                              className={`flex items-center justify-between p-3 ${
+                                result.available 
+                                  ? 'hover:bg-muted/50 cursor-pointer' 
+                                  : 'opacity-60 bg-muted/30'
+                              }`}
+                              onClick={() => handleSelectDomain(result)}
+                            >
+                              <div className="flex items-center gap-3">
+                                <Globe className={`h-4 w-4 ${result.available ? 'text-green-600' : 'text-muted-foreground'}`} />
+                                <div>
+                                  <p className="font-mono font-medium">{result.domainName}</p>
+                                  <div className="flex items-center gap-2 mt-0.5">
+                                    {result.available ? (
+                                      <Badge className="bg-green-500/10 text-green-600 text-xs">可購買</Badge>
+                                    ) : (
+                                      <Badge variant="secondary" className="text-xs">已被註冊</Badge>
+                                    )}
+                                    {result.premium && (
+                                      <Badge variant="outline" className="text-amber-600 border-amber-300 text-xs">
+                                        <Sparkles className="h-3 w-3 mr-1" />
+                                        Premium
+                                      </Badge>
+                                    )}
+                                  </div>
+                                </div>
+                              </div>
+                              {result.available && (
+                                <div className="text-right">
+                                  <p className="font-bold text-primary">HK${result.sellingPriceHkd}/年</p>
+                                  <p className="text-xs text-muted-foreground">
+                                    續費 HK${result.renewalPriceHkd}/年
+                                  </p>
+                                </div>
+                              )}
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                    
+                    {isSearching && (
+                      <div className="flex items-center justify-center py-8">
+                        <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+                        <span className="ml-3 text-muted-foreground">正在搜索可用域名...</span>
+                      </div>
+                    )}
+                    
+                    {/* Selected Domain Payment */}
+                    {selectedDomain && (
+                      <div className="space-y-4 border-t pt-4">
+                        <div className="bg-green-50 dark:bg-green-950/20 border border-green-200 dark:border-green-900 rounded-lg p-4">
+                          <div className="flex items-center justify-between mb-4">
+                            <div>
+                              <p className="text-sm text-muted-foreground">已選擇域名</p>
+                              <p className="text-xl font-bold font-mono">{selectedDomain.domainName}</p>
+                            </div>
+                            <Button variant="ghost" size="sm" onClick={() => setSelectedDomain(null)}>更換</Button>
                           </div>
-                          <div className="text-center">
-                            <span className="font-mono">.io</span>
-                            <p className="text-muted-foreground">~HK$280-350/年</p>
+                          
+                          <div className="space-y-3 mb-4">
+                            <div className="flex justify-between items-center pb-2 border-b">
+                              <span className="text-sm">域名費用</span>
+                              <span className="font-mono">HK${selectedDomain.sellingPriceHkd}</span>
+                            </div>
+                            <div className="flex justify-between items-center pb-2 border-b">
+                              <span className="text-sm">年度管理費</span>
+                              <span className="font-mono">HK$99</span>
+                            </div>
+                            <div className="flex justify-between items-center text-lg font-bold text-primary">
+                              <span>總計</span>
+                              <span className="font-mono">HK${selectedDomain.sellingPriceHkd + 99}</span>
+                            </div>
                           </div>
-                          <div className="text-center">
-                            <span className="font-mono">.ai</span>
-                            <p className="text-muted-foreground">~HK$600-800/年</p>
+                          
+                          <Button className="w-full gap-2" size="lg">
+                            <ShoppingCart className="h-4 w-4" />
+                            立即購買並支付
+                          </Button>
+                        </div>
+                      </div>
+                    )}
+                    
+                    {/* Coming Soon Notice */}
+                    {!selectedDomain && (
+                      <Alert>
+                        <Info className="h-4 w-4" />
+                        <AlertTitle>一站式域名購買</AlertTitle>
+                        <AlertDescription>
+                          搜索域名後，選擇您喜歡的域名即可直接購買。我們支持 Stripe 支付，安全快速。
+                        </AlertDescription>
+                      </Alert>
+                    )}
+                  </TabsContent>
+                  
+                  <TabsContent value="info" className="space-y-4 mt-4">
+                    {/* Pricing Info */}
+                    <div className="space-y-4">
+                      <div className="border rounded-lg p-4">
+                        <h4 className="font-medium mb-3">域名費用（一次性）</h4>
+                        <div className="grid grid-cols-3 gap-4 text-center">
+                          <div className="p-3 bg-muted rounded-lg">
+                            <span className="font-mono text-lg">.com</span>
+                            <p className="text-sm text-muted-foreground mt-1">約 HK$80-120/年</p>
+                          </div>
+                          <div className="p-3 bg-muted rounded-lg">
+                            <span className="font-mono text-lg">.io</span>
+                            <p className="text-sm text-muted-foreground mt-1">約 HK$280-400/年</p>
+                          </div>
+                          <div className="p-3 bg-muted rounded-lg">
+                            <span className="font-mono text-lg">.ai</span>
+                            <p className="text-sm text-muted-foreground mt-1">約 HK$600-900/年</p>
+                          </div>
+                        </div>
+                        <p className="text-xs text-muted-foreground mt-3">
+                          * 價格已包含 30% 服務費，實際價格以搜索結果為準
+                        </p>
+                      </div>
+                      
+                      <div className="border rounded-lg p-4">
+                        <h4 className="font-medium mb-3">域名管理費</h4>
+                        <div className="flex items-center justify-between">
+                          <div>
+                            <p className="text-2xl font-bold text-primary">HK$99<span className="text-sm font-normal text-muted-foreground">/年</span></p>
+                            <p className="text-sm text-muted-foreground mt-1">首 14 天免費試用</p>
+                          </div>
+                          <div className="text-right text-sm">
+                            <p className="flex items-center gap-1"><CheckCircle2 className="h-3 w-3 text-green-600" /> 自動 SSL 證書</p>
+                            <p className="flex items-center gap-1"><CheckCircle2 className="h-3 w-3 text-green-600" /> DNS 狀態監控</p>
+                            <p className="flex items-center gap-1"><CheckCircle2 className="h-3 w-3 text-green-600" /> 到期提醒通知</p>
                           </div>
                         </div>
                       </div>
-                      <Button 
-                        className="w-full gap-2" 
-                        onClick={handleOpenManusDomains}
-                      >
-                        前往 Manus 購買域名
-                        <ExternalLink className="h-4 w-4" />
-                      </Button>
                     </div>
-                  </div>
-
-                  {/* Step 2 */}
-                  <div className="border rounded-lg p-4 space-y-3">
-                    <div className="flex items-center gap-3">
-                      <div className="h-8 w-8 rounded-full bg-muted flex items-center justify-center flex-shrink-0">
-                        <span className="text-sm font-bold text-muted-foreground">2</span>
-                      </div>
-                      <div>
-                        <p className="font-medium">返回 Lulubaby 連接域名</p>
-                        <p className="text-sm text-muted-foreground">購買完成後，返回此頁面點擊「連接現有域名」</p>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Step 3 */}
-                  <div className="border rounded-lg p-4 space-y-3">
-                    <div className="flex items-center gap-3">
-                      <div className="h-8 w-8 rounded-full bg-muted flex items-center justify-center flex-shrink-0">
-                        <span className="text-sm font-bold text-muted-foreground">3</span>
-                      </div>
-                      <div>
-                        <p className="font-medium">設定 DNS 並啟用</p>
-                        <p className="text-sm text-muted-foreground">按照指示設定 DNS，完成後自動啟用 SSL</p>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Fee Explanation */}
-                  <Alert>
-                    <Info className="h-4 w-4" />
-                    <AlertTitle>費用說明</AlertTitle>
-                    <AlertDescription className="space-y-1">
-                      <p><strong>域名註冊費</strong>：由 Manus 收取（視域名後綴而定）</p>
-                      <p><strong>域名管理費</strong>：HK${pricing?.annualFee || 99}/年（由 Lulubaby 收取）</p>
-                      <p className="text-xs text-muted-foreground">包含：自動 SSL 證書、DNS 監控、到期提醒</p>
-                      <p className="text-xs text-muted-foreground">首 {pricing?.trialDays || 14} 天免費試用域名管理服務</p>
-                    </AlertDescription>
-                  </Alert>
-                </div>
-                <DialogFooter>
-                  <Button variant="outline" onClick={() => setIsBuyDialogOpen(false)}>
-                    關閉
-                  </Button>
-                  <Button onClick={() => {
-                    setIsBuyDialogOpen(false);
-                    setIsAddDialogOpen(true);
-                  }} className="gap-2">
-                    我已購買，連接域名
-                    <ArrowRight className="h-4 w-4" />
-                  </Button>
-                </DialogFooter>
+                  </TabsContent>
+                </Tabs>
               </DialogContent>
             </Dialog>
-
+            
             {/* Connect Existing Domain Button */}
             <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
               <DialogTrigger asChild>
@@ -319,9 +456,9 @@ export default function Domain() {
               </DialogTrigger>
               <DialogContent>
                 <DialogHeader>
-                  <DialogTitle>連接自訂域名</DialogTitle>
+                  <DialogTitle>連接現有域名</DialogTitle>
                   <DialogDescription>
-                    輸入您想要綁定的域名，例如 chat.yourbrand.com
+                    輸入您已擁有的域名，我們將提供 DNS 設定指示
                   </DialogDescription>
                 </DialogHeader>
                 <div className="space-y-4 py-4">
@@ -329,51 +466,65 @@ export default function Domain() {
                     <Label htmlFor="domain">域名</Label>
                     <Input
                       id="domain"
-                      placeholder="chat.yourbrand.com"
+                      placeholder="例如：chat.yourbrand.com"
                       value={newDomain}
                       onChange={(e) => setNewDomain(e.target.value)}
                     />
+                    <p className="text-xs text-muted-foreground">
+                      建議使用子域名（如 chat.yourbrand.com），這樣不會影響您的主網站
+                    </p>
                   </div>
+                  
                   <Alert>
                     <Info className="h-4 w-4" />
                     <AlertTitle>域名管理費</AlertTitle>
                     <AlertDescription>
-                      HK${pricing?.annualFee || 99}/年，包含自動 SSL 證書、DNS 監控和到期提醒。
-                      首 {pricing?.trialDays || 14} 天免費試用。
+                      連接域名後，我們將收取 HK$99/年 的管理費，包含自動 SSL 證書、DNS 監控和到期提醒。首 14 天免費試用。
                     </AlertDescription>
                   </Alert>
-                  <div className="text-xs text-muted-foreground">
-                    <p>💡 還沒有域名？<button 
-                      className="text-primary underline hover:no-underline"
-                      onClick={() => {
-                        setIsAddDialogOpen(false);
-                        setIsBuyDialogOpen(true);
-                      }}
-                    >點此購買新域名</button></p>
-                  </div>
                 </div>
                 <DialogFooter>
                   <Button variant="outline" onClick={() => setIsAddDialogOpen(false)}>
                     取消
                   </Button>
-                  <Button onClick={handleAddDomain} disabled={addDomainMutation.isPending}>
-                    {addDomainMutation.isPending ? "添加中..." : "連接域名"}
+                  <Button 
+                    onClick={handleAddDomain}
+                    disabled={addDomainMutation.isPending}
+                  >
+                    {addDomainMutation.isPending ? (
+                      <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                    ) : null}
+                    添加域名
                   </Button>
                 </DialogFooter>
               </DialogContent>
             </Dialog>
           </div>
         </CardHeader>
-        <CardContent>
+        <CardContent className="space-y-4">
+          {/* Domain List */}
           {domains && domains.length > 0 ? (
-            <div className="space-y-4">
+            <div className="space-y-3">
               {domains.map((domain) => (
-                <div key={domain.id} className="border rounded-lg p-4 space-y-3">
+                <div 
+                  key={domain.id}
+                  className="border rounded-lg p-4 space-y-3"
+                >
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-3">
-                      <Globe className="h-5 w-5 text-muted-foreground" />
-                      <span className="font-mono font-medium">{domain.domain}</span>
-                      {getStatusBadge(domain.status)}
+                      <Globe className="h-5 w-5 text-primary" />
+                      <div>
+                        <p className="font-mono font-medium">{domain.domain}</p>
+                        <div className="flex items-center gap-2 mt-1">
+                          {getStatusBadge(domain.status)}
+                          {domain.status === 'active' && domain.sslEnabled && (
+                            <Badge className="bg-green-500/10 text-green-600">
+                              <Shield className="h-3 w-3 mr-1" />
+                              SSL
+                            </Badge>
+                          )}
+                        </div>
+                      </div>
                     </div>
                     <Button
                       variant="ghost"
@@ -389,99 +540,82 @@ export default function Domain() {
                     </Button>
                   </div>
                   
-                  {/* DNS Instructions */}
-                  {domain.status === 'pending_dns' && (
-                    <Alert className="bg-amber-50 border-amber-200">
-                      <AlertCircle className="h-4 w-4 text-amber-600" />
-                      <AlertTitle className="text-amber-800">DNS 設定指示</AlertTitle>
-                      <AlertDescription className="text-amber-700 space-y-2">
-                        <p>請在您的域名 DNS 設定中添加以下記錄：</p>
-                        <div className="bg-white rounded p-3 space-y-2 font-mono text-sm">
-                          <div className="flex items-center justify-between">
-                            <span>類型: <strong>CNAME</strong></span>
-                            <span>主機: <strong>{domain.subdomain || '@'}</strong></span>
-                            <span>值: <strong>{domain.dnsRecordValue}</strong></span>
-                            <Button size="sm" variant="ghost" onClick={() => copyDnsRecord(domain.dnsRecordValue || '')}>
+                  {/* DNS Setup Instructions */}
+                  {(domain.status === 'pending_dns' || domain.status === 'verifying') && (
+                    <div className="bg-muted rounded-lg p-3 space-y-2">
+                      <p className="text-sm font-medium">DNS 設定指示：</p>
+                      <div className="grid grid-cols-3 gap-2 text-xs">
+                        <div>
+                          <p className="text-muted-foreground">類型</p>
+                          <p className="font-mono">{domain.dnsRecordType}</p>
+                        </div>
+                        <div>
+                          <p className="text-muted-foreground">名稱</p>
+                          <p className="font-mono">{domain.subdomain || '@'}</p>
+                        </div>
+                        <div>
+                          <p className="text-muted-foreground">值</p>
+                          <div className="flex items-center gap-1">
+                            <p className="font-mono truncate">{domain.dnsRecordValue}</p>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="h-5 w-5"
+                              onClick={() => copyDnsRecord(domain.dnsRecordValue!)}
+                            >
                               <Copy className="h-3 w-3" />
                             </Button>
                           </div>
                         </div>
-                        <div className="flex gap-2 mt-3">
-                          <Button 
-                            size="sm" 
-                            onClick={() => handleVerifyDns(domain.id)}
-                            disabled={verifyingId === domain.id}
-                          >
-                            {verifyingId === domain.id ? (
-                              <><RefreshCw className="h-4 w-4 mr-2 animate-spin" />驗證中...</>
-                            ) : (
-                              <><RefreshCw className="h-4 w-4 mr-2" />驗證 DNS</>
-                            )}
-                          </Button>
-                        </div>
-                      </AlertDescription>
-                    </Alert>
+                      </div>
+                      <div className="flex gap-2 mt-2">
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => handleVerifyDns(domain.id)}
+                          disabled={verifyingId === domain.id}
+                        >
+                          {verifyingId === domain.id ? (
+                            <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                          ) : (
+                            <RefreshCw className="h-4 w-4 mr-2" />
+                          )}
+                          驗證 DNS
+                        </Button>
+                      </div>
+                    </div>
                   )}
                   
                   {/* SSL Activation */}
                   {domain.status === 'ssl_pending' && (
-                    <Alert className="bg-purple-50 border-purple-200">
-                      <Shield className="h-4 w-4 text-purple-600" />
-                      <AlertTitle className="text-purple-800">DNS 驗證成功</AlertTitle>
-                      <AlertDescription className="text-purple-700">
-                        <p>DNS 已正確設定，現在可以啟用 SSL 證書。</p>
-                        <Button 
-                          size="sm" 
-                          className="mt-2"
-                          onClick={() => handleActivateSsl(domain.id)}
-                          disabled={activatingId === domain.id}
-                        >
-                          {activatingId === domain.id ? (
-                            <><RefreshCw className="h-4 w-4 mr-2 animate-spin" />啟用中...</>
-                          ) : (
-                            <><Shield className="h-4 w-4 mr-2" />啟用 SSL</>
-                          )}
-                        </Button>
-                      </AlertDescription>
-                    </Alert>
+                    <div className="flex gap-2">
+                      <Button
+                        size="sm"
+                        onClick={() => handleActivateSsl(domain.id)}
+                        disabled={activatingId === domain.id}
+                      >
+                        {activatingId === domain.id ? (
+                          <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                        ) : (
+                          <Shield className="h-4 w-4 mr-2" />
+                        )}
+                        啟用 SSL
+                      </Button>
+                    </div>
                   )}
                   
                   {/* Active Domain */}
                   {domain.status === 'active' && (
-                    <div className="flex items-center gap-4 text-sm text-muted-foreground">
-                      <span className="flex items-center gap-1">
-                        <Shield className="h-4 w-4 text-green-600" />
-                        SSL 已啟用
-                      </span>
-                      {domain.sslExpiresAt && (
-                        <span>
-                          證書到期: {new Date(domain.sslExpiresAt).toLocaleDateString('zh-HK')}
-                        </span>
-                      )}
-                      <span className="flex items-center gap-1">
-                        <CheckCircle2 className="h-4 w-4 text-green-600" />
-                        域名已生效
-                      </span>
+                    <div className="flex items-center gap-2">
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => window.open(`https://${domain.domain}`, '_blank')}
+                      >
+                        <ExternalLink className="h-4 w-4 mr-2" />
+                        訪問網站
+                      </Button>
                     </div>
-                  )}
-                  
-                  {/* Error State */}
-                  {domain.status === 'error' && domain.lastErrorMessage && (
-                    <Alert variant="destructive">
-                      <AlertCircle className="h-4 w-4" />
-                      <AlertTitle>錯誤</AlertTitle>
-                      <AlertDescription>
-                        {domain.lastErrorMessage}
-                        <Button 
-                          size="sm" 
-                          variant="outline"
-                          className="mt-2"
-                          onClick={() => handleVerifyDns(domain.id)}
-                        >
-                          重新驗證
-                        </Button>
-                      </AlertDescription>
-                    </Alert>
                   )}
                 </div>
               ))}
@@ -489,180 +623,34 @@ export default function Domain() {
           ) : (
             <div className="text-center py-8 text-muted-foreground">
               <Globe className="h-12 w-12 mx-auto mb-3 opacity-50" />
-              <p>尚未添加自訂域名</p>
-              <p className="text-sm mt-1">添加您的品牌域名，提升專業形象</p>
-              <div className="flex justify-center gap-3 mt-4">
-                <Button variant="outline" size="sm" onClick={() => setIsBuyDialogOpen(true)} className="gap-2">
-                  <ShoppingCart className="h-4 w-4" />
-                  購買新域名
-                </Button>
-                <Button size="sm" onClick={() => setIsAddDialogOpen(true)} className="gap-2">
-                  <Plus className="h-4 w-4" />
-                  連接現有域名
-                </Button>
+              <p>您還沒有設定自訂域名</p>
+              <p className="text-sm mt-1">點擊上方按鈕開始設定</p>
+            </div>
+          )}
+          
+          {/* Pricing Info */}
+          {pricing && (
+            <div className="border-t pt-4 mt-4">
+              <div className="flex items-center justify-between text-sm">
+                <div className="flex items-center gap-2">
+                  <Crown className="h-4 w-4 text-amber-600" />
+                  <span>域名管理費</span>
+                </div>
+                <div className="text-right">
+                  <span className="font-bold">HK${pricing.annualFee}/年</span>
+                  <span className="text-muted-foreground ml-2">（首 {pricing.trialDays} 天免費）</span>
+                </div>
+              </div>
+              <div className="flex flex-wrap gap-2 mt-2">
+                {pricing.features.map((feature, i) => (
+                  <Badge key={i} variant="secondary" className="text-xs">
+                    <CheckCircle2 className="h-3 w-3 mr-1" />
+                    {feature}
+                  </Badge>
+                ))}
               </div>
             </div>
           )}
-        </CardContent>
-      </Card>
-
-      {/* URL Options */}
-      <div className="grid md:grid-cols-3 gap-4">
-        {/* Free Option */}
-        <Card className="relative">
-          <div className="absolute top-3 right-3">
-            <span className="px-2 py-0.5 rounded-full bg-green-500/10 text-green-600 text-xs font-medium flex items-center gap-1">
-              <Sparkles className="h-3 w-3" />
-              免費
-            </span>
-          </div>
-          <CardHeader className="pb-3">
-            <div className="h-10 w-10 rounded-xl bg-muted flex items-center justify-center mb-2">
-              <Globe className="h-5 w-5 text-muted-foreground" />
-            </div>
-            <CardTitle className="text-base">系統網址</CardTitle>
-            <CardDescription className="text-xs">免費使用系統自動生成的對話連結</CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-3">
-            <div className="bg-muted rounded-lg px-3 py-2 font-mono text-xs break-all">
-              yoursite.manus.space/chat/1
-            </div>
-            <ul className="text-xs text-muted-foreground space-y-1">
-              <li>✓ 永久免費</li>
-              <li>✓ 即時可用</li>
-              <li>✓ SSL安全加密</li>
-            </ul>
-          </CardContent>
-        </Card>
-
-        {/* Subdomain Option */}
-        <Card className="relative border-primary/30">
-          <div className="absolute top-3 right-3">
-            <span className="px-2 py-0.5 rounded-full bg-primary text-primary-foreground text-xs font-medium">
-              推薦
-            </span>
-          </div>
-          <CardHeader className="pb-3">
-            <div className="h-10 w-10 rounded-xl bg-primary/10 flex items-center justify-center mb-2">
-              <Crown className="h-5 w-5 text-primary" />
-            </div>
-            <CardTitle className="text-base">自訂子域名</CardTitle>
-            <CardDescription className="text-xs">自訂您的專屬子域名前綴</CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-3">
-            <div className="bg-muted rounded-lg px-3 py-2 font-mono text-xs break-all">
-              <span className="text-primary font-semibold">yourname</span>.manus.space
-            </div>
-            <ul className="text-xs text-muted-foreground space-y-1">
-              <li>✓ 專業品牌形象</li>
-              <li>✓ 易於記憶分享</li>
-              <li>✓ 在設定面板修改</li>
-            </ul>
-          </CardContent>
-        </Card>
-
-        {/* Custom Domain Option */}
-        <Card className="relative border-amber-300/50">
-          <div className="absolute top-3 right-3">
-            <span className="px-2 py-0.5 rounded-full bg-amber-500/10 text-amber-600 text-xs font-medium">
-              HK${pricing?.annualFee || 99}/年
-            </span>
-          </div>
-          <CardHeader className="pb-3">
-            <div className="h-10 w-10 rounded-xl bg-amber-500/10 flex items-center justify-center mb-2">
-              <Crown className="h-5 w-5 text-amber-600" />
-            </div>
-            <CardTitle className="text-base">自訂域名</CardTitle>
-            <CardDescription className="text-xs">綁定您自己的品牌域名</CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-3">
-            <div className="bg-muted rounded-lg px-3 py-2 font-mono text-xs break-all">
-              ai.<span className="text-primary font-semibold">yourbrand</span>.com
-            </div>
-            <ul className="text-xs text-muted-foreground space-y-1">
-              <li>✓ 完整品牌體驗</li>
-              <li>✓ 自動 SSL 證書</li>
-              <li>✓ DNS 監控 &amp; 到期提醒</li>
-            </ul>
-            <Button 
-              variant="outline" 
-              size="sm" 
-              className="w-full mt-2 gap-2"
-              onClick={() => setIsBuyDialogOpen(true)}
-            >
-              <ShoppingCart className="h-4 w-4" />
-              購買域名
-            </Button>
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* How to Setup */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-lg">如何設定自訂域名？</CardTitle>
-          <CardDescription>只需三個簡單步驟即可完成設定</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="grid md:grid-cols-3 gap-6">
-            <div className="flex gap-4">
-              <div className="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
-                <span className="text-sm font-bold text-primary">1</span>
-              </div>
-              <div>
-                <p className="font-medium">購買或準備域名</p>
-                <p className="text-sm text-muted-foreground mt-1">
-                  <button 
-                    className="text-primary underline hover:no-underline"
-                    onClick={() => setIsBuyDialogOpen(true)}
-                  >購買新域名</button> 或使用您現有的域名
-                </p>
-              </div>
-            </div>
-            <div className="flex gap-4">
-              <div className="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
-                <span className="text-sm font-bold text-primary">2</span>
-              </div>
-              <div>
-                <p className="font-medium">設定 DNS</p>
-                <p className="text-sm text-muted-foreground mt-1">按照指示在您的 DNS 添加 CNAME 記錄</p>
-              </div>
-            </div>
-            <div className="flex gap-4">
-              <div className="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
-                <span className="text-sm font-bold text-primary">3</span>
-              </div>
-              <div>
-                <p className="font-medium">驗證並啟用</p>
-                <p className="text-sm text-muted-foreground mt-1">驗證 DNS 設定後自動啟用 SSL</p>
-              </div>
-            </div>
-          </div>
-          
-          <div className="mt-6 pt-6 border-t flex items-center justify-between">
-            <p className="text-sm text-muted-foreground">
-              自訂域名讓您的AI助手更專業，提升客戶對您品牌的信任度
-            </p>
-            <div className="flex gap-2">
-              <Button 
-                variant="outline" 
-                size="sm" 
-                className="gap-2"
-                onClick={() => setIsBuyDialogOpen(true)}
-              >
-                <ShoppingCart className="h-4 w-4" />
-                購買域名
-              </Button>
-              <Button 
-                size="sm" 
-                className="gap-2"
-                onClick={() => setIsAddDialogOpen(true)}
-              >
-                連接域名
-                <ChevronRight className="h-4 w-4" />
-              </Button>
-            </div>
-          </div>
         </CardContent>
       </Card>
     </div>

@@ -284,6 +284,10 @@
 - [x] 比較各 API 的價格、功能、門檻
 - [x] 創建詳細的接入指南文檔 (DOMAIN_RESELLER_API_GUIDE.md)
 - [x] 選擇最適合的 API 方案 (推薦 Name.com Core API)
-- [ ] 實現域名搜索功能
-- [ ] 實現域名購買功能
+- [x] 獲取 Name.com API Key
+- [x] 設置 API Key 環境變數（已驗證連接成功）
+- [x] 實現域名可用性搜索 API (domains.search)
+- [x] 實現域名價格查詢 API (domains.checkAvailability)
+- [x] 更新專屬網址頁面 UI（域名搜索、結果顯示）
 - [ ] 整合 Stripe 支付
+- [ ] 實現域名購買流程（下單、付款、註冊）
