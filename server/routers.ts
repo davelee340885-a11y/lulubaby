@@ -25,7 +25,9 @@ import {
   getDomainsByUserId, getDomainById, getDomainByName, createDomain, updateDomain, deleteDomain,
   updateDomainDnsStatus, updateDomainSslStatus, createDomainHealthLog, getDomainHealthLogs,
   // Domain order operations
-  createDomainOrder, getDomainOrder, updateDomainOrderStatus
+  createDomainOrder, getDomainOrder, updateDomainOrderStatus,
+  // Database connection
+  getDb
 } from "./db";
 import Stripe from "stripe";
 import { invokeLLM } from "./_core/llm";
@@ -1822,7 +1824,7 @@ ${knowledgeContent.substring(0, 10000)}
         }
       }),
 
-        // Verify Name.com API connection
+    // Verify Name.com API connection
     verifyApiConnection: protectedProcedure.query(async () => {
       try {
         const username = await verifyConnection();
@@ -1831,6 +1833,34 @@ ${knowledgeContent.substring(0, 10000)}
         return { connected: false, error: String(error) };
       }
     }),
+    
+    // Get user's domain purchase orders
+    getOrders: protectedProcedure.query(async ({ ctx }) => {
+      const db = await getDb();
+      if (!db) return [];
+      
+      const { domainOrders } = await import('../drizzle/schema');
+      const { eq, desc } = await import('drizzle-orm');
+      
+      const orders = await db
+        .select()
+        .from(domainOrders)
+        .where(eq(domainOrders.userId, ctx.user.id))
+        .orderBy(desc(domainOrders.createdAt));
+      
+      return orders;
+    }),
+    
+    // Get a specific order by ID
+    getOrder: protectedProcedure
+      .input(z.object({ orderId: z.number() }))
+      .query(async ({ ctx, input }) => {
+        const order = await getDomainOrder(input.orderId);
+        if (!order || order.userId !== ctx.user.id) {
+          throw new Error('訂單不存在或無權訪問');
+        }
+        return order;
+      }),
   }),
 });
 export type AppRouter = typeof appRouter;

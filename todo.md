@@ -374,3 +374,34 @@
 - [x] 更新 Stripe Keys 為 Lulubaby 沙盒環境
 - [x] 更新後端 Secret Key
 - [x] 更新前端 Publishable Key
+
+
+## Name.com API 對接和域名管理顯示（Phase 5）
+- [x] 1. 驗證 Stripe 支付成功的訂單數據
+  - [x] 查詢 domain_orders 表中的最新訂單
+  - [x] 檢查訂單狀態是否為 payment_completed
+  - [x] 驗證支付金額和域名資訊正確
+- [x] 2. 測試 Stripe Webhook 自動觸發機制
+  - [x] 檢查 Webhook 是否成功接收 payment_intent.succeeded 事件
+  - [x] 驗證 Webhook 是否調用了 Name.com 購買 API
+  - [x] 查看訂單狀態是否更新為 registered 或 registration_failed
+- [x] 3. 測試 Name.com API 域名註冊
+  - [x] 使用測試環境 (api.dev.name.com) 測試域名註冊
+  - [x] 驗證域名註冊請求參數正確
+  - [x] 處理註冊成功和失敗的情況
+  - [x] 保存 Name.com 返回的註冊資訊
+- [x] 4. 實現已購買域名列表 UI
+  - [x] 在專屬網址頁面添加「已購買域名」區塊
+  - [x] 顯示域名列表（域名、購買日期、狀態、到期日）
+  - [x] 添加域名狀態標籤（處理中/已註冊/註冊失敗）
+  - [x] 實現域名詳情展開功能
+- [ ] 5. 添加域名管理功能
+  - [ ] 顯示 Name.com 註冊詳情
+  - [ ] 添加 DNS 設定連結
+  - [ ] 顯示域名到期日和續費提醒
+  - [ ] 添加域名狀態刷新功能
+- [x] 6. 完整流程測試
+  - [x] 端到端測試：搜索 → 支付 → 註冊 → 顯示
+  - [x] 測試多個域名購買
+  - [x] 測試註冊失敗處理
+  - [x] 驗證所有 UI 顯示正確

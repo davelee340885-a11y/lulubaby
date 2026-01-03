@@ -42,6 +42,129 @@ interface DomainSearchResult {
   renewalPriceHkd: number;
 }
 
+// 已購買域名列表組件
+function PurchasedDomains() {
+  const { data: orders, isLoading } = trpc.domains.getOrders.useQuery();
+  
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center py-8">
+        <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+      </div>
+    );
+  }
+  
+  if (!orders || orders.length === 0) {
+    return (
+      <div className="text-center py-8 space-y-3">
+        <div className="flex justify-center">
+          <div className="h-12 w-12 rounded-full bg-muted flex items-center justify-center">
+            <ShoppingCart className="h-6 w-6 text-muted-foreground" />
+          </div>
+        </div>
+        <div>
+          <h3 className="font-medium">尚無購買記錄</h3>
+          <p className="text-sm text-muted-foreground mt-1">
+            您還沒有購買任何域名，去「搜索域名」標籤頁開始搜索吧！
+          </p>
+        </div>
+      </div>
+    );
+  }
+  
+  const getStatusBadge = (status: string) => {
+    const statusConfig: Record<string, { label: string; variant: "default" | "secondary" | "destructive" | "outline" }> = {
+      pending_payment: { label: "待支付", variant: "outline" },
+      payment_processing: { label: "支付處理中", variant: "secondary" },
+      payment_failed: { label: "支付失敗", variant: "destructive" },
+      payment_completed: { label: "支付完成", variant: "default" },
+      registering: { label: "註冊中", variant: "secondary" },
+      registered: { label: "已註冊", variant: "default" },
+      failed: { label: "註冊失敗", variant: "destructive" },
+      cancelled: { label: "已取消", variant: "outline" },
+    };
+    
+    const config = statusConfig[status] || { label: status, variant: "outline" as const };
+    return <Badge variant={config.variant}>{config.label}</Badge>;
+  };
+  
+  return (
+    <div className="space-y-3">
+      <div className="text-sm text-muted-foreground">
+        共 {orders.length} 筆訂單
+      </div>
+      
+      <div className="space-y-2">
+        {orders.map((order) => (
+          <div
+            key={order.id}
+            className="border rounded-lg p-4 space-y-3 hover:bg-muted/50 transition-colors"
+          >
+            <div className="flex items-start justify-between">
+              <div className="space-y-1">
+                <div className="flex items-center gap-2">
+                  <Globe className="h-4 w-4 text-muted-foreground" />
+                  <span className="font-medium">{order.domain}</span>
+                </div>
+                <div className="text-sm text-muted-foreground">
+                  訂單 ID: {order.id}
+                </div>
+              </div>
+              {getStatusBadge(order.status)}
+            </div>
+            
+            <div className="grid grid-cols-2 gap-3 text-sm">
+              <div>
+                <div className="text-muted-foreground">購買時間</div>
+                <div className="font-medium">
+                  {new Date(order.createdAt).toLocaleDateString('zh-TW', {
+                    year: 'numeric',
+                    month: '2-digit',
+                    day: '2-digit',
+                  })}
+                </div>
+              </div>
+              <div>
+                <div className="text-muted-foreground">總價</div>
+                <div className="font-medium">
+                  HK${(order.totalPrice / 100).toFixed(2)}
+                </div>
+              </div>
+            </div>
+            
+            {order.status === 'registered' && order.registrationDate && (
+              <div className="pt-2 border-t text-sm">
+                <div className="flex items-center gap-2 text-green-600">
+                  <CheckCircle2 className="h-4 w-4" />
+                  <span>域名已成功註冊！註冊時間：{new Date(order.registrationDate).toLocaleDateString('zh-TW')}</span>
+                </div>
+              </div>
+            )}
+            
+            {order.status === 'failed' && (
+              <div className="pt-2 border-t text-sm">
+                <div className="flex items-center gap-2 text-destructive">
+                  <AlertCircle className="h-4 w-4" />
+                  <span>註冊失敗，請聯繫客服處理</span>
+                </div>
+              </div>
+            )}
+            
+            {(order.status === 'payment_completed' || order.status === 'registering') && (
+              <div className="pt-2 border-t text-sm">
+                <div className="flex items-center gap-2 text-blue-600">
+                  <Clock className="h-4 w-4" />
+                  <span>支付已完成，正在處理域名註冊...</span>
+                </div>
+              </div>
+            )}
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 export default function Domain() {
   const { data: persona } = trpc.persona.get.useQuery();
   const { data: domains, refetch: refetchDomains } = trpc.domains.list.useQuery();
@@ -299,8 +422,9 @@ export default function Domain() {
                 </DialogHeader>
                 
                 <Tabs defaultValue="search" className="w-full">
-                  <TabsList className="grid w-full grid-cols-2">
+                  <TabsList className="grid w-full grid-cols-3">
                     <TabsTrigger value="search">搜索域名</TabsTrigger>
+                    <TabsTrigger value="orders">已購買</TabsTrigger>
                     <TabsTrigger value="info">費用說明</TabsTrigger>
                   </TabsList>
                   <TabsContent value="search" className="space-y-3 mt-3">
@@ -479,6 +603,10 @@ export default function Domain() {
                     )}
                     
 
+                  </TabsContent>
+                  
+                  <TabsContent value="orders" className="space-y-3 mt-3">
+                    <PurchasedDomains />
                   </TabsContent>
                   
                   <TabsContent value="info" className="space-y-4 mt-4">
