@@ -405,3 +405,27 @@
   - [x] 測試多個域名購買
   - [x] 測試註冊失敗處理
   - [x] 驗證所有 UI 顯示正確
+
+
+## 生產環境配置 - Stripe Webhook 設置（Phase 6）
+- [x] 1. 檢查當前 Stripe 配置
+  - [x] 查看現有的 Webhook 端點
+  - [x] 確認 Stripe API 金鑰狀態
+  - [x] 檢查開發伺服器 URL
+- [x] 2. 使用 Stripe MCP 創建 Webhook 端點
+  - [x] 獲取開發伺服器的公開 URL
+  - [x] 創建 Webhook 端點指向 /api/webhooks/stripe
+  - [x] 配置監聽事件：payment_intent.succeeded
+  - [x] 獲取 Webhook 簽名密鑰
+- [x] 3. 配置環境變數
+  - [x] 添加 STRIPE_WEBHOOK_SECRET 到環境變數
+  - [x] 重啟開發伺服器應用新配置
+- [x] 4. 測試 Webhook 功能
+  - [x] 發送測試事件到 Webhook
+  - [x] 驗證 Webhook 接收成功
+  - [x] 檢查訂單狀態更新
+  - [x] 驗證 Name.com 註冊調用
+- [x] 5. 完整流程測試
+  - [x] 測試真實支付 → Webhook → 域名註冊流程
+  - [x] 驗證錯誤處理機制
+  - [x] 確認所有日誌記錄正常

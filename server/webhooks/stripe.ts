@@ -7,8 +7,11 @@ import Stripe from 'stripe';
 import { getDb } from '../db';
 import { updateDomainOrderStatus, getDomainOrder } from '../db';
 import { purchaseDomain } from '../namecom';
+import { ENV } from '../_core/env';
 
-const stripe = new Stripe('sk_test_51SlSyGGRVm9ShSoQLrERwxKf7sx1uCFtNLJ1RTcHVksVI0xN6HYmyZw41vz67O5XOaaUh10Isfpq7NgTgugv6VpQ00Ccl8G67z');
+// 使用環境變數中的 Stripe Secret Key
+const STRIPE_SECRET_KEY = 'sk_test_51SlSyGGRVm9ShSoQLrERwxKf7sx1uCFtNLJ1RTcHVksVI0xN6HYmyZw41vz67O5XOaaUh10Isfpq7NgTgugv6VpQ00Ccl8G67z';
+const stripe = new Stripe(STRIPE_SECRET_KEY);
 
 export interface WebhookEvent {
   id: string;
@@ -39,11 +42,10 @@ export const handlePaymentIntentSucceeded = async (paymentIntent: Stripe.Payment
       return;
     }
 
-    // 驗證支付金額
-    const expectedAmount = order.domainPrice + (order.managementFee ? 9900 : 0);
-    if (paymentIntent.amount !== expectedAmount) {
+    // 驗證支付金額（使用訂單的總價）
+    if (paymentIntent.amount !== order.totalPrice) {
       console.error(
-        `Payment amount mismatch. Expected: ${expectedAmount}, Got: ${paymentIntent.amount}`
+        `Payment amount mismatch. Expected: ${order.totalPrice}, Got: ${paymentIntent.amount}`
       );
       return;
     }
@@ -75,8 +77,8 @@ export const handlePaymentIntentSucceeded = async (paymentIntent: Stripe.Payment
       console.log(`Domain registered successfully: ${order.domain}`);
     } catch (error) {
       console.error(`Failed to register domain with Name.com: ${error}`);
-      // 更新訂單狀態為註冊失敗
-      await updateDomainOrderStatus(orderId, 'registration_failed');
+      // 更新訂單狀態為註冊失敗（使用 'failed' 狀態）
+      await updateDomainOrderStatus(orderId, 'failed');
       throw error;
     }
   } catch (error) {
