@@ -1640,24 +1640,23 @@ ${knowledgeContent.substring(0, 10000)}
     // Search domains with pricing (Name.com API)
     search: protectedProcedure
       .input(z.object({
-        keyword: z.string().min(1).max(63),
+        keyword: z.string().min(1),
         tlds: z.array(z.string()).optional(),
-        currency: z.enum(['USD', 'HKD']).optional(),
       }))
       .mutation(async ({ input }) => {
         const tlds = input.tlds || ['com', 'net', 'org', 'io', 'co', 'ai'];
-        const currency = input.currency || 'USD';
-        return searchDomainsWithPricing(input.keyword, tlds, currency);
+        // All prices in USD
+        return searchDomainsWithPricing(input.keyword, tlds, 'USD');
       }),
 
     // Check single domain availability
     checkAvailability: protectedProcedure
       .input(z.object({
         domain: z.string().min(1),
-        currency: z.enum(['USD', 'HKD']).optional(),
       }))
       .query(async ({ input }) => {
-        const currency = input.currency || 'USD';
+        // All prices in USD
+        const currency = 'USD';
         return getDomainPricing(input.domain, currency);
       }),
 
@@ -1771,7 +1770,7 @@ ${knowledgeContent.substring(0, 10000)}
         try {
           const stripe = new Stripe('sk_test_51SlSyGGRVm9ShSoQLrERwxKf7sx1uCFtNLJ1RTcHVksVI0xN6HYmyZw41vz67O5XOaaUh10Isfpq7NgTgugv6VpQ00Ccl8G67z');
           
-          // 統一使用 cents 作為價格單位
+          // All prices in USD (Stripe will handle currency conversion)
           const domainPriceCents = Math.round(input.domainPriceUsd * 100);
           const managementFeeCents = input.includeManagementService ? 1299 : 0;  // $12.99 USD
           const totalPriceCents = domainPriceCents + managementFeeCents;
@@ -1781,9 +1780,9 @@ ${knowledgeContent.substring(0, 10000)}
             userId: ctx.user.id,
             domain: input.domainName,
             tld: input.domainName.split('.').pop() || 'com',
-            domainPrice: domainPriceCents,      // 以 cents 為單位
-            managementFee: managementFeeCents,  // 以 cents 為單位
-            totalPrice: totalPriceCents,        // 以 cents 為單位
+            domainPrice: domainPriceCents,
+            managementFee: managementFeeCents,
+            totalPrice: totalPriceCents,
             currency: 'USD',
             status: 'pending_payment',
           });

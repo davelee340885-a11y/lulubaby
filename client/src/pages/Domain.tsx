@@ -12,8 +12,7 @@ import { toast } from "sonner";
 import { trpc } from "@/lib/trpc";
 import { useState, useEffect } from "react";
 import { useLocation } from "wouter";
-import { useCurrency, formatPrice } from "@/hooks/useCurrency";
-import type { Currency } from "../../../shared/currency";
+// Currency removed - all prices in USD
 import {
   Dialog,
   DialogContent,
@@ -42,9 +41,7 @@ interface DomainSearchResult {
   originalPriceUsd: number;
   sellingPriceUsd: number;
   renewalSellingPriceUsd: number;
-  currency: Currency;
-  displayPrice: number;
-  displayRenewalPrice: number;
+  // All prices in USD
 }
 
 // 已購買域名列表組件
@@ -132,7 +129,7 @@ function PurchasedDomains() {
               <div>
                 <div className="text-muted-foreground">總價</div>
                 <div className="font-medium">
-                  HK${(order.totalPrice / 100).toFixed(2)}
+                  ${(order.totalPrice / 100).toFixed(2)}
                 </div>
               </div>
             </div>
@@ -171,7 +168,6 @@ function PurchasedDomains() {
 }
 
 export default function Domain() {
-  const { currency } = useCurrency();
   const { data: persona } = trpc.persona.get.useQuery();
   const { data: domains, refetch: refetchDomains } = trpc.domains.list.useQuery();
   const { data: pricing } = trpc.domains.pricing.useQuery();
@@ -349,7 +345,6 @@ export default function Domain() {
     setSearchResults([]);
     searchDomainsMutation.mutate({
       keyword: searchKeyword,
-      currency,
     });
   };
 
@@ -502,9 +497,9 @@ export default function Domain() {
                               </div>
                               {result.available && (
                                  <div className="text-right">
-                                 <span className="text-base font-bold">{formatPrice(result.displayPrice, result.currency)}/年</span>
+                                 <span className="text-base font-bold">${result.sellingPriceUsd.toFixed(2)}/年</span>
                                   <p className="text-xs text-muted-foreground">
-                                    續費 {formatPrice(result.displayRenewalPrice, result.currency)}/年
+                                    續費 ${result.renewalSellingPriceUsd.toFixed(2)}/年
                                    </p>
                                  </div>
                               )}
@@ -536,7 +531,7 @@ export default function Domain() {
                             <div className="space-y-2 mb-3">
                             <div className="flex justify-between items-center pb-2 border-b">
                               <span className="text-sm">域名費用</span>
-                              <span className="font-mono">{formatPrice(selectedDomain.displayPrice, selectedDomain.currency)}</span>
+                              <span className="font-mono">${selectedDomain.sellingPriceUsd.toFixed(2)}</span>
                             </div>
                             
                             {/* Management Service Toggle */}
@@ -553,15 +548,12 @@ export default function Domain() {
                                   年度管理費
                                 </label>
                               </div>
-                              <span className="font-mono">{includeManagementService ? formatPrice(currency === 'HKD' ? 99 : 12.99, currency) : formatPrice(0, currency)}</span>
+                              <span className="font-mono">{includeManagementService ? '$12.99' : '$0.00'}</span>
                             </div>
                             
                             <div className="flex justify-between items-center text-lg font-bold text-primary">
                               <span>總計</span>
-                              <span className="font-mono">{formatPrice(
-                                selectedDomain.displayPrice + (includeManagementService ? (currency === 'HKD' ? 99 : 12.99) : 0),
-                                selectedDomain.currency
-                              )}</span>
+                              <span className="font-mono">${(selectedDomain.sellingPriceUsd + (includeManagementService ? 12.99 : 0)).toFixed(2)}</span>
                             </div>
                           </div>
                           
@@ -629,15 +621,15 @@ export default function Domain() {
                         <div className="grid grid-cols-2 gap-1.5 text-center">
                           <div className="p-3 bg-muted rounded-lg">
                             <span className="font-mono text-lg">.com</span>
-                            <p className="text-sm text-muted-foreground mt-1">約 HK$80-120/年</p>
+                            <p className="text-sm text-muted-foreground mt-1">~$10-15/年</p>
                           </div>
                           <div className="p-3 bg-muted rounded-lg">
                             <span className="font-mono text-lg">.io</span>
-                            <p className="text-sm text-muted-foreground mt-1">約 HK$280-400/年</p>
+                            <p className="text-sm text-muted-foreground mt-1">~$35-50/年</p>
                           </div>
                           <div className="p-3 bg-muted rounded-lg">
                             <span className="font-mono text-lg">.ai</span>
-                            <p className="text-sm text-muted-foreground mt-1">約 HK$600-900/年</p>
+                            <p className="text-sm text-muted-foreground mt-1">~$75-115/年</p>
                           </div>
                         </div>
                         <p className="text-xs text-muted-foreground mt-3">
@@ -649,7 +641,7 @@ export default function Domain() {
                         <h4 className="font-medium mb-3">域名管理費</h4>
                         <div className="flex items-center justify-between">
                           <div>
-                            <p className="text-2xl font-bold text-primary">HK$99<span className="text-sm font-normal text-muted-foreground">/年</span></p>
+                            <p className="text-2xl font-bold text-primary">$12.99<span className="text-sm font-normal text-muted-foreground">/年</span></p>
                             <p className="text-sm text-muted-foreground mt-1">首 14 天免費試用</p>
                           </div>
                           <div className="text-right text-sm">
@@ -698,7 +690,7 @@ export default function Domain() {
                     <Info className="h-4 w-4" />
                     <AlertTitle>域名管理費</AlertTitle>
                     <AlertDescription>
-                      連接域名後，我們將收取 HK$99/年 的管理費，包含自動 SSL 證書、DNS 監控和到期提醒。首 14 天免費試用。
+                      連接域名後，我們將收取 $12.99/年 的管理費，包含自動 SSL 證書、DNS 監控和到期提醒。首 14 天免費試用。
                     </AlertDescription>
                   </Alert>
                 </div>
@@ -856,7 +848,7 @@ export default function Domain() {
                   <span>域名管理費</span>
                 </div>
                 <div className="text-right">
-                  <span className="font-bold">HK${pricing.annualFee}/年</span>
+                  <span className="font-bold">${pricing.annualFee}/年</span>
                   <span className="text-muted-foreground ml-2">（首 {pricing.trialDays} 天免費）</span>
                 </div>
               </div>
