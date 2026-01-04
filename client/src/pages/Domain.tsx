@@ -502,21 +502,21 @@ export default function Domain() {
                                    {result.premium ? (
                                      // Premium 域名：顯示一次性購買價格
                                      <>
-                                       <span className="text-base font-bold">${result.sellingPriceUsd.toFixed(2)}</span>
+                                       <span className="text-base font-bold">USD ${result.sellingPriceUsd.toFixed(2)}</span>
                                        <p className="text-xs text-muted-foreground">
                                          <span className="text-amber-600">一次性購買<br/></span>
-                                         續費 ${result.renewalSellingPriceUsd.toFixed(2)}/年
+                                         續費 USD ${result.renewalSellingPriceUsd.toFixed(2)}/年
                                        </p>
                                      </>
                                    ) : (
                                      // 普通域名：顯示每年價格
                                      <>
-                                       <span className="text-base font-bold">${result.pricePerYear.toFixed(2)}/年</span>
+                                       <span className="text-base font-bold">USD ${result.pricePerYear.toFixed(2)}/年</span>
                                        <p className="text-xs text-muted-foreground">
                                          {result.minYears > 1 && (
-                                           <span className="text-amber-600">最低 {result.minYears} 年，總計 ${result.sellingPriceUsd.toFixed(2)}<br/></span>
+                                           <span className="text-amber-600">最低 {result.minYears} 年，總計 USD ${result.sellingPriceUsd.toFixed(2)}<br/></span>
                                          )}
-                                         續費 ${result.renewalSellingPriceUsd.toFixed(2)}/年
+                                         續費 USD ${result.renewalSellingPriceUsd.toFixed(2)}/年
                                        </p>
                                      </>
                                    )}
@@ -550,7 +550,7 @@ export default function Domain() {
                             <div className="space-y-2 mb-3">
                             <div className="flex justify-between items-center pb-2 border-b">
                               <span className="text-sm">域名費用</span>
-                              <span className="font-mono">${selectedDomain.sellingPriceUsd.toFixed(2)}</span>
+                              <span className="font-mono">USD ${selectedDomain.sellingPriceUsd.toFixed(2)}</span>
                             </div>
                             
                             {/* Management Service Toggle */}
@@ -567,12 +567,12 @@ export default function Domain() {
                                   年度管理費
                                 </label>
                               </div>
-                              <span className="font-mono">{includeManagementService ? '$12.99' : '$0.00'}</span>
+                              <span className="font-mono">{includeManagementService ? 'USD $12.99' : 'USD $0.00'}</span>
                             </div>
                             
                             <div className="flex justify-between items-center text-lg font-bold text-primary">
                               <span>總計</span>
-                              <span className="font-mono">${(selectedDomain.sellingPriceUsd + (includeManagementService ? 12.99 : 0)).toFixed(2)}</span>
+                              <span className="font-mono">USD ${(selectedDomain.sellingPriceUsd + (includeManagementService ? 12.99 : 0)).toFixed(2)}</span>
                             </div>
                           </div>
                           
@@ -661,7 +661,7 @@ export default function Domain() {
                         <h4 className="font-medium mb-3">域名管理費</h4>
                         <div className="flex items-center justify-between">
                           <div>
-                            <p className="text-2xl font-bold text-primary">$12.99<span className="text-sm font-normal text-muted-foreground">/年</span></p>
+                            <p className="text-2xl font-bold text-primary">USD $12.99<span className="text-sm font-normal text-muted-foreground">/年</span></p>
                             <p className="text-sm text-muted-foreground mt-1">首 14 天免費試用</p>
                           </div>
                           <div className="text-right text-sm">
