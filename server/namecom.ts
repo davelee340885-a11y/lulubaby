@@ -3,7 +3,8 @@
  * 提供域名搜索、價格查詢、域名購買等功能
  */
 
-import { Currency, convertPrice } from "../shared/currency";
+import { Currency, convertPrice } from '../shared/currency';
+import { getDomainMinYears } from '../shared/tldConfig';
 
 const NAMECOM_API_URL = "https://api.name.com/v4";
 
@@ -271,6 +272,8 @@ export const getDomainPricing = async (
   currency: Currency;
   displayPrice: number;
   displayRenewalPrice: number;
+  minYears: number;
+  pricePerYear: number;
 }> => {
   const result = await checkDomainAvailability([domainName]);
   const domain = result.results[0];
@@ -281,11 +284,15 @@ export const getDomainPricing = async (
 
   const originalPriceUsd = domain.purchasePrice || 0;
   const renewalPriceUsd = domain.renewalPrice || originalPriceUsd;
+  const minYears = getDomainMinYears(domain.domainName);
 
   const sellingPriceUsd = calculateSellingPrice(originalPriceUsd);
   const renewalSellingPriceUsd = calculateSellingPrice(renewalPriceUsd);
   const displayPrice = convertPrice(sellingPriceUsd, currency);
   const displayRenewalPrice = convertPrice(renewalSellingPriceUsd, currency);
+  
+  // 計算每年價格（purchasePrice 是最低購買期限的總價）
+  const pricePerYear = sellingPriceUsd / minYears;
 
   return {
     domainName: domain.domainName,
@@ -298,6 +305,8 @@ export const getDomainPricing = async (
     currency,
     displayPrice,
     displayRenewalPrice,
+    minYears,
+    pricePerYear,
   };
 };
 
@@ -321,16 +330,23 @@ export const searchDomainsWithPricing = async (
   currency: Currency;
   displayPrice: number;
   displayRenewalPrice: number;
+  minYears: number;
+  pricePerYear: number;
 }>> => {
   const result = await searchDomains(keyword, tlds);
 
   return result.results.map((domain) => {
     const originalPriceUsd = domain.purchasePrice || 0;
     const renewalPriceUsd = domain.renewalPrice || originalPriceUsd;
+    const minYears = getDomainMinYears(domain.domainName);
+    
     const sellingPriceUsd = calculateSellingPrice(originalPriceUsd);
     const renewalSellingPriceUsd = calculateSellingPrice(renewalPriceUsd);
     const displayPrice = convertPrice(sellingPriceUsd, currency);
     const displayRenewalPrice = convertPrice(renewalSellingPriceUsd, currency);
+    
+    // 計算每年價格
+    const pricePerYear = sellingPriceUsd / minYears;
 
     return {
       domainName: domain.domainName,
@@ -342,6 +358,8 @@ export const searchDomainsWithPricing = async (
       currency,
       displayPrice,
       displayRenewalPrice,
+      minYears,
+      pricePerYear,
     };
   });
 };

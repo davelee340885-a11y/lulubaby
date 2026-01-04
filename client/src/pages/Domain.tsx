@@ -41,6 +41,8 @@ interface DomainSearchResult {
   originalPriceUsd: number;
   sellingPriceUsd: number;
   renewalSellingPriceUsd: number;
+  minYears: number; // 最低購買年限
+  pricePerYear: number; // 每年價格（USD）
   // All prices in USD
 }
 
@@ -497,8 +499,11 @@ export default function Domain() {
                               </div>
                               {result.available && (
                                  <div className="text-right">
-                                 <span className="text-base font-bold">${result.sellingPriceUsd.toFixed(2)}/年</span>
+                                 <span className="text-base font-bold">${result.pricePerYear.toFixed(2)}/年</span>
                                   <p className="text-xs text-muted-foreground">
+                                    {result.minYears > 1 && (
+                                      <span className="text-amber-600">最低 {result.minYears} 年，總計 ${result.sellingPriceUsd.toFixed(2)}<br/></span>
+                                    )}
                                     續費 ${result.renewalSellingPriceUsd.toFixed(2)}/年
                                    </p>
                                  </div>
@@ -629,7 +634,8 @@ export default function Domain() {
                           </div>
                           <div className="p-3 bg-muted rounded-lg">
                             <span className="font-mono text-lg">.ai</span>
-                            <p className="text-sm text-muted-foreground mt-1">~$75-115/年</p>
+                            <p className="text-sm text-muted-foreground mt-1">~$90-120/年</p>
+                            <p className="text-xs text-amber-600 mt-0.5">最低 2 年</p>
                           </div>
                         </div>
                         <p className="text-xs text-muted-foreground mt-3">
