@@ -499,13 +499,27 @@ export default function Domain() {
                               </div>
                               {result.available && (
                                  <div className="text-right">
-                                 <span className="text-base font-bold">${result.pricePerYear.toFixed(2)}/年</span>
-                                  <p className="text-xs text-muted-foreground">
-                                    {result.minYears > 1 && (
-                                      <span className="text-amber-600">最低 {result.minYears} 年，總計 ${result.sellingPriceUsd.toFixed(2)}<br/></span>
-                                    )}
-                                    續費 ${result.renewalSellingPriceUsd.toFixed(2)}/年
-                                   </p>
+                                   {result.premium ? (
+                                     // Premium 域名：顯示一次性購買價格
+                                     <>
+                                       <span className="text-base font-bold">${result.sellingPriceUsd.toFixed(2)}</span>
+                                       <p className="text-xs text-muted-foreground">
+                                         <span className="text-amber-600">一次性購買<br/></span>
+                                         續費 ${result.renewalSellingPriceUsd.toFixed(2)}/年
+                                       </p>
+                                     </>
+                                   ) : (
+                                     // 普通域名：顯示每年價格
+                                     <>
+                                       <span className="text-base font-bold">${result.pricePerYear.toFixed(2)}/年</span>
+                                       <p className="text-xs text-muted-foreground">
+                                         {result.minYears > 1 && (
+                                           <span className="text-amber-600">最低 {result.minYears} 年，總計 ${result.sellingPriceUsd.toFixed(2)}<br/></span>
+                                         )}
+                                         續費 ${result.renewalSellingPriceUsd.toFixed(2)}/年
+                                       </p>
+                                     </>
+                                   )}
                                  </div>
                               )}
                             </div>
