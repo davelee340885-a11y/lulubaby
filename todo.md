@@ -577,3 +577,22 @@
 - [ ] 5. 配置 Stripe webhook URL
 - [ ] 6. 使用測試信用卡完成支付流程
 - [ ] 7. 驗證訂單狀態更新和域名註冊
+
+
+## 真實域名購買測試準備（Phase 14）
+- [ ] 1. 檢查 Stripe API Key（測試環境 vs 生產環境）
+- [ ] 2. 配置 Stripe Webhook URL
+- [ ] 3. 驗證 Name.com API 連接和餘額
+- [ ] 4. 測試完整購買流程（真實信用卡 + 真實域名）
+- [ ] 5. 驗證域名註冊成功
+- [ ] 6. 測試域名連接功能
+
+
+## 配置 Stripe Webhook（Phase 15）
+- [x] 1. 打開 Stripe Dashboard Webhook 頁面
+- [x] 2. 添加 Webhook 端點 URL
+- [x] 3. 配置監聽事件（checkout.session.completed）
+- [x] 4. 保存並獲取 Webhook Signing Secret
+- [x] 5. 更新代碼使用新的 Webhook Secret
+- [ ] 6. 測試 Webhook 事件觸發
+- [ ] 7. 驗證伺服器接收到事件

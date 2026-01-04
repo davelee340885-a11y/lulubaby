@@ -11,6 +11,7 @@ import { ENV } from '../_core/env';
 
 // 使用環境變數中的 Stripe Secret Key
 const STRIPE_SECRET_KEY = 'sk_test_51SlSyGGRVm9ShSoQLrERwxKf7sx1uCFtNLJ1RTcHVksVI0xN6HYmyZw41vz67O5XOaaUh10Isfpq7NgTgugv6VpQ00Ccl8G67z';
+const STRIPE_WEBHOOK_SECRET = 'whsec_aKJeNqsAR89h0m2k8V4i2eDMpTSrwBjY';
 const stripe = new Stripe(STRIPE_SECRET_KEY);
 
 export interface WebhookEvent {

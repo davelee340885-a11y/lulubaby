@@ -42,7 +42,7 @@ async function startServer() {
           return res.status(400).send("Missing stripe-signature header");
         }
         
-        const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET || "whsec_test_secret";
+        const webhookSecret = "whsec_aKJeNqsAR89h0m2k8V4i2eDMpTSrwBjY";
         const event = verifyWebhookSignature(
           req.body.toString(),
           signature as string,
