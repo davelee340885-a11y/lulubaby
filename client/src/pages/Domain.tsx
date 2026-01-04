@@ -38,8 +38,8 @@ interface DomainSearchResult {
   available: boolean;
   premium: boolean;
   originalPriceUsd: number;
-  sellingPriceHkd: number;
-  renewalPriceHkd: number;
+  sellingPriceUsd: number;
+  renewalSellingPriceUsd: number;
 }
 
 // 已購買域名列表組件
@@ -492,12 +492,12 @@ export default function Domain() {
                                 </div>
                               </div>
                               {result.available && (
-                                <div className="text-right">
-                                 <span className="text-base font-bold">HK${result.sellingPriceHkd}/年</span>
-                                  <p className="text-xs text-muted-foreground">
-                                    續費 HK${result.renewalPriceHkd}/年
-                                  </p>
-                                </div>
+                                 <div className="text-right">
+                                  <span className="text-base font-bold">${result.sellingPriceUsd}/年</span>
+                                   <p className="text-xs text-muted-foreground">
+                                     續費 ${result.renewalSellingPriceUsd}/年
+                                   </p>
+                                 </div>
                               )}
                             </div>
                           ))}
@@ -524,10 +524,10 @@ export default function Domain() {
                             <Button variant="ghost" size="sm" className="h-7 text-xs" onClick={() => setSelectedDomain(null)}>更換</Button>
                           </div>
                           
-                          <div className="space-y-2 mb-3">
+                            <div className="space-y-2 mb-3">
                             <div className="flex justify-between items-center pb-2 border-b">
                               <span className="text-sm">域名費用</span>
-                              <span className="font-mono">HK${selectedDomain.sellingPriceHkd}</span>
+                              <span className="font-mono">${selectedDomain.sellingPriceUsd}</span>
                             </div>
                             
                             {/* Management Service Toggle */}
@@ -544,12 +544,12 @@ export default function Domain() {
                                   年度管理費
                                 </label>
                               </div>
-                              <span className="font-mono">{includeManagementService ? 'HK$99' : 'HK$0'}</span>
+                              <span className="font-mono">{includeManagementService ? '$12.99' : '$0'}</span>
                             </div>
                             
                             <div className="flex justify-between items-center text-lg font-bold text-primary">
                               <span>總計</span>
-                              <span className="font-mono">HK${selectedDomain.sellingPriceHkd + (includeManagementService ? 99 : 0)}</span>
+                              <span className="font-mono">${(selectedDomain.sellingPriceUsd + (includeManagementService ? 12.99 : 0)).toFixed(2)}</span>
                             </div>
                           </div>
                           
@@ -568,7 +568,7 @@ export default function Domain() {
                               if (selectedDomain) {
                                 createCheckoutSessionMutation.mutate({
                                   domainName: selectedDomain.domainName,
-                                  domainPriceHkd: selectedDomain.sellingPriceHkd,
+                                  domainPriceUsd: selectedDomain.sellingPriceUsd,
                                   includeManagementService: includeManagementService,
                                 });
                               }

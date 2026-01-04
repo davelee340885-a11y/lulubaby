@@ -1624,8 +1624,8 @@ ${knowledgeContent.substring(0, 10000)}
     // Get pricing info
     pricing: publicProcedure.query(() => {
       return {
-        annualFee: 99, // HK$99
-        currency: 'HKD',
+        annualFee: 12.99, // $12.99 USD
+        currency: 'USD',
         features: [
           '自動 SSL 證書',
           'DNS 狀態監控',
@@ -1726,7 +1726,7 @@ ${knowledgeContent.substring(0, 10000)}
           dnsRecordValue: 'lulubaby.manus.space',
           verificationToken,
           subscriptionStatus: 'active',
-          annualFee: pricing.sellingPriceHkd,
+          annualFee: pricing.sellingPriceUsd,
         });
 
         // Set DNS records to point to Lulubaby
@@ -1750,7 +1750,7 @@ ${knowledgeContent.substring(0, 10000)}
           namecomDomain: result,
           pricing: {
             originalPriceUsd: pricing.originalPriceUsd,
-            sellingPriceHkd: pricing.sellingPriceHkd,
+            sellingPriceUsd: pricing.sellingPriceUsd,
           },
         };
       }),
@@ -1759,7 +1759,7 @@ ${knowledgeContent.substring(0, 10000)}
     createCheckoutSession: protectedProcedure
       .input(z.object({
         domainName: z.string().min(1),
-        domainPriceHkd: z.number().positive(),
+        domainPriceUsd: z.number().positive(),
         includeManagementService: z.boolean(),
       }))
       .mutation(async ({ ctx, input }) => {
@@ -1767,8 +1767,8 @@ ${knowledgeContent.substring(0, 10000)}
           const stripe = new Stripe('sk_test_51SlSyGGRVm9ShSoQLrERwxKf7sx1uCFtNLJ1RTcHVksVI0xN6HYmyZw41vz67O5XOaaUh10Isfpq7NgTgugv6VpQ00Ccl8G67z');
           
           // 統一使用 cents 作為價格單位
-          const domainPriceCents = Math.round(input.domainPriceHkd * 100);
-          const managementFeeCents = input.includeManagementService ? 9900 : 0;
+          const domainPriceCents = Math.round(input.domainPriceUsd * 100);
+          const managementFeeCents = input.includeManagementService ? 1299 : 0;  // $12.99 USD
           const totalPriceCents = domainPriceCents + managementFeeCents;
           
           // Create domain order in database
@@ -1779,7 +1779,7 @@ ${knowledgeContent.substring(0, 10000)}
             domainPrice: domainPriceCents,      // 以 cents 為單位
             managementFee: managementFeeCents,  // 以 cents 為單位
             totalPrice: totalPriceCents,        // 以 cents 為單位
-            currency: 'HKD',
+            currency: 'USD',
             status: 'pending_payment',
           });
           
@@ -1789,7 +1789,7 @@ ${knowledgeContent.substring(0, 10000)}
             line_items: [
               {
                 price_data: {
-                  currency: 'hkd',
+                  currency: 'usd',
                   product_data: {
                     name: `域名註冊 - ${input.domainName}`,
                     description: input.includeManagementService 

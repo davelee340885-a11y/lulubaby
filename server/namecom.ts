@@ -239,19 +239,15 @@ export const verifyConnection = async (): Promise<string> => {
 // Lulubaby 加價比例（30%）
 const MARKUP_PERCENTAGE = 0.30;
 
-// USD 到 HKD 匯率（約 7.8）
-const USD_TO_HKD_RATE = 7.8;
-
 /**
  * 計算 Lulubaby 售價（含 30% 加價）
  * @param usdPrice Name.com 原價（USD）
- * @returns Lulubaby 售價（HKD）
+ * @returns Lulubaby 售價（USD）
  */
 export const calculateSellingPrice = (usdPrice: number): number => {
-  const hkdPrice = usdPrice * USD_TO_HKD_RATE;
-  const markedUpPrice = hkdPrice * (1 + MARKUP_PERCENTAGE);
-  // 四捨五入到整數
-  return Math.round(markedUpPrice);
+  const markedUpPrice = usdPrice * (1 + MARKUP_PERCENTAGE);
+  // 四捨五入到小數點後兩位
+  return Math.round(markedUpPrice * 100) / 100;
 };
 
 /**
@@ -266,9 +262,9 @@ export const getDomainPricing = async (
   available: boolean;
   premium: boolean;
   originalPriceUsd: number;
-  sellingPriceHkd: number;
+  sellingPriceUsd: number;
   renewalPriceUsd: number;
-  renewalPriceHkd: number;
+  renewalSellingPriceUsd: number;
 }> => {
   const result = await checkDomainAvailability([domainName]);
   const domain = result.results[0];
@@ -285,9 +281,9 @@ export const getDomainPricing = async (
     available: domain.purchasable,
     premium: domain.premium,
     originalPriceUsd,
-    sellingPriceHkd: calculateSellingPrice(originalPriceUsd),
+    sellingPriceUsd: calculateSellingPrice(originalPriceUsd),
     renewalPriceUsd,
-    renewalPriceHkd: calculateSellingPrice(renewalPriceUsd),
+    renewalSellingPriceUsd: calculateSellingPrice(renewalPriceUsd),
   };
 };
 
@@ -305,8 +301,8 @@ export const searchDomainsWithPricing = async (
   available: boolean;
   premium: boolean;
   originalPriceUsd: number;
-  sellingPriceHkd: number;
-  renewalPriceHkd: number;
+  sellingPriceUsd: number;
+  renewalSellingPriceUsd: number;
 }>> => {
   const result = await searchDomains(keyword, tlds);
 
@@ -319,8 +315,8 @@ export const searchDomainsWithPricing = async (
       available: domain.purchasable,
       premium: domain.premium,
       originalPriceUsd,
-      sellingPriceHkd: calculateSellingPrice(originalPriceUsd),
-      renewalPriceHkd: calculateSellingPrice(renewalPriceUsd),
+      sellingPriceUsd: calculateSellingPrice(originalPriceUsd),
+      renewalSellingPriceUsd: calculateSellingPrice(renewalPriceUsd),
     };
   });
 };

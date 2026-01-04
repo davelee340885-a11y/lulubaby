@@ -480,3 +480,23 @@
   - [x] 更新測試腳本的利潤計算邏輯
   - [x] 驗證 30% 加價後的利潤率
   - [x] 記錄不同場景的財務數據
+
+
+## 改為全部使用 USD 交易（Phase 9）
+- [x] 1. 更新後端價格計算邏輯
+  - [x] 移除 HKD 轉換邏輯
+  - [x] 直接使用 Name.com 的 USD 價格 × 1.3
+  - [x] 更新 calculateSellingPrice 函數
+- [x] 2. 更新數據庫貨幣欄位
+  - [x] 將 currency 從 'HKD' 改為 'USD'
+  - [x] 價格欄位改為存儲 USD cents
+- [x] 3. 更新前端顯示
+  - [x] 所有價格顯示改為 USD
+  - [x] 更新管理費為 USD（如 $12.99）
+- [x] 4. 更新 Stripe 支付
+  - [x] Checkout Session 改為 'usd' 貨幣
+  - [x] 價格計算改為 USD cents
+- [x] 5. 測試 USD 交易流程
+  - [x] 運行測試腳本驗證利潤計算
+  - [x] 測試完整的支付流程
+  - [x] 驗證 Stripe 不會收取貨幣轉換費
