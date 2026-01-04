@@ -127,11 +127,71 @@ export const verifyWebhookSignature = (
 };
 
 /**
+ * 處理 checkout.session.completed 事件
+ * 當 Checkout Session 完成時觸發（推薦使用此事件）
+ */
+export const handleCheckoutSessionCompleted = async (session: Stripe.Checkout.Session) => {
+  try {
+    const orderIdStr = session.metadata?.orderId;
+    if (!orderIdStr) {
+      console.error('Checkout session missing orderId in metadata');
+      return;
+    }
+
+    const orderId = parseInt(orderIdStr);
+    const order = await getDomainOrder(orderId);
+
+    if (!order) {
+      console.error(`Order not found: ${orderId}`);
+      return;
+    }
+
+    // 更新訂單狀態為支付成功
+    await updateDomainOrderStatus(orderId, 'payment_completed');
+    console.log(`Order ${orderId} marked as payment_completed`);
+
+    // 自動調用 Name.com 購買 API
+    console.log(`Triggering Name.com domain registration for order: ${orderId}`);
+    
+    try {
+      // 準備域名購買請求
+      const purchaseRequest = {
+        domain: {
+          domainName: order.domain,
+        },
+        purchasePrice: order.domainPrice / 100, // 轉換為美元
+        years: 1,
+      };
+
+      const registrationResult = await purchaseDomain(purchaseRequest);
+
+      // 更新訂單狀態為已註冊
+      await updateDomainOrderStatus(orderId, 'registered');
+
+      console.log(`Domain registered successfully: ${order.domain}`);
+      console.log(`Registration result:`, registrationResult);
+    } catch (error) {
+      console.error(`Failed to register domain with Name.com:`, error);
+      await updateDomainOrderStatus(orderId, 'failed');
+      throw error;
+    }
+  } catch (error) {
+    console.error('Error handling checkout.session.completed:', error);
+    throw error;
+  }
+};
+
+/**
  * 處理 Webhook 事件
  */
 export const handleWebhookEvent = async (event: WebhookEvent): Promise<void> => {
   switch (event.type) {
+    case 'checkout.session.completed':
+      // 推薦：使用 checkout.session.completed 事件
+      await handleCheckoutSessionCompleted(event.data.object as Stripe.Checkout.Session);
+      break;
     case 'payment_intent.succeeded':
+      // 備用：也處理 payment_intent.succeeded 事件
       await handlePaymentIntentSucceeded(event.data.object as Stripe.PaymentIntent);
       break;
     case 'payment_intent.payment_failed':

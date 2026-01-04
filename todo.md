@@ -567,3 +567,13 @@
 - [x] 4. 移除 shared/currency.ts 中的多貨幣相關代碼
 - [x] 5. 更新管理費為統一 USD $12.99
 - [x] 6. 測試完整的購買流程
+
+
+## Stripe 支付流程完整測試（Phase 13）
+- [x] 1. 檢查當前 Stripe 配置（API Key、Webhook Secret）
+- [x] 2. 實現 Stripe webhook 處理端點（/api/webhooks/stripe）
+- [x] 3. 處理 checkout.session.completed 事件
+- [x] 4. 更新訂單狀態並調用 Name.com 註冊 API
+- [ ] 5. 配置 Stripe webhook URL
+- [ ] 6. 使用測試信用卡完成支付流程
+- [ ] 7. 驗證訂單狀態更新和域名註冊
