@@ -1766,17 +1766,19 @@ ${knowledgeContent.substring(0, 10000)}
         try {
           const stripe = new Stripe('sk_test_51SlSyGGRVm9ShSoQLrERwxKf7sx1uCFtNLJ1RTcHVksVI0xN6HYmyZw41vz67O5XOaaUh10Isfpq7NgTgugv6VpQ00Ccl8G67z');
           
-          const managementFee = input.includeManagementService ? 99 : 0;
-          const totalAmount = Math.round((input.domainPriceHkd + managementFee) * 100);
+          // 統一使用 cents 作為價格單位
+          const domainPriceCents = Math.round(input.domainPriceHkd * 100);
+          const managementFeeCents = input.includeManagementService ? 9900 : 0;
+          const totalPriceCents = domainPriceCents + managementFeeCents;
           
           // Create domain order in database
           const order = await createDomainOrder({
             userId: ctx.user.id,
             domain: input.domainName,
             tld: input.domainName.split('.').pop() || 'com',
-            domainPrice: input.domainPriceHkd,
-            managementFee: managementFee,
-            totalPrice: (input.domainPriceHkd + managementFee),
+            domainPrice: domainPriceCents,      // 以 cents 為單位
+            managementFee: managementFeeCents,  // 以 cents 為單位
+            totalPrice: totalPriceCents,        // 以 cents 為單位
             currency: 'HKD',
             status: 'pending_payment',
           });
@@ -1794,7 +1796,7 @@ ${knowledgeContent.substring(0, 10000)}
                       ? '包含年度管理服務（SSL、DNS監控、到期提醒）'
                       : '只購買域名',
                   },
-                  unit_amount: totalAmount,
+                  unit_amount: totalPriceCents,
                 },
                 quantity: 1,
               },
