@@ -42,6 +42,7 @@ import {
   verifyConnection,
   type ContactInfo
 } from "./namecom";
+import { detectCurrency, type Currency, MANAGEMENT_FEE } from "../shared/currency";
 import { 
   fetchYouTubeTranscript, 
   fetchWebpageContent, 
@@ -1641,19 +1642,23 @@ ${knowledgeContent.substring(0, 10000)}
       .input(z.object({
         keyword: z.string().min(1).max(63),
         tlds: z.array(z.string()).optional(),
+        currency: z.enum(['USD', 'HKD']).optional(),
       }))
       .mutation(async ({ input }) => {
         const tlds = input.tlds || ['com', 'net', 'org', 'io', 'co', 'ai'];
-        return searchDomainsWithPricing(input.keyword, tlds);
+        const currency = input.currency || 'USD';
+        return searchDomainsWithPricing(input.keyword, tlds, currency);
       }),
 
     // Check single domain availability
     checkAvailability: protectedProcedure
       .input(z.object({
         domain: z.string().min(1),
+        currency: z.enum(['USD', 'HKD']).optional(),
       }))
       .query(async ({ input }) => {
-        return getDomainPricing(input.domain);
+        const currency = input.currency || 'USD';
+        return getDomainPricing(input.domain, currency);
       }),
 
     // Purchase domain via Name.com

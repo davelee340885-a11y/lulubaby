@@ -3,6 +3,8 @@
  * 提供域名搜索、價格查詢、域名購買等功能
  */
 
+import { Currency, convertPrice } from "../shared/currency";
+
 const NAMECOM_API_URL = "https://api.name.com/v4";
 
 // 從環境變數獲取憑證
@@ -256,7 +258,8 @@ export const calculateSellingPrice = (usdPrice: number): number => {
  * @returns 價格資訊
  */
 export const getDomainPricing = async (
-  domainName: string
+  domainName: string,
+  currency: Currency = 'USD'
 ): Promise<{
   domainName: string;
   available: boolean;
@@ -265,6 +268,9 @@ export const getDomainPricing = async (
   sellingPriceUsd: number;
   renewalPriceUsd: number;
   renewalSellingPriceUsd: number;
+  currency: Currency;
+  displayPrice: number;
+  displayRenewalPrice: number;
 }> => {
   const result = await checkDomainAvailability([domainName]);
   const domain = result.results[0];
@@ -276,14 +282,22 @@ export const getDomainPricing = async (
   const originalPriceUsd = domain.purchasePrice || 0;
   const renewalPriceUsd = domain.renewalPrice || originalPriceUsd;
 
+  const sellingPriceUsd = calculateSellingPrice(originalPriceUsd);
+  const renewalSellingPriceUsd = calculateSellingPrice(renewalPriceUsd);
+  const displayPrice = convertPrice(sellingPriceUsd, currency);
+  const displayRenewalPrice = convertPrice(renewalSellingPriceUsd, currency);
+
   return {
     domainName: domain.domainName,
     available: domain.purchasable,
     premium: domain.premium,
     originalPriceUsd,
-    sellingPriceUsd: calculateSellingPrice(originalPriceUsd),
+    sellingPriceUsd,
     renewalPriceUsd,
-    renewalSellingPriceUsd: calculateSellingPrice(renewalPriceUsd),
+    renewalSellingPriceUsd,
+    currency,
+    displayPrice,
+    displayRenewalPrice,
   };
 };
 
@@ -295,7 +309,8 @@ export const getDomainPricing = async (
  */
 export const searchDomainsWithPricing = async (
   keyword: string,
-  tlds: string[] = ["com", "net", "org", "io", "co", "ai"]
+  tlds: string[] = ["com", "net", "org", "io", "co", "ai"],
+  currency: Currency = 'USD'
 ): Promise<Array<{
   domainName: string;
   available: boolean;
@@ -303,20 +318,30 @@ export const searchDomainsWithPricing = async (
   originalPriceUsd: number;
   sellingPriceUsd: number;
   renewalSellingPriceUsd: number;
+  currency: Currency;
+  displayPrice: number;
+  displayRenewalPrice: number;
 }>> => {
   const result = await searchDomains(keyword, tlds);
 
   return result.results.map((domain) => {
     const originalPriceUsd = domain.purchasePrice || 0;
     const renewalPriceUsd = domain.renewalPrice || originalPriceUsd;
+    const sellingPriceUsd = calculateSellingPrice(originalPriceUsd);
+    const renewalSellingPriceUsd = calculateSellingPrice(renewalPriceUsd);
+    const displayPrice = convertPrice(sellingPriceUsd, currency);
+    const displayRenewalPrice = convertPrice(renewalSellingPriceUsd, currency);
 
     return {
       domainName: domain.domainName,
       available: domain.purchasable,
       premium: domain.premium,
       originalPriceUsd,
-      sellingPriceUsd: calculateSellingPrice(originalPriceUsd),
-      renewalSellingPriceUsd: calculateSellingPrice(renewalPriceUsd),
+      sellingPriceUsd,
+      renewalSellingPriceUsd,
+      currency,
+      displayPrice,
+      displayRenewalPrice,
     };
   });
 };

@@ -12,6 +12,8 @@ import { toast } from "sonner";
 import { trpc } from "@/lib/trpc";
 import { useState, useEffect } from "react";
 import { useLocation } from "wouter";
+import { useCurrency, formatPrice } from "@/hooks/useCurrency";
+import type { Currency } from "../../../shared/currency";
 import {
   Dialog,
   DialogContent,
@@ -40,6 +42,9 @@ interface DomainSearchResult {
   originalPriceUsd: number;
   sellingPriceUsd: number;
   renewalSellingPriceUsd: number;
+  currency: Currency;
+  displayPrice: number;
+  displayRenewalPrice: number;
 }
 
 // 已購買域名列表組件
@@ -166,6 +171,7 @@ function PurchasedDomains() {
 }
 
 export default function Domain() {
+  const { currency } = useCurrency();
   const { data: persona } = trpc.persona.get.useQuery();
   const { data: domains, refetch: refetchDomains } = trpc.domains.list.useQuery();
   const { data: pricing } = trpc.domains.pricing.useQuery();
@@ -341,9 +347,12 @@ export default function Domain() {
     }
     setIsSearching(true);
     setSearchResults([]);
-    searchDomainsMutation.mutate({ keyword: cleanKeyword });
+    searchDomainsMutation.mutate({
+      keyword: searchKeyword,
+      currency,
+    });
   };
-  
+
   const handleSelectDomain = (domain: DomainSearchResult) => {
     if (!domain.available) {
       toast.error("此域名已被註冊，無法購買");
@@ -493,9 +502,9 @@ export default function Domain() {
                               </div>
                               {result.available && (
                                  <div className="text-right">
-                                  <span className="text-base font-bold">${result.sellingPriceUsd}/年</span>
-                                   <p className="text-xs text-muted-foreground">
-                                     續費 ${result.renewalSellingPriceUsd}/年
+                                 <span className="text-base font-bold">{formatPrice(result.displayPrice, result.currency)}/年</span>
+                                  <p className="text-xs text-muted-foreground">
+                                    續費 {formatPrice(result.displayRenewalPrice, result.currency)}/年
                                    </p>
                                  </div>
                               )}
@@ -527,7 +536,7 @@ export default function Domain() {
                             <div className="space-y-2 mb-3">
                             <div className="flex justify-between items-center pb-2 border-b">
                               <span className="text-sm">域名費用</span>
-                              <span className="font-mono">${selectedDomain.sellingPriceUsd}</span>
+                              <span className="font-mono">{formatPrice(selectedDomain.displayPrice, selectedDomain.currency)}</span>
                             </div>
                             
                             {/* Management Service Toggle */}
@@ -544,12 +553,15 @@ export default function Domain() {
                                   年度管理費
                                 </label>
                               </div>
-                              <span className="font-mono">{includeManagementService ? '$12.99' : '$0'}</span>
+                              <span className="font-mono">{includeManagementService ? formatPrice(currency === 'HKD' ? 99 : 12.99, currency) : formatPrice(0, currency)}</span>
                             </div>
                             
                             <div className="flex justify-between items-center text-lg font-bold text-primary">
                               <span>總計</span>
-                              <span className="font-mono">${(selectedDomain.sellingPriceUsd + (includeManagementService ? 12.99 : 0)).toFixed(2)}</span>
+                              <span className="font-mono">{formatPrice(
+                                selectedDomain.displayPrice + (includeManagementService ? (currency === 'HKD' ? 99 : 12.99) : 0),
+                                selectedDomain.currency
+                              )}</span>
                             </div>
                           </div>
                           
