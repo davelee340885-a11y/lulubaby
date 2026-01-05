@@ -27,6 +27,7 @@ import {
   // Domain order operations
   createDomainOrder, getDomainOrder, updateDomainOrderStatus,
   getRegisteredDomainOrders, updateDomainOrderDnsConfig, getDomainOrderByDomain,
+  bindDomainToPersona, unbindDomainFromPersona, publishDomain, unpublishDomain, getPublishedDomainByName,
   // Database connection
   getDb
 } from "./db";
@@ -2105,6 +2106,102 @@ ${knowledgeContent.substring(0, 10000)}
             : result.status === 'provisioning' 
               ? 'SSL 證書正在申請中...' 
               : result.error || 'SSL 狀態未知',
+        };
+      }),
+
+    // ==================== Domain Binding and Publishing API ====================
+    
+    // Bind domain to AI persona
+    bindPersona: protectedProcedure
+      .input(z.object({ 
+        orderId: z.number(),
+        personaId: z.number(),
+      }))
+      .mutation(async ({ ctx, input }) => {
+        const order = await getDomainOrder(input.orderId);
+        if (!order || order.userId !== ctx.user.id) {
+          throw new Error('訂單不存在或無權訪問');
+        }
+        
+        if (order.status !== 'registered') {
+          throw new Error('域名尚未註冊完成');
+        }
+        
+        // Verify persona exists and belongs to user
+        const persona = await getPersonaById(input.personaId);
+        if (!persona || persona.userId !== ctx.user.id) {
+          throw new Error('智能體不存在或無權訪問');
+        }
+        
+        await bindDomainToPersona(input.orderId, input.personaId);
+        
+        return {
+          success: true,
+          message: `域名 ${order.domain} 已綁定到智能體 ${persona.agentName}`,
+        };
+      }),
+    
+    // Unbind domain from persona
+    unbindPersona: protectedProcedure
+      .input(z.object({ orderId: z.number() }))
+      .mutation(async ({ ctx, input }) => {
+        const order = await getDomainOrder(input.orderId);
+        if (!order || order.userId !== ctx.user.id) {
+          throw new Error('訂單不存在或無權訪問');
+        }
+        
+        await unbindDomainFromPersona(input.orderId);
+        
+        return {
+          success: true,
+          message: '域名已解除綁定',
+        };
+      }),
+    
+    // Publish domain
+    publish: protectedProcedure
+      .input(z.object({ orderId: z.number() }))
+      .mutation(async ({ ctx, input }) => {
+        const order = await getDomainOrder(input.orderId);
+        if (!order || order.userId !== ctx.user.id) {
+          throw new Error('訂單不存在或無權訪問');
+        }
+        
+        if (order.status !== 'registered') {
+          throw new Error('域名尚未註冊完成');
+        }
+        
+        if (!order.personaId) {
+          throw new Error('請先綁定智能體');
+        }
+        
+        if (order.dnsStatus !== 'active') {
+          throw new Error('DNS 尚未生效，請先完成 DNS 配置');
+        }
+        
+        await publishDomain(input.orderId);
+        
+        return {
+          success: true,
+          message: `域名 ${order.domain} 已發布，現在可以透過域名訪問您的智能體！`,
+          url: `https://${order.domain}`,
+        };
+      }),
+    
+    // Unpublish domain
+    unpublish: protectedProcedure
+      .input(z.object({ orderId: z.number() }))
+      .mutation(async ({ ctx, input }) => {
+        const order = await getDomainOrder(input.orderId);
+        if (!order || order.userId !== ctx.user.id) {
+          throw new Error('訂單不存在或無權訪問');
+        }
+        
+        await unpublishDomain(input.orderId);
+        
+        return {
+          success: true,
+          message: '域名已取消發布',
         };
       }),
 

@@ -803,6 +803,11 @@ export const domainOrders = mysqlTable("domain_orders", {
   dnsErrorMessage: text("dnsErrorMessage"), // DNS configuration error
   sslErrorMessage: text("sslErrorMessage"), // SSL configuration error
   
+  // Domain Binding and Publishing
+  personaId: int("personaId"), // Bound AI persona ID (null if not bound)
+  isPublished: boolean("isPublished").default(false).notNull(), // Whether domain is published
+  publishedAt: timestamp("publishedAt"), // When domain was published
+  
   // Metadata
   metadata: text("metadata"), // JSON with additional info
   

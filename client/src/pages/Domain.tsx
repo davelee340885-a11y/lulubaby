@@ -49,7 +49,88 @@ interface DomainSearchResult {
 
 // 已購買域名列表組件
 function PurchasedDomains() {
-  const { data: orders, isLoading } = trpc.domains.getOrders.useQuery();
+  const { data: orders, isLoading, refetch } = trpc.domains.getOrders.useQuery();
+  const { data: persona } = trpc.persona.get.useQuery();
+  const [bindingOrderId, setBindingOrderId] = useState<number | null>(null);
+  const [publishingOrderId, setPublishingOrderId] = useState<number | null>(null);
+  const [checkingDnsOrderId, setCheckingDnsOrderId] = useState<number | null>(null);
+  const [checkingSslOrderId, setCheckingSslOrderId] = useState<number | null>(null);
+  
+  const bindPersonaMutation = trpc.domains.bindPersona.useMutation({
+    onSuccess: (data) => {
+      toast.success(data.message);
+      setBindingOrderId(null);
+      refetch();
+    },
+    onError: (error) => {
+      toast.error(error.message);
+      setBindingOrderId(null);
+    },
+  });
+  
+  const publishMutation = trpc.domains.publish.useMutation({
+    onSuccess: (data) => {
+      toast.success(data.message);
+      setPublishingOrderId(null);
+      refetch();
+    },
+    onError: (error) => {
+      toast.error(error.message);
+      setPublishingOrderId(null);
+    },
+  });
+  
+  const checkDnsStatusMutation = trpc.domains.checkDnsStatus.useMutation({
+    onSuccess: (data) => {
+      if (data.propagated) {
+        toast.success(data.message);
+      } else {
+        toast.info(data.message);
+      }
+      setCheckingDnsOrderId(null);
+      refetch();
+    },
+    onError: (error) => {
+      toast.error(error.message);
+      setCheckingDnsOrderId(null);
+    },
+  });
+  
+  const checkSslStatusMutation = trpc.domains.checkSslStatus.useMutation({
+    onSuccess: (data) => {
+      toast.info(data.message);
+      setCheckingSslOrderId(null);
+      refetch();
+    },
+    onError: (error) => {
+      toast.error(error.message);
+      setCheckingSslOrderId(null);
+    },
+  });
+  
+  const handleBindPersona = (orderId: number) => {
+    if (!persona?.id) {
+      toast.error('請先設定您的 AI 智能體');
+      return;
+    }
+    setBindingOrderId(orderId);
+    bindPersonaMutation.mutate({ orderId, personaId: persona.id });
+  };
+  
+  const handlePublish = (orderId: number) => {
+    setPublishingOrderId(orderId);
+    publishMutation.mutate({ orderId });
+  };
+  
+  const handleCheckDns = (orderId: number) => {
+    setCheckingDnsOrderId(orderId);
+    checkDnsStatusMutation.mutate({ orderId });
+  };
+  
+  const handleCheckSsl = (orderId: number) => {
+    setCheckingSslOrderId(orderId);
+    checkSslStatusMutation.mutate({ orderId });
+  };
   
   if (isLoading) {
     return (
@@ -138,11 +219,205 @@ function PurchasedDomains() {
             </div>
             
             {order.status === 'registered' && order.registrationDate && (
-              <div className="pt-2 border-t text-sm">
-                <div className="flex items-center gap-2 text-green-600">
+              <div className="pt-3 border-t space-y-3">
+                <div className="flex items-center gap-2 text-green-600 text-sm">
                   <CheckCircle2 className="h-4 w-4" />
                   <span>域名已成功註冊！註冊時間：{new Date(order.registrationDate).toLocaleDateString('zh-TW')}</span>
                 </div>
+                
+                {/* DNS and SSL Status */}
+                <div className="grid grid-cols-2 gap-2 text-sm">
+                  <div className="space-y-1">
+                    <div className="text-muted-foreground">DNS 狀態</div>
+                    <div className="flex items-center gap-2">
+                      {order.dnsStatus === 'active' && (
+                        <Badge variant="default" className="bg-green-600">
+                          <CheckCircle2 className="h-3 w-3 mr-1" />
+                          已生效
+                        </Badge>
+                      )}
+                      {order.dnsStatus === 'propagating' && (
+                        <Badge variant="secondary">
+                          <Clock className="h-3 w-3 mr-1" />
+                          傳播中
+                        </Badge>
+                      )}
+                      {order.dnsStatus === 'pending' && (
+                        <Badge variant="outline">
+                          待配置
+                        </Badge>
+                      )}
+                      {order.dnsStatus === 'error' && (
+                        <Badge variant="destructive">
+                          <AlertCircle className="h-3 w-3 mr-1" />
+                          錯誤
+                        </Badge>
+                      )}
+                      {order.dnsStatus !== 'active' && (
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          className="h-6 px-2"
+                          onClick={() => handleCheckDns(order.id)}
+                          disabled={checkingDnsOrderId === order.id}
+                        >
+                          {checkingDnsOrderId === order.id ? (
+                            <Loader2 className="h-3 w-3 animate-spin" />
+                          ) : (
+                            <RefreshCw className="h-3 w-3" />
+                          )}
+                        </Button>
+                      )}
+                    </div>
+                  </div>
+                  
+                  <div className="space-y-1">
+                    <div className="text-muted-foreground">SSL 狀態</div>
+                    <div className="flex items-center gap-2">
+                      {order.sslStatus === 'active' && (
+                        <Badge variant="default" className="bg-green-600">
+                          <Shield className="h-3 w-3 mr-1" />
+                          已啟用
+                        </Badge>
+                      )}
+                      {order.sslStatus === 'provisioning' && (
+                        <Badge variant="secondary">
+                          <Clock className="h-3 w-3 mr-1" />
+                          申請中
+                        </Badge>
+                      )}
+                      {order.sslStatus === 'pending' && (
+                        <Badge variant="outline">
+                          待申請
+                        </Badge>
+                      )}
+                      {order.sslStatus === 'error' && (
+                        <Badge variant="destructive">
+                          <AlertCircle className="h-3 w-3 mr-1" />
+                          錯誤
+                        </Badge>
+                      )}
+                      {order.sslStatus !== 'active' && order.dnsStatus === 'active' && (
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          className="h-6 px-2"
+                          onClick={() => handleCheckSsl(order.id)}
+                          disabled={checkingSslOrderId === order.id}
+                        >
+                          {checkingSslOrderId === order.id ? (
+                            <Loader2 className="h-3 w-3 animate-spin" />
+                          ) : (
+                            <RefreshCw className="h-3 w-3" />
+                          )}
+                        </Button>
+                      )}
+                    </div>
+                  </div>
+                </div>
+                
+                {/* Persona Binding */}
+                <div className="space-y-2">
+                  <div className="text-sm text-muted-foreground">
+                    綁定智能體
+                  </div>
+                  {order.personaId ? (
+                    <div className="flex items-center gap-2">
+                      <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-200">
+                        <LinkIcon className="h-3 w-3 mr-1" />
+                        已綁定到 {persona?.agentName || '智能體'}
+                      </Badge>
+                    </div>
+                  ) : (
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => handleBindPersona(order.id)}
+                      disabled={bindingOrderId === order.id}
+                    >
+                      {bindingOrderId === order.id ? (
+                        <>
+                          <Loader2 className="h-3 w-3 mr-2 animate-spin" />
+                          綁定中...
+                        </>
+                      ) : (
+                        <>
+                          <LinkIcon className="h-3 w-3 mr-2" />
+                          綁定智能體
+                        </>
+                      )}
+                    </Button>
+                  )}
+                </div>
+                
+                {/* Publish Button */}
+                {order.personaId && order.dnsStatus === 'active' && (
+                  <div className="flex gap-2">
+                    {order.isPublished ? (
+                      <>
+                        <Badge variant="default" className="bg-green-600">
+                          <CheckCircle2 className="h-3 w-3 mr-1" />
+                          已發布
+                        </Badge>
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => window.open(`https://${order.domain}`, '_blank')}
+                        >
+                          <ExternalLink className="h-3 w-3 mr-2" />
+                          訪問網站
+                        </Button>
+                      </>
+                    ) : (
+                      <Button
+                        size="sm"
+                        onClick={() => handlePublish(order.id)}
+                        disabled={publishingOrderId === order.id}
+                        className="bg-green-600 hover:bg-green-700"
+                      >
+                        {publishingOrderId === order.id ? (
+                          <>
+                            <Loader2 className="h-3 w-3 mr-2 animate-spin" />
+                            發布中...
+                          </>
+                        ) : (
+                          <>
+                            <Sparkles className="h-3 w-3 mr-2" />
+                            發布網站
+                          </>
+                        )}
+                      </Button>
+                    )}
+                  </div>
+                )}
+                
+                {/* Publishing Requirements */}
+                {!order.isPublished && (
+                  <Alert>
+                    <Info className="h-4 w-4" />
+                    <AlertTitle>發布條件</AlertTitle>
+                    <AlertDescription className="text-xs space-y-1">
+                      {!order.personaId && (
+                        <div className="flex items-center gap-1">
+                          <AlertCircle className="h-3 w-3 text-amber-500" />
+                          <span>需要綁定智能體</span>
+                        </div>
+                      )}
+                      {order.dnsStatus !== 'active' && (
+                        <div className="flex items-center gap-1">
+                          <AlertCircle className="h-3 w-3 text-amber-500" />
+                          <span>DNS 需要生效（通常需要 5 分鐘 - 48 小時）</span>
+                        </div>
+                      )}
+                      {order.personaId && order.dnsStatus === 'active' && (
+                        <div className="flex items-center gap-1">
+                          <CheckCircle2 className="h-3 w-3 text-green-600" />
+                          <span>所有條件已滿足，可以發布！</span>
+                        </div>
+                      )}
+                    </AlertDescription>
+                  </Alert>
+                )}
               </div>
             )}
             

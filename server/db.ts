@@ -2059,3 +2059,71 @@ export async function getDomainOrderByDomain(domain: string): Promise<DomainOrde
   
   return result.length > 0 ? result[0] : undefined;
 }
+
+
+/**
+ * Bind a domain to an AI persona
+ */
+export async function bindDomainToPersona(orderId: number, personaId: number): Promise<void> {
+  const db = await getDb();
+  if (!db) return;
+  
+  await db.update(domainOrders)
+    .set({ personaId, updatedAt: new Date() })
+    .where(eq(domainOrders.id, orderId));
+}
+
+/**
+ * Unbind a domain from its persona
+ */
+export async function unbindDomainFromPersona(orderId: number): Promise<void> {
+  const db = await getDb();
+  if (!db) return;
+  
+  await db.update(domainOrders)
+    .set({ personaId: null, updatedAt: new Date() })
+    .where(eq(domainOrders.id, orderId));
+}
+
+/**
+ * Publish a domain
+ */
+export async function publishDomain(orderId: number): Promise<void> {
+  const db = await getDb();
+  if (!db) return;
+  
+  await db.update(domainOrders)
+    .set({ isPublished: true, publishedAt: new Date(), updatedAt: new Date() })
+    .where(eq(domainOrders.id, orderId));
+}
+
+/**
+ * Unpublish a domain
+ */
+export async function unpublishDomain(orderId: number): Promise<void> {
+  const db = await getDb();
+  if (!db) return;
+  
+  await db.update(domainOrders)
+    .set({ isPublished: false, publishedAt: null, updatedAt: new Date() })
+    .where(eq(domainOrders.id, orderId));
+}
+
+/**
+ * Get published domain by domain name (for dynamic routing)
+ */
+export async function getPublishedDomainByName(domain: string): Promise<DomainOrder | undefined> {
+  const db = await getDb();
+  if (!db) return undefined;
+  
+  const result = await db.select()
+    .from(domainOrders)
+    .where(and(
+      eq(domainOrders.domain, domain),
+      eq(domainOrders.isPublished, true),
+      eq(domainOrders.status, 'registered')
+    ))
+    .limit(1);
+  
+  return result.length > 0 ? result[0] : undefined;
+}
