@@ -1769,7 +1769,11 @@ ${knowledgeContent.substring(0, 10000)}
       }))
       .mutation(async ({ ctx, input }) => {
         try {
-          const stripe = new Stripe('sk_test_51SlSyGGRVm9ShSoQLrERwxKf7sx1uCFtNLJ1RTcHVksVI0xN6HYmyZw41vz67O5XOaaUh10Isfpq7NgTgugv6VpQ00Ccl8G67z');
+          const stripeSecretKey = process.env.STRIPE_SECRET_KEY;
+          if (!stripeSecretKey) {
+            throw new Error('Stripe 密鑰未配置，請在設定中添加 STRIPE_SECRET_KEY');
+          }
+          const stripe = new Stripe(stripeSecretKey);
           
           // All prices in USD (Stripe will handle currency conversion)
           const domainPriceCents = Math.round(input.domainPriceUsd * 100);

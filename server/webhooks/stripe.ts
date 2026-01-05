@@ -10,8 +10,13 @@ import { purchaseDomain } from '../namecom';
 import { ENV } from '../_core/env';
 
 // 使用環境變數中的 Stripe Secret Key
-const STRIPE_SECRET_KEY = 'sk_test_51SlSyGGRVm9ShSoQLrERwxKf7sx1uCFtNLJ1RTcHVksVI0xN6HYmyZw41vz67O5XOaaUh10Isfpq7NgTgugv6VpQ00Ccl8G67z';
-const STRIPE_WEBHOOK_SECRET = 'whsec_aKJeNqsAR89h0m2k8V4i2eDMpTSrwBjY';
+const STRIPE_SECRET_KEY = process.env.STRIPE_SECRET_KEY || '';
+const STRIPE_WEBHOOK_SECRET = process.env.STRIPE_WEBHOOK_SECRET || '';
+
+if (!STRIPE_SECRET_KEY) {
+  throw new Error('STRIPE_SECRET_KEY environment variable is not set');
+}
+
 const stripe = new Stripe(STRIPE_SECRET_KEY);
 
 export interface WebhookEvent {

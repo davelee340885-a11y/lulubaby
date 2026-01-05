@@ -697,8 +697,32 @@
 
 
 ## 域名購買和發布完整指南文檔 - 完成
+
+## lulubaby.xyz 域名購買和配置 - 完成
+- [x] 使用 Stripe 完成支付（$2.59 USD）
+- [x] 使用 Name.com CORE API 購買域名（訂單號：26487104）
+- [x] 配置 Cloudflare DNS（Zone ID: 1f16dfc3baace827839078c96cf3b21d）
+- [x] 設置 CNAME 記錄指向 lulubaby.manus.space
+- [x] 更新 Nameservers 到 Cloudflare
+- [x] 更新數據庫訂單狀態
+- [ ] 等待 DNS 傳播（24-48小時）
+- [ ] 驗證域名可訪問性
 - [x] 創建 Stripe 支付環境設置指南
 - [x] 編寫完整的支付流程文檔（用戶付款 → Name.com 購買 → Stripe 分成）
 - [x] 編寫域名配置和發布指南
 - [x] 測試並驗證整個流程
 - [x] 創建操作截圖和示意圖
+
+
+## Stripe 生產環境配置 - 完成
+- [x] 配置 Stripe 生產環境密鑰
+- [x] 驗證 Stripe API 連接
+- [x] 設置 Webhook 端點
+- [ ] 測試完整購買流程（待用戶操作）
+
+
+## Webhook 處理和域名自動配置修復
+- [ ] 修復 Stripe Webhook 處理邏輯
+- [ ] 手動觸發 lulubaby.xyz 域名購買
+- [ ] 配置 Cloudflare DNS 和 SSL
+- [ ] 驗證域名可訪問性
