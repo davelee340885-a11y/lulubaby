@@ -2116,12 +2116,15 @@ export async function getPublishedDomainByName(domain: string): Promise<DomainOr
   const db = await getDb();
   if (!db) return undefined;
   
+  const { isNotNull } = await import('drizzle-orm');
+  
   const result = await db.select()
     .from(domainOrders)
     .where(and(
       eq(domainOrders.domain, domain),
       eq(domainOrders.isPublished, true),
-      eq(domainOrders.status, 'registered')
+      eq(domainOrders.status, 'registered'),
+      isNotNull(domainOrders.personaId) // Must have persona bound
     ))
     .limit(1);
   

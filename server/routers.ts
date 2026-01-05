@@ -2205,6 +2205,21 @@ ${knowledgeContent.substring(0, 10000)}
         };
       }),
 
+    // Get published domain by name (public API for custom domain routing)
+    getPublishedDomain: publicProcedure
+      .input(z.object({ domain: z.string() }))
+      .query(async ({ input }) => {
+        const domain = await getPublishedDomainByName(input.domain);
+        if (!domain) {
+          return null;
+        }
+        return {
+          domain: domain.domain,
+          personaId: domain.personaId,
+          isPublished: domain.isPublished,
+        };
+      }),
+    
     // Get domain management summary
     getManagementSummary: protectedProcedure.query(async ({ ctx }) => {
       const orders = await getRegisteredDomainOrders(ctx.user.id);

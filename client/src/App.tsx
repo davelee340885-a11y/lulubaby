@@ -20,6 +20,7 @@ import Chat from "./pages/Chat";
 import Team from "./pages/Team";
 import Customers from "./pages/Customers";
 import Widget from "./pages/Widget";
+import CustomDomainChat from "./pages/CustomDomainChat";
 
 function DashboardRoutes() {
   return (
@@ -47,6 +48,17 @@ function DashboardRoutes() {
 }
 
 function Router() {
+  // Check if this is a custom domain (not localhost)
+  const isCustomDomain = typeof window !== 'undefined' && 
+    window.location.hostname !== 'localhost' && 
+    window.location.hostname !== '127.0.0.1' &&
+    !window.location.hostname.includes('manus.computer');
+  
+  // If custom domain, show custom domain chat page for root path
+  if (isCustomDomain && window.location.pathname === '/') {
+    return <CustomDomainChat />;
+  }
+  
   return (
     <Switch>
       {/* Public chat page - no auth required */}
