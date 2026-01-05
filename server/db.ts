@@ -1951,3 +1951,111 @@ export async function updateStripePaymentStatus(paymentIntentId: string, status:
     .set({ status: status as any, updatedAt: new Date() })
     .where(eq(stripePayments.stripePaymentIntentId, paymentIntentId));
 }
+
+
+// ==================== Domain DNS/SSL Configuration Operations ====================
+
+export type DnsStatus = 'pending' | 'configuring' | 'propagating' | 'active' | 'error';
+export type SslStatus = 'pending' | 'provisioning' | 'active' | 'error';
+
+export interface DomainConfigUpdate {
+  dnsStatus?: DnsStatus;
+  sslStatus?: SslStatus;
+  cloudflareZoneId?: string;
+  cloudflareCnameRecordId?: string;
+  nameservers?: string[];
+  targetHost?: string;
+  lastDnsCheck?: Date;
+  lastSslCheck?: Date;
+  dnsErrorMessage?: string;
+  sslErrorMessage?: string;
+}
+
+/**
+ * Update domain order DNS configuration
+ */
+export async function updateDomainOrderDnsConfig(
+  orderId: number,
+  config: DomainConfigUpdate
+): Promise<void> {
+  const db = await getDb();
+  if (!db) return;
+  
+  const updateData: Record<string, any> = {};
+  
+  if (config.dnsStatus !== undefined) updateData.dnsStatus = config.dnsStatus;
+  if (config.sslStatus !== undefined) updateData.sslStatus = config.sslStatus;
+  if (config.cloudflareZoneId !== undefined) updateData.cloudflareZoneId = config.cloudflareZoneId;
+  if (config.cloudflareCnameRecordId !== undefined) updateData.cloudflareCnameRecordId = config.cloudflareCnameRecordId;
+  if (config.nameservers !== undefined) updateData.nameservers = JSON.stringify(config.nameservers);
+  if (config.targetHost !== undefined) updateData.targetHost = config.targetHost;
+  if (config.lastDnsCheck !== undefined) updateData.lastDnsCheck = config.lastDnsCheck;
+  if (config.lastSslCheck !== undefined) updateData.lastSslCheck = config.lastSslCheck;
+  if (config.dnsErrorMessage !== undefined) updateData.dnsErrorMessage = config.dnsErrorMessage;
+  if (config.sslErrorMessage !== undefined) updateData.sslErrorMessage = config.sslErrorMessage;
+  
+  updateData.updatedAt = new Date();
+  
+  await db.update(domainOrders).set(updateData).where(eq(domainOrders.id, orderId));
+}
+
+/**
+ * Get all registered domain orders for a user (for domain management)
+ */
+export async function getRegisteredDomainOrders(userId: number): Promise<DomainOrder[]> {
+  const db = await getDb();
+  if (!db) return [];
+  
+  return db.select()
+    .from(domainOrders)
+    .where(and(
+      eq(domainOrders.userId, userId),
+      eq(domainOrders.status, 'registered')
+    ))
+    .orderBy(desc(domainOrders.createdAt));
+}
+
+/**
+ * Get domain orders pending DNS configuration
+ */
+export async function getDomainOrdersPendingDns(): Promise<DomainOrder[]> {
+  const db = await getDb();
+  if (!db) return [];
+  
+  return db.select()
+    .from(domainOrders)
+    .where(and(
+      eq(domainOrders.status, 'registered'),
+      eq(domainOrders.dnsStatus, 'pending')
+    ));
+}
+
+/**
+ * Get domain orders with DNS propagating status
+ */
+export async function getDomainOrdersPropagating(): Promise<DomainOrder[]> {
+  const db = await getDb();
+  if (!db) return [];
+  
+  return db.select()
+    .from(domainOrders)
+    .where(and(
+      eq(domainOrders.status, 'registered'),
+      eq(domainOrders.dnsStatus, 'propagating')
+    ));
+}
+
+/**
+ * Get domain order by domain name
+ */
+export async function getDomainOrderByDomain(domain: string): Promise<DomainOrder | undefined> {
+  const db = await getDb();
+  if (!db) return undefined;
+  
+  const result = await db.select()
+    .from(domainOrders)
+    .where(eq(domainOrders.domain, domain))
+    .limit(1);
+  
+  return result.length > 0 ? result[0] : undefined;
+}

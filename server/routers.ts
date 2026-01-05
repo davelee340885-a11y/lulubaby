@@ -26,6 +26,7 @@ import {
   updateDomainDnsStatus, updateDomainSslStatus, createDomainHealthLog, getDomainHealthLogs,
   // Domain order operations
   createDomainOrder, getDomainOrder, updateDomainOrderStatus,
+  getRegisteredDomainOrders, updateDomainOrderDnsConfig, getDomainOrderByDomain,
   // Database connection
   getDb
 } from "./db";
@@ -1867,6 +1868,248 @@ ${knowledgeContent.substring(0, 10000)}
         }
         return order;
       }),
+
+    // ==================== Domain Management API ====================
+    
+    // Get registered domains for management
+    getRegisteredDomains: protectedProcedure.query(async ({ ctx }) => {
+      return getRegisteredDomainOrders(ctx.user.id);
+    }),
+
+    // Get Cloudflare configuration status
+    getCloudflareStatus: protectedProcedure.query(async () => {
+      const { getConfigurationStatus } = await import('./services/cloudflare');
+      return getConfigurationStatus();
+    }),
+
+    // Setup domain with Cloudflare (DNS + SSL)
+    setupDomain: protectedProcedure
+      .input(z.object({ orderId: z.number() }))
+      .mutation(async ({ ctx, input }) => {
+        const order = await getDomainOrder(input.orderId);
+        if (!order || order.userId !== ctx.user.id) {
+          throw new Error('訂單不存在或無權訪問');
+        }
+        
+        if (order.status !== 'registered') {
+          throw new Error('域名尚未註冊完成');
+        }
+        
+        // Import Cloudflare service
+        const { setupDomain, isCloudflareConfigured } = await import('./services/cloudflare');
+        
+        if (!isCloudflareConfigured()) {
+          // Return manual setup instructions if Cloudflare is not configured
+          return {
+            success: false,
+            requiresManualSetup: true,
+            instructions: {
+              step1: '登入您的域名註冊商管理後台',
+              step2: '將 DNS 設定為 CNAME 指向 lulubaby.manus.space',
+              step3: '等待 DNS 傳播完成（通常需要 24-48 小時）',
+              step4: '回來點擊「驗證 DNS」按鈕',
+            },
+            message: 'Cloudflare API 尚未配置，請手動設定 DNS 或聯繫管理員配置 Cloudflare。',
+          };
+        }
+        
+        // Update status to configuring
+        await updateDomainOrderDnsConfig(input.orderId, {
+          dnsStatus: 'configuring',
+        });
+        
+        try {
+          // Setup domain with Cloudflare
+          const result = await setupDomain(order.domain);
+          
+          if (result.success) {
+            await updateDomainOrderDnsConfig(input.orderId, {
+              dnsStatus: 'propagating',
+              sslStatus: 'provisioning',
+              cloudflareZoneId: result.zoneId,
+              cloudflareCnameRecordId: result.cnameRecordId,
+              nameservers: result.nameservers,
+              lastDnsCheck: new Date(),
+            });
+            
+            return {
+              success: true,
+              message: 'DNS 配置已啟動，正在等待傳播...',
+              nameservers: result.nameservers,
+            };
+          } else {
+            await updateDomainOrderDnsConfig(input.orderId, {
+              dnsStatus: 'error',
+              dnsErrorMessage: result.error,
+            });
+            
+            return {
+              success: false,
+              error: result.error,
+            };
+          }
+        } catch (error) {
+          await updateDomainOrderDnsConfig(input.orderId, {
+            dnsStatus: 'error',
+            dnsErrorMessage: error instanceof Error ? error.message : 'Unknown error',
+          });
+          throw error;
+        }
+      }),
+
+    // Check DNS propagation status
+    checkDnsStatus: protectedProcedure
+      .input(z.object({ orderId: z.number() }))
+      .mutation(async ({ ctx, input }) => {
+        const order = await getDomainOrder(input.orderId);
+        if (!order || order.userId !== ctx.user.id) {
+          throw new Error('訂單不存在或無權訪問');
+        }
+        
+        const { checkDnsPropagation, isCloudflareConfigured } = await import('./services/cloudflare');
+        
+        if (!isCloudflareConfigured() || !order.nameservers) {
+          // Manual DNS check using dig command
+          try {
+            const { execSync } = await import('child_process');
+            const result = execSync(`dig +short CNAME ${order.domain}`, { encoding: 'utf-8' });
+            const cnameValue = result.trim();
+            
+            const isPointingToLulubaby = cnameValue.includes('lulubaby.manus.space');
+            
+            if (isPointingToLulubaby) {
+              await updateDomainOrderDnsConfig(input.orderId, {
+                dnsStatus: 'active',
+                lastDnsCheck: new Date(),
+              });
+              
+              return {
+                propagated: true,
+                message: 'DNS 已生效！您的域名已指向 Lulubaby。',
+              };
+            } else {
+              return {
+                propagated: false,
+                currentValue: cnameValue || '未設定',
+                expectedValue: 'lulubaby.manus.space',
+                message: 'DNS 尚未生效，請稍後再試。',
+              };
+            }
+          } catch (error) {
+            return {
+              propagated: false,
+              error: 'DNS 查詢失敗',
+              message: '無法查詢 DNS 狀態，請稍後再試。',
+            };
+          }
+        }
+        
+        // Check with Cloudflare nameservers
+        const nameservers = JSON.parse(order.nameservers as string);
+        const result = await checkDnsPropagation(order.domain, nameservers);
+        
+        if (result.propagated) {
+          await updateDomainOrderDnsConfig(input.orderId, {
+            dnsStatus: 'active',
+            lastDnsCheck: new Date(),
+          });
+        }
+        
+        return {
+          propagated: result.propagated,
+          currentNameservers: result.currentNameservers,
+          expectedNameservers: result.expectedNameservers,
+          message: result.propagated 
+            ? 'DNS 已生效！' 
+            : 'DNS 尚未傳播完成，請稍後再試。',
+        };
+      }),
+
+    // Check SSL status
+    checkSslStatus: protectedProcedure
+      .input(z.object({ orderId: z.number() }))
+      .mutation(async ({ ctx, input }) => {
+        const order = await getDomainOrder(input.orderId);
+        if (!order || order.userId !== ctx.user.id) {
+          throw new Error('訂單不存在或無權訪問');
+        }
+        
+        if (!order.cloudflareZoneId) {
+          // Check SSL manually using openssl
+          try {
+            const { execSync } = await import('child_process');
+            const result = execSync(
+              `echo | openssl s_client -connect ${order.domain}:443 -servername ${order.domain} 2>/dev/null | openssl x509 -noout -dates 2>/dev/null`,
+              { encoding: 'utf-8', timeout: 10000 }
+            );
+            
+            const hasValidCert = result.includes('notAfter');
+            
+            if (hasValidCert) {
+              await updateDomainOrderDnsConfig(input.orderId, {
+                sslStatus: 'active',
+                lastSslCheck: new Date(),
+              });
+              
+              return {
+                status: 'active',
+                message: 'SSL 證書已啟用。',
+              };
+            }
+          } catch (error) {
+            // SSL check failed, might not be ready yet
+          }
+          
+          return {
+            status: order.sslStatus,
+            message: order.dnsStatus === 'active' 
+              ? 'SSL 證書正在申請中...' 
+              : '請先完成 DNS 配置。',
+          };
+        }
+        
+        const { checkSslStatus } = await import('./services/cloudflare');
+        const result = await checkSslStatus(order.cloudflareZoneId);
+        
+        await updateDomainOrderDnsConfig(input.orderId, {
+          sslStatus: result.status,
+          lastSslCheck: new Date(),
+          sslErrorMessage: result.error,
+        });
+        
+        return {
+          status: result.status,
+          certificateStatus: result.certificateStatus,
+          message: result.status === 'active' 
+            ? 'SSL 證書已啟用。' 
+            : result.status === 'provisioning' 
+              ? 'SSL 證書正在申請中...' 
+              : result.error || 'SSL 狀態未知',
+        };
+      }),
+
+    // Get domain management summary
+    getManagementSummary: protectedProcedure.query(async ({ ctx }) => {
+      const orders = await getRegisteredDomainOrders(ctx.user.id);
+      
+      const summary = {
+        totalDomains: orders.length,
+        activeCount: orders.filter(o => o.dnsStatus === 'active' && o.sslStatus === 'active').length,
+        pendingCount: orders.filter(o => o.dnsStatus === 'pending' || o.dnsStatus === 'configuring' || o.dnsStatus === 'propagating').length,
+        errorCount: orders.filter(o => o.dnsStatus === 'error' || o.sslStatus === 'error').length,
+        domains: orders.map(o => ({
+          id: o.id,
+          domain: o.domain,
+          dnsStatus: o.dnsStatus,
+          sslStatus: o.sslStatus,
+          registrationDate: o.registrationDate,
+          expirationDate: o.expirationDate,
+          targetHost: o.targetHost,
+        })),
+      };
+      
+      return summary;
+    }),
   }),
 });
 export type AppRouter = typeof appRouter;

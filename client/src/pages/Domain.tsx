@@ -33,6 +33,7 @@ import {
   TabsList,
   TabsTrigger,
 } from "@/components/ui/tabs";
+import DomainManagement from "@/components/DomainManagement";
 
 interface DomainSearchResult {
   domainName: string;
@@ -428,9 +429,10 @@ export default function Domain() {
                 </DialogHeader>
                 
                 <Tabs defaultValue="search" className="w-full">
-                  <TabsList className="grid w-full grid-cols-3">
+                  <TabsList className="grid w-full grid-cols-4">
                     <TabsTrigger value="search">搜索域名</TabsTrigger>
                     <TabsTrigger value="orders">已購買</TabsTrigger>
+                    <TabsTrigger value="manage">域名管理</TabsTrigger>
                     <TabsTrigger value="info">費用說明</TabsTrigger>
                   </TabsList>
                   <TabsContent value="search" className="space-y-3 mt-3">
@@ -630,6 +632,10 @@ export default function Domain() {
                   
                   <TabsContent value="orders" className="space-y-3 mt-3">
                     <PurchasedDomains />
+                  </TabsContent>
+                  
+                  <TabsContent value="manage" className="space-y-3 mt-3">
+                    <DomainManagement />
                   </TabsContent>
                   
                   <TabsContent value="info" className="space-y-4 mt-4">

@@ -780,6 +780,29 @@ export const domainOrders = mysqlTable("domain_orders", {
   lastErrorMessage: text("lastErrorMessage"),
   failureReason: text("failureReason"),
   
+  // DNS and SSL Configuration (Cloudflare)
+  dnsStatus: mysqlEnum("dnsStatus", [
+    "pending",           // 待配置
+    "configuring",       // 配置中
+    "propagating",       // DNS 傳播中
+    "active",            // 已生效
+    "error"              // 配置失敗
+  ]).default("pending").notNull(),
+  sslStatus: mysqlEnum("sslStatus", [
+    "pending",           // 待申請
+    "provisioning",      // 申請中
+    "active",            // 已生效
+    "error"              // 申請失敗
+  ]).default("pending").notNull(),
+  cloudflareZoneId: varchar("cloudflareZoneId", { length: 64 }), // Cloudflare Zone ID
+  cloudflareCnameRecordId: varchar("cloudflareCnameRecordId", { length: 64 }), // CNAME record ID
+  nameservers: text("nameservers"), // JSON array of nameservers
+  targetHost: varchar("targetHost", { length: 255 }).default("lulubaby.manus.space"), // Target host for CNAME
+  lastDnsCheck: timestamp("lastDnsCheck"), // Last DNS propagation check
+  lastSslCheck: timestamp("lastSslCheck"), // Last SSL status check
+  dnsErrorMessage: text("dnsErrorMessage"), // DNS configuration error
+  sslErrorMessage: text("sslErrorMessage"), // SSL configuration error
+  
   // Metadata
   metadata: text("metadata"), // JSON with additional info
   
