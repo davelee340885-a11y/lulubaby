@@ -507,13 +507,13 @@ function MinimalLayout({
           <div className="flex-1 flex flex-col items-center justify-center px-4 py-6">
             <div className="w-full max-w-xl text-center space-y-5">
               {/* Welcome Message - Hero Title */}
-              <h1 className="text-2xl md:text-3xl font-semibold text-foreground leading-tight">
-                {persona.welcomeMessage}
-              </h1>
+              <h2 className="text-lg font-semibold text-foreground">
+                {persona.welcomeMessage || "您好！我是您的AI助手"}
+              </h2>
               
               {/* Input Area - Centered, Prominent */}
               <div className="relative w-full">
-                <div className="flex items-center bg-background border border-border/60 rounded-2xl shadow-sm hover:shadow-md transition-shadow px-4 py-3">
+                <div className="flex items-center bg-background border border-border/60 rounded-xl shadow-sm px-3 py-2">
                   <Input
                     ref={inputRef}
                     placeholder={chatPlaceholder}
@@ -521,17 +521,16 @@ function MinimalLayout({
                     onChange={(e) => setInput(e.target.value)}
                     onKeyDown={handleKeyDown}
                     disabled={isTyping}
-                    className="border-0 shadow-none focus-visible:ring-0 h-auto text-sm px-0 bg-transparent"
+                    className="border-0 shadow-none focus-visible:ring-0 h-auto text-xs px-0 bg-transparent"
                   />
                   <Button
                     onClick={() => handleSend()}
                     disabled={!input.trim() || isTyping}
                     size="icon"
-                    className="rounded-full h-9 w-9 shrink-0 ml-2"
-                    style={{ backgroundColor: input.trim() ? primaryColor : undefined }}
-                    variant={input.trim() ? "default" : "ghost"}
+                    className="rounded-full h-7 w-7 shrink-0 ml-2"
+                    style={{ backgroundColor: primaryColor }}
                   >
-                    {isTyping ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
+                    {isTyping ? <Loader2 className="h-3 w-3 animate-spin" /> : <Send className="h-3 w-3" />}
                   </Button>
                 </div>
               </div>
@@ -539,14 +538,14 @@ function MinimalLayout({
               {/* Suggested Questions - Compact Tags */}
               {suggestedQuestions.length > 0 && (
                 <div className="flex flex-wrap justify-center gap-1.5">
-                  {suggestedQuestions.map((question, index) => (
+                  {suggestedQuestions.slice(0, 3).map((question, index) => (
                     <button
                       key={index}
                       onClick={() => handleSuggestedQuestion(question)}
-                      className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full border border-border/60 bg-background hover:bg-muted/50 hover:border-primary/30 transition-all text-xs text-muted-foreground hover:text-foreground"
+                      className="inline-flex items-center gap-1 px-2 py-1 rounded-full border border-border/60 bg-background text-[10px] text-muted-foreground"
                     >
-                      <MessageSquare className="h-3 w-3" />
-                      {question}
+                      <MessageSquare className="h-2.5 w-2.5" />
+                      <span className="max-w-[100px] truncate">{question}</span>
                     </button>
                   ))}
                 </div>
@@ -696,99 +695,92 @@ function ProfessionalLayout({
 
   return (
     <div className="min-h-screen flex flex-col" style={{ backgroundColor: `${primaryColor}05` }}>
-      {/* Hero Section - Only show when no messages */}
-      {!hasStartedChat && (
-        <div className="relative py-10 px-4" style={{ backgroundColor: primaryColor }}>
-          <div className="absolute inset-0 bg-gradient-to-b from-black/10 to-black/30" />
-          <div className="relative container max-w-xl text-center text-white">
-            {/* Profile Photo */}
-            <div className="mb-4">
-              {persona.profilePhotoUrl ? (
-                <img
-                  src={persona.profilePhotoUrl}
-                  alt={persona.agentName}
-                  className="w-20 h-20 rounded-full mx-auto object-cover border-3 border-white/30 shadow-lg"
-                />
-              ) : (
-                <Avatar className="w-20 h-20 mx-auto border-3 border-white/30 shadow-lg">
-                  <AvatarImage src={persona.avatarUrl || undefined} />
-                  <AvatarFallback className="text-2xl bg-white/20">
-                    <Bot className="h-10 w-10" />
-                  </AvatarFallback>
-                </Avatar>
-              )}
+      {/* Minimal Header */}
+      <header className="sticky top-0 z-10 border-b border-border/40 bg-background/95 backdrop-blur">
+        <div className="container max-w-sm mx-auto py-1.5 px-4">
+          <div className="flex items-center gap-1.5">
+            <Avatar className="h-5 w-5">
+              <AvatarImage src={persona.avatarUrl || undefined} />
+              <AvatarFallback style={{ backgroundColor: `${primaryColor}15`, color: primaryColor }}>
+                <Bot className="h-2.5 w-2.5" />
+              </AvatarFallback>
+            </Avatar>
+            <div className="flex-1 min-w-0">
+              <h1 className="font-medium text-xs truncate">{persona.agentName}</h1>
             </div>
-            
-            <h1 className="text-xl font-bold mb-1">{persona.agentName}</h1>
-            {persona.tagline && (
-              <p className="text-white/90 text-sm mb-3">{persona.tagline}</p>
-            )}
-            <p className="text-white/80 text-sm max-w-md mx-auto">{persona.welcomeMessage}</p>
+            <span className="flex items-center gap-0.5 text-[10px] text-green-600">
+              <span className="w-1 h-1 rounded-full bg-green-500" />
+              在線
+            </span>
           </div>
         </div>
-      )}
+      </header>
 
-      {/* Compact Header - Only show when chatting */}
-      {hasStartedChat && (
-        <header className="sticky top-0 z-10 border-b bg-background/95 backdrop-blur">
-          <div className="container max-w-2xl py-2">
-            <div className="flex items-center gap-2">
-              {persona.profilePhotoUrl ? (
-                <img
-                  src={persona.profilePhotoUrl}
-                  alt={persona.agentName}
-                  className="w-8 h-8 rounded-full object-cover border-2"
-                  style={{ borderColor: primaryColor }}
-                />
-              ) : (
-                <Avatar className="h-8 w-8 border-2" style={{ borderColor: primaryColor }}>
-                  <AvatarImage src={persona.avatarUrl || undefined} />
-                  <AvatarFallback style={{ backgroundColor: `${primaryColor}15`, color: primaryColor }}>
-                    <Bot className="h-4 w-4" />
-                  </AvatarFallback>
-                </Avatar>
-              )}
-              <div className="flex-1 min-w-0">
-                <h1 className="font-semibold text-sm truncate">{persona.agentName}</h1>
-                {persona.tagline && <p className="text-xs text-muted-foreground truncate">{persona.tagline}</p>}
-              </div>
-            </div>
-          </div>
-        </header>
-      )}
 
-      {/* Chat Area */}
+
+      {/* Main Content Area */}
       <div className="flex-1 flex flex-col">
-        {/* Welcome Content */}
+        {/* Welcome State - Compact & Centered Layout */}
         {!hasStartedChat && (
-          <div className="container max-w-xl px-4 py-6 space-y-4">
-            {/* Suggested Questions */}
-            {suggestedQuestions.length > 0 && (
-              <div className="space-y-1.5">
-                <p className="text-xs text-muted-foreground text-center mb-2">常見問題</p>
-                {suggestedQuestions.map((question, index) => (
-                  <button
-                    key={index}
-                    onClick={() => handleSuggestedQuestion(question)}
-                    className="w-full text-left px-3 py-2 rounded-lg bg-background border hover:bg-muted/50 transition-colors text-sm shadow-sm"
+          <div className="flex-1 flex flex-col items-center justify-center px-4 py-6">
+            <div className="w-full max-w-xl text-center space-y-5">
+              {/* Welcome Message - Hero Title */}
+              <h2 className="text-lg font-semibold text-foreground">
+                {persona.welcomeMessage || "您好！我是您的AI助手"}
+              </h2>
+              
+              {/* Input Area - Centered, Prominent */}
+              <div className="relative w-full">
+                <div className="flex items-center bg-background border border-border/60 rounded-xl shadow-sm px-3 py-2">
+                  <Input
+                    ref={inputRef}
+                    placeholder={chatPlaceholder}
+                    value={input}
+                    onChange={(e) => setInput(e.target.value)}
+                    onKeyDown={handleKeyDown}
+                    disabled={isTyping}
+                    className="border-0 shadow-none focus-visible:ring-0 h-auto text-xs px-0 bg-transparent"
+                  />
+                  <Button
+                    onClick={() => handleSend()}
+                    disabled={!input.trim() || isTyping}
+                    size="icon"
+                    className="rounded-full h-7 w-7 shrink-0 ml-2"
+                    style={{ backgroundColor: primaryColor }}
                   >
-                    {question}
-                  </button>
-                ))}
+                    {isTyping ? <Loader2 className="h-3 w-3 animate-spin" /> : <Send className="h-3 w-3" />}
+                  </Button>
+                </div>
               </div>
-            )}
 
-            {/* Quick Buttons */}
-            {showQuickButtons && persona.quickButtons.length > 0 && (
-              <div className="pt-2">
-                <QuickButtonGroup
-                  buttons={persona.quickButtons}
-                  displayMode={buttonDisplayMode}
-                  primaryColor={primaryColor}
-                  onButtonClick={handleQuickButton}
-                />
-              </div>
-            )}
+              {/* Suggested Questions - Compact Tags */}
+              {suggestedQuestions.length > 0 && (
+                <div className="flex flex-wrap justify-center gap-1.5">
+                  {suggestedQuestions.slice(0, 3).map((question, index) => (
+                    <button
+                      key={index}
+                      onClick={() => handleSuggestedQuestion(question)}
+                      className="inline-flex items-center gap-1 px-2 py-1 rounded-full border border-border/60 bg-background text-[10px] text-muted-foreground"
+                    >
+                      <MessageSquare className="h-2.5 w-2.5" />
+                      <span className="max-w-[100px] truncate">{question}</span>
+                    </button>
+                  ))}
+                </div>
+              )}
+
+              {/* Quick Buttons - Prominent Display */}
+              {showQuickButtons && persona.quickButtons.length > 0 && (
+                <div className="flex flex-wrap justify-center gap-1.5">
+                  <QuickButtonGroup
+                    buttons={persona.quickButtons}
+                    displayMode={buttonDisplayMode}
+                    primaryColor={primaryColor}
+                    onButtonClick={handleQuickButton}
+                  />
+                </div>
+              )}
+            </div>
           </div>
         )}
 
@@ -968,55 +960,65 @@ function CustomLayout({
 
       {/* Main Content */}
       <div className="flex-1 flex flex-col">
-        {/* Welcome State */}
+        {/* Welcome State - Compact & Centered Layout */}
         {!hasStartedChat && (
-          <div className="flex-1 flex flex-col items-center justify-center px-4 py-8">
-            <div className="bg-background/90 backdrop-blur rounded-2xl p-6 max-w-md w-full shadow-lg">
-              <div className="text-center mb-4">
-                {persona.profilePhotoUrl ? (
-                  <img
-                    src={persona.profilePhotoUrl}
-                    alt={persona.agentName}
-                    className="w-16 h-16 rounded-full mx-auto object-cover border-3 shadow-md mb-3"
-                    style={{ borderColor: primaryColor }}
-                  />
-                ) : (
-                  <Avatar className="w-16 h-16 mx-auto mb-3">
-                    <AvatarImage src={persona.avatarUrl || undefined} />
-                    <AvatarFallback style={{ backgroundColor: `${primaryColor}15`, color: primaryColor }}>
-                      <Bot className="h-8 w-8" />
-                    </AvatarFallback>
-                  </Avatar>
-                )}
-                <h2 className="text-lg font-semibold">{persona.agentName}</h2>
-                {persona.tagline && <p className="text-sm text-muted-foreground">{persona.tagline}</p>}
-              </div>
+          <div className="flex-1 flex flex-col items-center justify-center px-4 py-6">
+            <div className="w-full max-w-xl text-center space-y-5">
+              {/* Welcome Message - Hero Title */}
+              <h2 className="text-lg font-semibold text-foreground">
+                {persona.welcomeMessage || "您好！我是您的AI助手"}
+              </h2>
               
-              <p className="text-sm text-center text-muted-foreground mb-4">{persona.welcomeMessage}</p>
+              {/* Input Area - Centered, Prominent */}
+              <div className="relative w-full">
+                <div className="flex items-center bg-background border border-border/60 rounded-xl shadow-sm px-3 py-2">
+                  <Input
+                    ref={inputRef}
+                    placeholder={chatPlaceholder}
+                    value={input}
+                    onChange={(e) => setInput(e.target.value)}
+                    onKeyDown={handleKeyDown}
+                    disabled={isTyping}
+                    className="border-0 shadow-none focus-visible:ring-0 h-auto text-xs px-0 bg-transparent"
+                  />
+                  <Button
+                    onClick={() => handleSend()}
+                    disabled={!input.trim() || isTyping}
+                    size="icon"
+                    className="rounded-full h-7 w-7 shrink-0 ml-2"
+                    style={{ backgroundColor: primaryColor }}
+                  >
+                    {isTyping ? <Loader2 className="h-3 w-3 animate-spin" /> : <Send className="h-3 w-3" />}
+                  </Button>
+                </div>
+              </div>
 
-              {/* Suggested Questions */}
+              {/* Suggested Questions - Compact Tags */}
               {suggestedQuestions.length > 0 && (
-                <div className="space-y-1.5 mb-4">
-                  {suggestedQuestions.map((question, index) => (
+                <div className="flex flex-wrap justify-center gap-1.5">
+                  {suggestedQuestions.slice(0, 3).map((question, index) => (
                     <button
                       key={index}
                       onClick={() => handleSuggestedQuestion(question)}
-                      className="w-full text-left px-3 py-2 rounded-lg border hover:bg-muted/50 transition-colors text-sm"
+                      className="inline-flex items-center gap-1 px-2 py-1 rounded-full border border-border/60 bg-background text-[10px] text-muted-foreground"
                     >
-                      {question}
+                      <MessageSquare className="h-2.5 w-2.5" />
+                      <span className="max-w-[100px] truncate">{question}</span>
                     </button>
                   ))}
                 </div>
               )}
 
-              {/* Quick Buttons */}
+              {/* Quick Buttons - Prominent Display */}
               {showQuickButtons && persona.quickButtons.length > 0 && (
-                <QuickButtonGroup
-                  buttons={persona.quickButtons}
-                  displayMode={buttonDisplayMode}
-                  primaryColor={primaryColor}
-                  onButtonClick={handleQuickButton}
-                />
+                <div className="flex flex-wrap justify-center gap-1.5">
+                  <QuickButtonGroup
+                    buttons={persona.quickButtons}
+                    displayMode={buttonDisplayMode}
+                    primaryColor={primaryColor}
+                    onButtonClick={handleQuickButton}
+                  />
+                </div>
               )}
             </div>
           </div>

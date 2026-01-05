@@ -219,57 +219,45 @@ export default function CustomDomainChat() {
       <ScrollArea ref={scrollRef} className="flex-1 p-4">
         <div className="max-w-3xl mx-auto space-y-4">
           {messages.length === 0 ? (
-            // Welcome Screen
-            <div className="flex flex-col items-center justify-center min-h-[60vh] space-y-6">
-              {/* AI Avatar and Name */}
-              {persona.avatarUrl && (
-                <Avatar className="h-16 w-16">
-                  <AvatarImage src={persona.avatarUrl} alt={persona.agentName} />
-                  <AvatarFallback>
-                    <Bot className="h-8 w-8" />
-                  </AvatarFallback>
-                </Avatar>
-              )}
-
+            // Welcome Screen - Compact & Centered Layout
+            <div className="flex flex-col items-center justify-center min-h-[60vh] space-y-4">
               {/* Welcome Message */}
-              <div className="text-center space-y-2 max-w-2xl">
-                <h1 className="text-3xl font-bold">{persona.welcomeMessage || `您好！我是 ${persona.agentName}`}</h1>
-              </div>
+              <h2 className="text-lg font-semibold text-foreground">
+                {persona.welcomeMessage || `您好！我是 ${persona.agentName}`}
+              </h2>
 
-              {/* Guided Questions */}
+              {/* Guided Questions - Compact Tags */}
               {persona.suggestedQuestions && persona.suggestedQuestions.length > 0 && (
-                <div className="flex flex-wrap gap-2 justify-center max-w-2xl">
-                  {persona.suggestedQuestions.map((question: string, index: number) => (
-                    <Button
+                <div className="flex flex-wrap justify-center gap-1.5 max-w-2xl">
+                  {persona.suggestedQuestions.slice(0, 3).map((question: string, index: number) => (
+                    <button
                       key={index}
-                      variant="outline"
-                      size="sm"
                       onClick={() => handleGuidedQuestion(question)}
-                      className="text-xs"
+                      className="inline-flex items-center gap-1 px-2 py-1 rounded-full border border-border/60 bg-background text-[10px] text-muted-foreground"
                     >
-                      {question}
-                    </Button>
+                      <MessageSquare className="h-2.5 w-2.5" />
+                      <span className="max-w-[100px] truncate">{question}</span>
+                    </button>
                   ))}
                 </div>
               )}
 
-              {/* Quick Buttons */}
+              {/* Quick Buttons - Icon Mode */}
               {persona.quickButtons && persona.quickButtons.length > 0 && (
-                <div className="flex flex-wrap gap-2 justify-center max-w-2xl">
+                <div className="flex flex-wrap justify-center gap-1.5 max-w-2xl">
                   <TooltipProvider>
-                    {persona.quickButtons.map((button: any) => {
+                    {persona.quickButtons.slice(0, 6).map((button: any) => {
                       const ButtonIcon = iconMap[button.icon] || MessageSquare;
                       return (
                         <Tooltip key={button.id}>
                           <TooltipTrigger asChild>
-                            <Button
-                              variant="ghost"
-                              size="sm"
+                            <button
+                              className="p-1.5 rounded-lg hover:bg-muted/80 transition-colors"
+                              style={{ color: persona.primaryColor || '#15f9de' }}
                               onClick={() => handleQuickButton(button)}
-                              className="h-8 w-8 p-0"
                             >
-                              <ButtonIcon className="h-4 w-4" />
-                            </Button>
+                              <ButtonIcon className="h-3.5 w-3.5" />
+                            </button>
                           </TooltipTrigger>
                           <TooltipContent>
                             <p className="text-xs">{button.label}</p>
