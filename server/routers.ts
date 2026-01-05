@@ -1645,7 +1645,7 @@ ${knowledgeContent.substring(0, 10000)}
         tlds: z.array(z.string()).optional(),
       }))
       .mutation(async ({ input }) => {
-        const tlds = input.tlds || ['com', 'net', 'org', 'io', 'co', 'ai'];
+        const tlds = input.tlds || ['com', 'net', 'org', 'io', 'co', 'ai', 'app', 'dev', 'me', 'store', 'shop', 'online', 'site', 'xyz', 'tech', 'cc', 'info', 'biz'];
         // All prices in USD
         return searchDomainsWithPricing(input.keyword, tlds, 'USD');
       }),

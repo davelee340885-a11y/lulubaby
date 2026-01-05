@@ -143,7 +143,7 @@ export const checkDomainAvailability = async (
  */
 export const searchDomains = async (
   keyword: string,
-  tlds: string[] = ["com", "net", "org", "io", "co", "ai"]
+  tlds: string[] = ["com", "net", "org", "io", "co", "ai", "app", "dev", "me", "store", "shop", "online", "site", "xyz", "tech", "cc", "info", "biz"]
 ): Promise<DomainSearchResult> => {
   // 生成要檢查的域名列表
   const domainNames = tlds.map((tld) => `${keyword}.${tld}`);
@@ -318,7 +318,7 @@ export const getDomainPricing = async (
  */
 export const searchDomainsWithPricing = async (
   keyword: string,
-  tlds: string[] = ["com", "net", "org", "io", "co", "ai"],
+  tlds: string[] = ["com", "net", "org", "io", "co", "ai", "app", "dev", "me", "store", "shop", "online", "site", "xyz", "tech", "cc", "info", "biz"],
   currency: Currency = 'USD'
 ): Promise<Array<{
   domainName: string;

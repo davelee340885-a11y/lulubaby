@@ -665,7 +665,7 @@
   - [x] 更新 domain_orders 表添加 DNS 配置狀態欄位
   - [x] 添加 Cloudflare zone_id 和記錄 ID 欄位
   - [x] 設計域名狀態流程（pending → configuring → active → error）
-- [x] 2. 實現 Cloudflare API 整合（預留配置位置）
+- [x] 2. 實現 Cloudflare API 整合（已配置並驗證成功）
   - [x] 創建 Cloudflare API 客戶端
   - [x] 實現添加域名到 Cloudflare Zone
   - [x] 實現設置 CNAME 記錄指向 lulubaby.manus.space
@@ -687,3 +687,18 @@
   - [x] 端到端測試：購買 → 配置 → 上線
   - [x] 錯誤處理測試
   - [x] 狀態監控測試
+
+
+## 域名搜索結果顯示問題修復 - 完成
+- [x] 檢查域名搜索 API 返回的 TLD 列表
+- [x] 確認前端是否正確顯示所有搜索結果
+- [x] 擴展搜索的 TLD 列表（添加更多常見後綴）
+- [x] 修復搜索結果顯示邏輯
+
+
+## 域名購買和發布完整指南文檔 - 完成
+- [x] 創建 Stripe 支付環境設置指南
+- [x] 編寫完整的支付流程文檔（用戶付款 → Name.com 購買 → Stripe 分成）
+- [x] 編寫域名配置和發布指南
+- [x] 測試並驗證整個流程
+- [x] 創建操作截圖和示意圖
