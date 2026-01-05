@@ -871,6 +871,11 @@
 - [x] 驗證三個版面顯示完全一致
 
 ## 修復 lulubaby.xyz 顯示不匹配問題
-- [ ] 對比 /chat/1 和 lulubaby.xyz 找出差異
-- [ ] 修復 CustomDomainChat.tsx 使其與正確設計一致
-- [ ] 驗證三個版面完全一致
+- [x] 對比 /chat/1 和 lulubaby.xyz 找出差異
+- [x] 修復 CustomDomainChat.tsx 使其與正確設計一致
+- [x] 驗證三個版面完全一致（需要重新發布網站）
+
+## 修復 lulubaby.xyz 對話框位置問題
+- [x] 對比 lulubaby.xyz 和 /chat/1 的佈局差異
+- [x] 修復 CustomDomainChat.tsx 使對話框垂直置中
+- [x] 驗證兩個版面完全一致（需要重新發布網站）

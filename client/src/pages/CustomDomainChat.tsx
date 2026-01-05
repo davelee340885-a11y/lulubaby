@@ -221,13 +221,12 @@ export default function CustomDomainChat() {
     : MessageSquare;
 
   return (
-    <div className="flex flex-col h-screen bg-background">
-      {/* Chat Messages Area */}
-      <ScrollArea ref={scrollRef} className="flex-1 p-4">
-        <div className="max-w-3xl mx-auto space-y-4">
-          {messages.length === 0 ? (
-            // Welcome Screen - Compact & Centered Layout (same as Chat.tsx)
-            <div className="flex-1 flex flex-col items-center justify-center px-4 py-6">
+    <div className="min-h-screen flex flex-col bg-background">
+      {/* Main Content Area */}
+      <div className="flex-1 flex flex-col">
+        {/* Welcome State - Compact & Centered Layout */}
+        {messages.length === 0 && (
+          <div className="flex-1 flex flex-col items-center justify-center px-4 py-6">
               <div className="w-full max-w-xl text-center space-y-5">
                 {/* Welcome Message - Hero Title */}
                 <h2 className="text-lg font-semibold text-foreground">
@@ -297,9 +296,13 @@ export default function CustomDomainChat() {
                 )}
               </div>
             </div>
-          ) : (
-            // Conversation Messages
-            messages.map((message) => (
+        )}
+
+        {/* Chat Messages */}
+        {messages.length > 0 && (
+          <ScrollArea className="flex-1 px-4" ref={scrollRef}>
+            <div className="container max-w-2xl py-4 space-y-4">
+              {messages.map((message) => (
               <div
                 key={message.id}
                 className={`flex gap-3 ${message.role === "user" ? "justify-end" : "justify-start"}`}
@@ -333,27 +336,27 @@ export default function CustomDomainChat() {
                   </Avatar>
                 )}
               </div>
-            ))
-          )}
+              ))}
 
-          {isTyping && (
-            <div className="flex gap-3 justify-start">
-              <Avatar className="h-8 w-8 mt-1">
-                <AvatarImage src={persona.avatarUrl || undefined} alt={persona.agentName} />
-                <AvatarFallback>
-                  <Bot className="h-4 w-4" />
-                </AvatarFallback>
-              </Avatar>
-              <div className="rounded-lg px-4 py-2 bg-muted">
-                <Loader2 className="h-4 w-4 animate-spin" />
-              </div>
+              {isTyping && (
+                <div className="flex gap-2.5">
+                  <Avatar className="h-6 w-6 shrink-0 mt-0.5">
+                    <AvatarImage src={persona.avatarUrl || undefined} />
+                    <AvatarFallback style={{ backgroundColor: `${persona.primaryColor || '#15f9de'}15`, color: persona.primaryColor || '#15f9de' }}>
+                      <Bot className="h-3 w-3" />
+                    </AvatarFallback>
+                  </Avatar>
+                  <div className="rounded-lg px-3 py-2 bg-muted">
+                    <Loader2 className="h-3 w-3 animate-spin" />
+                  </div>
+                </div>
+              )}
             </div>
-          )}
-        </div>
-      </ScrollArea>
+          </ScrollArea>
+        )}
 
-      {/* Input Area - Only show when conversation started */}
-      {messages.length > 0 && (
+        {/* Input Area - Bottom Fixed (only when messages exist) */}
+        {messages.length > 0 && (
         <div className="border-t bg-background p-4">
           <div className="max-w-3xl mx-auto flex gap-2">
             <Input
@@ -371,6 +374,7 @@ export default function CustomDomainChat() {
           </div>
         </div>
       )}
+      </div>
     </div>
   );
 }
