@@ -1,0 +1,58 @@
+{
+  "query": "SELECT id, domain, status, dnsStatus, sslStatus, personaId, isPublished, registrationDate, stripePaymentIntentId, createdAt FROM domain_orders WHERE domain = 'lulubaby.xyz' ORDER BY id DESC LIMIT 20",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user VqBKoEwKfw4feq4.6cd8cd1ff95f --database aavW9BLbZ6sZHaPEemayyD --execute SELECT id, domain, status, dnsStatus, sslStatus, personaId, isPublished, registrationDate, stripePaymentIntentId, createdAt FROM domain_orders WHERE domain = 'lulubaby.xyz' ORDER BY id DESC LIMIT 20",
+  "rows": [
+    {
+      "id": "210003",
+      "domain": "lulubaby.xyz",
+      "status": "registered",
+      "dnsStatus": "active",
+      "sslStatus": "error",
+      "personaId": "1",
+      "isPublished": "1",
+      "registrationDate": "2026-01-05 08:59:06",
+      "stripePaymentIntentId": "NULL",
+      "createdAt": "2026-01-05 08:02:17"
+    },
+    {
+      "id": "210002",
+      "domain": "lulubaby.xyz",
+      "status": "registered",
+      "dnsStatus": "active",
+      "sslStatus": "pending",
+      "personaId": "NULL",
+      "isPublished": "0",
+      "registrationDate": "2026-01-05 08:59:06",
+      "stripePaymentIntentId": "NULL",
+      "createdAt": "2026-01-05 08:01:08"
+    },
+    {
+      "id": "210001",
+      "domain": "lulubaby.xyz",
+      "status": "registered",
+      "dnsStatus": "active",
+      "sslStatus": "pending",
+      "personaId": "NULL",
+      "isPublished": "0",
+      "registrationDate": "2026-01-05 08:59:06",
+      "stripePaymentIntentId": "NULL",
+      "createdAt": "2026-01-05 06:52:53"
+    },
+    {
+      "id": "180019",
+      "domain": "lulubaby.xyz",
+      "status": "registered",
+      "dnsStatus": "active",
+      "sslStatus": "pending",
+      "personaId": "NULL",
+      "isPublished": "0",
+      "registrationDate": "2026-01-05 08:59:06",
+      "stripePaymentIntentId": "NULL",
+      "createdAt": "2026-01-05 06:22:06"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\tdomain\tstatus\tdnsStatus\tsslStatus\tpersonaId\tisPublished\tregistrationDate\tstripePaymentIntentId\tcreatedAt\n210003\tlulubaby.xyz\tregistered\tactive\terror\t1\t1\t2026-01-05 08:59:06\tNULL\t2026-01-05 08:02:17\n210002\tlulubaby.xyz\tregistered\tactive\tpending\tNULL\t0\t2026-01-05 08:59:06\tNULL\t2026-01-05 08:01:08\n210001\tlulubaby.xyz\tregistered\tactive\tpending\tNULL\t0\t2026-01-05 08:59:06\tNULL\t2026-01-05 06:52:53\n180019\tlulubaby.xyz\tregistered\tactive\tpending\tNULL\t0\t2026-01-05 08:59:06\tNULL\t2026-01-05 06:22:06\n",
+  "stderr": "",
+  "execution_time_ms": 1534
+}

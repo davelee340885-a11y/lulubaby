@@ -1,0 +1,8 @@
+{
+  "query": "SELECT id, domain, status, dnsStatus, sslStatus, personaId, isPublished, createdAt, registrationDate, stripePaymentIntentId FROM domainOrders WHERE domain LIKE '%lulubaby%' ORDER BY createdAt DESC",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user VqBKoEwKfw4feq4.6cd8cd1ff95f --database aavW9BLbZ6sZHaPEemayyD --execute SELECT id, domain, status, dnsStatus, sslStatus, personaId, isPublished, createdAt, registrationDate, stripePaymentIntentId FROM domainOrders WHERE domain LIKE '%lulubaby%' ORDER BY createdAt DESC",
+  "returncode": 1,
+  "logs": [
+    "ERROR 1146 (42S02) at line 1: Table 'aavw9blbz6szhapeemayyd.domainOrders' doesn't exist"
+  ]
+}
