@@ -1878,8 +1878,24 @@ ${knowledgeContent.substring(0, 10000)}
 
     // Get Cloudflare configuration status
     getCloudflareStatus: protectedProcedure.query(async () => {
-      const { getConfigurationStatus } = await import('./services/cloudflare');
-      return getConfigurationStatus();
+      const { getConfigurationStatus, verifyApiToken, isCloudflareConfigured } = await import('./services/cloudflare');
+      const status = getConfigurationStatus();
+      
+      // If configured, verify the token is actually valid
+      if (status.configured) {
+        const verification = await verifyApiToken();
+        return {
+          ...status,
+          tokenValid: verification.valid,
+          tokenStatus: verification.status,
+          tokenError: verification.error,
+        };
+      }
+      
+      return {
+        ...status,
+        tokenValid: false,
+      };
     }),
 
     // Setup domain with Cloudflare (DNS + SSL)

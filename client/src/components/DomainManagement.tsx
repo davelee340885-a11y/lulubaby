@@ -468,14 +468,34 @@ export default function DomainManagement() {
       </div>
 
       {/* Cloudflare Status */}
-      {cloudflareStatus && !cloudflareStatus.configured && (
-        <Alert>
-          <Info className="h-4 w-4" />
-          <AlertTitle>Cloudflare 自動配置未啟用</AlertTitle>
-          <AlertDescription>
-            {cloudflareStatus.message} 您仍可以手動配置 DNS 記錄。
-          </AlertDescription>
-        </Alert>
+      {cloudflareStatus && (
+        <>
+          {cloudflareStatus.configured && cloudflareStatus.tokenValid ? (
+            <Alert className="border-green-200 bg-green-50 dark:border-green-800 dark:bg-green-950">
+              <CheckCircle2 className="h-4 w-4 text-green-600" />
+              <AlertTitle className="text-green-800 dark:text-green-200">Cloudflare 已連接</AlertTitle>
+              <AlertDescription className="text-green-700 dark:text-green-300">
+                API Token 驗證成功，可以自動配置 DNS 和 SSL。
+              </AlertDescription>
+            </Alert>
+          ) : cloudflareStatus.configured && !cloudflareStatus.tokenValid ? (
+            <Alert variant="destructive">
+              <AlertCircle className="h-4 w-4" />
+              <AlertTitle>Cloudflare Token 無效</AlertTitle>
+              <AlertDescription>
+                {('tokenError' in cloudflareStatus && cloudflareStatus.tokenError) || 'API Token 驗證失敗，請檢查設定。'}
+              </AlertDescription>
+            </Alert>
+          ) : (
+            <Alert>
+              <Info className="h-4 w-4" />
+              <AlertTitle>Cloudflare 自動配置未啟用</AlertTitle>
+              <AlertDescription>
+                {cloudflareStatus.message} 您仍可以手動配置 DNS 記錄。
+              </AlertDescription>
+            </Alert>
+          )}
+        </>
       )}
 
       {/* Domain List */}

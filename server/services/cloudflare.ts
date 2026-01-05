@@ -103,13 +103,54 @@ async function cloudflareRequest<T>(
       },
     });
     
-    const data = await response.json();
+    const data = await response.json() as { success: boolean; result?: T; errors?: any[] };
     return data;
   } catch (error) {
     console.error('[Cloudflare] API request failed:', error);
     return { 
       success: false, 
       errors: [{ message: error instanceof Error ? error.message : 'Unknown error' }] 
+    };
+  }
+}
+
+/**
+ * Verify Cloudflare API Token is valid
+ */
+export async function verifyApiToken(): Promise<{ valid: boolean; status?: string; error?: string }> {
+  const config = getConfig();
+  
+  if (!config) {
+    return { valid: false, error: 'Cloudflare not configured' };
+  }
+  
+  try {
+    // Use account-specific token verification endpoint
+    const response = await fetch(
+      `${CLOUDFLARE_API_URL}/accounts/${config.accountId}/tokens/verify`,
+      {
+        method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${config.apiToken}`,
+          'Content-Type': 'application/json',
+        },
+      }
+    );
+    
+    const data = await response.json() as { success: boolean; result?: { status: string }; errors?: any[] };
+    
+    if (data.success && data.result?.status === 'active') {
+      return { valid: true, status: data.result.status };
+    }
+    
+    return { 
+      valid: false, 
+      error: data.errors?.[0]?.message || 'Token verification failed' 
+    };
+  } catch (error) {
+    return { 
+      valid: false, 
+      error: error instanceof Error ? error.message : 'Verification request failed' 
     };
   }
 }
