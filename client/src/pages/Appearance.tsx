@@ -9,6 +9,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Loader2, Upload, X, Plus, Trash2, Image as ImageIcon, Bot, Send, MessageSquare, User, Package, Calendar, Phone, HelpCircle, Search, Link, Building2, FileText, Mail, ExternalLink, ShoppingBag, Star, Info, Palette, Zap, MessageCircle, Settings2, Save } from "lucide-react";
+import CompactChatPreview from "@/components/CompactChatPreview";
 import { toast } from "sonner";
 import { useState, useRef, useEffect } from "react";
 import {
@@ -810,111 +811,21 @@ export default function Appearance() {
         </Tabs>
 
         {/* Right: Compact Preview Panel */}
-        <div className="lg:sticky lg:top-6 space-y-2">
-          <div className="flex items-center justify-between">
-            <h3 className="font-medium text-sm">即時預覽</h3>
-            <span className="text-xs text-muted-foreground">手機版</span>
-          </div>
-          
-          <div className="relative mx-auto" style={{ width: "220px" }}>
-            <div className="rounded-[20px] border-4 border-gray-800 bg-gray-800 shadow-xl overflow-hidden">
-              <div className="h-4 bg-gray-800 flex items-center justify-center">
-                <div className="w-12 h-2.5 bg-black rounded-full" />
-              </div>
-              
-              <div 
-                className="bg-background overflow-hidden"
-                style={{ 
-                  height: "340px",
-                  backgroundImage: layoutStyle === "custom" && backgroundImageUrl ? `url(${backgroundImageUrl})` : undefined,
-                  backgroundSize: "cover",
-                  backgroundPosition: "center",
-                }}
-              >
-                {layoutStyle === "custom" && backgroundImageUrl && <div className="absolute inset-0 bg-black/40" />}
-                
-                <div className={`h-full flex flex-col ${layoutStyle === "custom" ? "relative z-10" : ""}`}>
-                  {/* Header */}
-                  <div className={`p-2 border-b ${layoutStyle === "custom" ? "bg-black/20 border-white/10" : "bg-background/95"}`}>
-                    <div className="flex items-center gap-2">
-                      <div className="h-6 w-6 rounded-full flex items-center justify-center overflow-hidden" style={{ backgroundColor: `${primaryColor}15` }}>
-                        {avatarUrl ? <img src={avatarUrl} alt="" className="h-full w-full object-cover" /> : <Bot className="h-3 w-3" style={{ color: primaryColor }} />}
-                      </div>
-                      <div>
-                        <p className={`text-[10px] font-medium ${layoutStyle === "custom" ? "text-white" : ""}`}>{agentName || "AI 助手"}</p>
-                        <p className={`text-[8px] ${layoutStyle === "custom" ? "text-white/70" : "text-muted-foreground"}`}>在線</p>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Profile Section for Professional */}
-                  {layoutStyle === "professional" && (
-                    <div className="p-2 text-center border-b">
-                      {profilePhotoUrl ? (
-                        <img src={profilePhotoUrl} alt="" className="h-10 w-10 rounded-full object-cover mx-auto border-2 border-background shadow-sm" />
-                      ) : (
-                        <div className="h-10 w-10 rounded-full mx-auto flex items-center justify-center" style={{ backgroundColor: `${primaryColor}15` }}>
-                          <User className="h-4 w-4" style={{ color: primaryColor }} />
-                        </div>
-                      )}
-                      {tagline && <p className="text-[8px] text-muted-foreground mt-1 px-2 line-clamp-2">{tagline}</p>}
-                    </div>
-                  )}
-
-                  {/* Chat Area */}
-                  <div className="flex-1 p-2 overflow-hidden">
-                    <div className="flex gap-1.5 mb-2">
-                      <div className="h-4 w-4 rounded-full flex items-center justify-center flex-shrink-0" style={{ backgroundColor: `${primaryColor}15` }}>
-                        <Bot className="h-2 w-2" style={{ color: primaryColor }} />
-                      </div>
-                      <div className={`rounded-lg px-2 py-1 max-w-[85%] ${layoutStyle === "custom" ? "bg-white/90 text-gray-900" : "bg-muted"}`}>
-                        <p className="text-[8px] leading-relaxed">{welcomeMessage || "您好！有什麼可以幫您？"}</p>
-                      </div>
-                    </div>
-
-                    {suggestedQuestions.length > 0 && (
-                      <div className="space-y-1 mt-2">
-                        {suggestedQuestions.slice(0, 2).map((q, i) => (
-                          <div key={i} className={`text-[7px] px-1.5 py-0.5 rounded-full border truncate ${layoutStyle === "custom" ? "bg-white/80 border-white/50 text-gray-700" : "bg-background border-border"}`}>{q}</div>
-                        ))}
-                        {suggestedQuestions.length > 2 && <p className={`text-[7px] text-center ${layoutStyle === "custom" ? "text-white/60" : "text-muted-foreground"}`}>+{suggestedQuestions.length - 2} 更多</p>}
-                      </div>
-                    )}
-
-                    {showQuickButtons && buttons && buttons.length > 0 && (
-                      <div className="flex flex-wrap gap-1 mt-2">
-                        {buttons.filter(b => b.isActive).slice(0, 3).map((button) => {
-                          const IconComponent = getIconComponent(button.icon || "search");
-                          return (
-                            <div key={button.id} className={`text-[7px] px-1.5 py-0.5 rounded flex items-center gap-0.5 ${layoutStyle === "custom" ? "bg-white/80 text-gray-700" : "bg-primary/10 text-primary"}`}>
-                              <IconComponent className="h-2 w-2" />
-                              {button.label}
-                            </div>
-                          );
-                        })}
-                      </div>
-                    )}
-                  </div>
-
-                  {/* Input Area */}
-                  <div className={`p-1.5 border-t ${layoutStyle === "custom" ? "bg-black/20 border-white/10" : ""}`}>
-                    <div className={`flex items-center gap-1 rounded-full px-2 py-1 ${layoutStyle === "custom" ? "bg-white/90" : "bg-muted"}`}>
-                      <span className="text-[8px] text-muted-foreground flex-1 truncate">{chatPlaceholder}</span>
-                      <div className="h-4 w-4 rounded-full flex items-center justify-center" style={{ backgroundColor: primaryColor }}>
-                        <Send className="h-2 w-2 text-white" />
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-              
-              <div className="h-3 bg-gray-800 flex items-center justify-center">
-                <div className="w-16 h-0.5 bg-gray-600 rounded-full" />
-              </div>
-            </div>
-          </div>
-          
-          <p className="text-[9px] text-muted-foreground text-center">預覽會隨設定即時更新</p>
+        <div className="lg:sticky lg:top-6">
+          <CompactChatPreview
+            agentName={agentName}
+            avatarUrl={avatarUrl}
+            welcomeMessage={welcomeMessage}
+            primaryColor={primaryColor}
+            suggestedQuestions={suggestedQuestions}
+            quickButtons={(buttons || []).filter(b => b.isActive).map(b => ({
+              label: b.label,
+              icon: b.icon || "search",
+              actionType: b.actionType,
+            }))}
+            buttonDisplayMode={buttonDisplayMode}
+            chatPlaceholder={chatPlaceholder}
+          />
         </div>
       </div>
 

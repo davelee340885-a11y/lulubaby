@@ -502,17 +502,17 @@ function MinimalLayout({
 
       {/* Main Content Area */}
       <div className="flex-1 flex flex-col">
-        {/* Welcome State - Manus Style Layout */}
+        {/* Welcome State - Compact & Centered Layout */}
         {!hasMessages && (
-          <div className="flex-1 flex flex-col items-center justify-center px-4">
-            <div className="w-full max-w-2xl text-center">
-              {/* Welcome Message - Large Title */}
-              <h1 className="text-2xl md:text-3xl font-semibold mb-8 text-foreground">
+          <div className="flex-1 flex flex-col items-center justify-center px-4 py-6">
+            <div className="w-full max-w-xl text-center space-y-5">
+              {/* Welcome Message - Hero Title */}
+              <h1 className="text-2xl md:text-3xl font-semibold text-foreground leading-tight">
                 {persona.welcomeMessage}
               </h1>
               
               {/* Input Area - Centered, Prominent */}
-              <div className="relative w-full max-w-xl mx-auto mb-6">
+              <div className="relative w-full">
                 <div className="flex items-center bg-background border border-border/60 rounded-2xl shadow-sm hover:shadow-md transition-shadow px-4 py-3">
                   <Input
                     ref={inputRef}
@@ -536,14 +536,14 @@ function MinimalLayout({
                 </div>
               </div>
 
-              {/* Suggested Questions - Small Tags Below Input */}
+              {/* Suggested Questions - Compact Tags */}
               {suggestedQuestions.length > 0 && (
-                <div className="flex flex-wrap justify-center gap-2 mb-4">
+                <div className="flex flex-wrap justify-center gap-1.5">
                   {suggestedQuestions.map((question, index) => (
                     <button
                       key={index}
                       onClick={() => handleSuggestedQuestion(question)}
-                      className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full border border-border/60 bg-background hover:bg-muted/50 hover:border-primary/30 transition-all text-xs text-muted-foreground hover:text-foreground"
+                      className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full border border-border/60 bg-background hover:bg-muted/50 hover:border-primary/30 transition-all text-xs text-muted-foreground hover:text-foreground"
                     >
                       <MessageSquare className="h-3 w-3" />
                       {question}
@@ -552,9 +552,9 @@ function MinimalLayout({
                 </div>
               )}
 
-              {/* Quick Buttons - Below Suggested Questions */}
+              {/* Quick Buttons - Prominent Display */}
               {showQuickButtons && persona.quickButtons.length > 0 && (
-                <div className="flex flex-wrap justify-center gap-2">
+                <div className="flex flex-wrap justify-center gap-1.5">
                   <QuickButtonGroup
                     buttons={persona.quickButtons}
                     displayMode={buttonDisplayMode}
