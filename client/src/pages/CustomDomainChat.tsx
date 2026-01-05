@@ -145,6 +145,13 @@ export default function CustomDomainChat() {
     });
   };
 
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === "Enter" && !e.shiftKey) {
+      e.preventDefault();
+      handleSend();
+    }
+  };
+
   const handleGuidedQuestion = (question: string) => {
     setInput(question);
     inputRef.current?.focus();
@@ -219,55 +226,76 @@ export default function CustomDomainChat() {
       <ScrollArea ref={scrollRef} className="flex-1 p-4">
         <div className="max-w-3xl mx-auto space-y-4">
           {messages.length === 0 ? (
-            // Welcome Screen - Compact & Centered Layout
-            <div className="flex flex-col items-center justify-center min-h-[60vh] space-y-4">
-              {/* Welcome Message */}
-              <h2 className="text-lg font-semibold text-foreground">
-                {persona.welcomeMessage || `您好！我是 ${persona.agentName}`}
-              </h2>
-
-              {/* Guided Questions - Compact Tags */}
-              {persona.suggestedQuestions && persona.suggestedQuestions.length > 0 && (
-                <div className="flex flex-wrap justify-center gap-1.5 max-w-2xl">
-                  {persona.suggestedQuestions.slice(0, 3).map((question: string, index: number) => (
-                    <button
-                      key={index}
-                      onClick={() => handleGuidedQuestion(question)}
-                      className="inline-flex items-center gap-1 px-2 py-1 rounded-full border border-border/60 bg-background text-[10px] text-muted-foreground"
+            // Welcome Screen - Compact & Centered Layout (same as Chat.tsx)
+            <div className="flex-1 flex flex-col items-center justify-center px-4 py-6">
+              <div className="w-full max-w-xl text-center space-y-5">
+                {/* Welcome Message - Hero Title */}
+                <h2 className="text-lg font-semibold text-foreground">
+                  {persona.welcomeMessage || `您好！我是 ${persona.agentName}`}
+                </h2>
+                
+                {/* Input Area - Centered, Prominent */}
+                <div className="relative w-full">
+                  <div className="flex items-center bg-background border border-border/60 rounded-xl shadow-sm px-3 py-2">
+                    <Input
+                      ref={inputRef}
+                      placeholder="輸入您的問題..."
+                      value={input}
+                      onChange={(e) => setInput(e.target.value)}
+                      onKeyDown={handleKeyDown}
+                      disabled={isTyping}
+                      className="border-0 shadow-none focus-visible:ring-0 h-auto text-xs px-0 bg-transparent"
+                    />
+                    <Button
+                      onClick={() => handleSend()}
+                      disabled={!input.trim() || isTyping}
+                      size="icon"
+                      className="rounded-full h-7 w-7 shrink-0 ml-2"
+                      style={{ backgroundColor: persona.primaryColor || '#15f9de' }}
                     >
-                      <MessageSquare className="h-2.5 w-2.5" />
-                      <span className="max-w-[100px] truncate">{question}</span>
-                    </button>
-                  ))}
+                      {isTyping ? <Loader2 className="h-3 w-3 animate-spin" /> : <Send className="h-3 w-3" />}
+                    </Button>
+                  </div>
                 </div>
-              )}
 
-              {/* Quick Buttons - Icon Mode */}
-              {persona.quickButtons && persona.quickButtons.length > 0 && (
-                <div className="flex flex-wrap justify-center gap-1.5 max-w-2xl">
-                  <TooltipProvider>
-                    {persona.quickButtons.slice(0, 6).map((button: any) => {
-                      const ButtonIcon = iconMap[button.icon] || MessageSquare;
+                {/* Suggested Questions - Compact Tags */}
+                {persona.suggestedQuestions && persona.suggestedQuestions.length > 0 && (
+                  <div className="flex flex-wrap justify-center gap-1.5">
+                    {persona.suggestedQuestions.slice(0, 3).map((question: string, index: number) => (
+                      <button
+                        key={index}
+                        onClick={() => handleGuidedQuestion(question)}
+                        className="inline-flex items-center gap-1 px-2 py-1 rounded-full border border-border/60 bg-background text-[10px] text-muted-foreground"
+                      >
+                        <MessageSquare className="h-2.5 w-2.5" />
+                        <span className="max-w-[100px] truncate">{question}</span>
+                      </button>
+                    ))}
+                  </div>
+                )}
+
+                {/* Quick Buttons - Full Mode with Labels */}
+                {persona.quickButtons && persona.quickButtons.length > 0 && (
+                  <div className="flex flex-wrap items-center justify-center gap-1.5">
+                    {persona.quickButtons.map((button: any) => {
+                      const ButtonIcon = iconMap[button.icon || button.actionType] || MessageSquare;
                       return (
-                        <Tooltip key={button.id}>
-                          <TooltipTrigger asChild>
-                            <button
-                              className="p-1.5 rounded-lg hover:bg-muted/80 transition-colors"
-                              style={{ color: persona.primaryColor || '#15f9de' }}
-                              onClick={() => handleQuickButton(button)}
-                            >
-                              <ButtonIcon className="h-3.5 w-3.5" />
-                            </button>
-                          </TooltipTrigger>
-                          <TooltipContent>
-                            <p className="text-xs">{button.label}</p>
-                          </TooltipContent>
-                        </Tooltip>
+                        <Button
+                          key={button.id}
+                          variant="outline"
+                          size="sm"
+                          className="h-6 px-2 text-[11px] rounded-md font-normal"
+                          onClick={() => handleQuickButton(button)}
+                        >
+                          <ButtonIcon className="h-3 w-3 mr-1" />
+                          {button.label}
+                          {button.actionType === "link" && <ExternalLink className="h-2 w-2 ml-0.5 opacity-50" />}
+                        </Button>
                       );
                     })}
-                  </TooltipProvider>
-                </div>
-              )}
+                  </div>
+                )}
+              </div>
             </div>
           ) : (
             // Conversation Messages
@@ -324,28 +352,25 @@ export default function CustomDomainChat() {
         </div>
       </ScrollArea>
 
-      {/* Input Area */}
-      <div className="border-t bg-background p-4">
-        <div className="max-w-3xl mx-auto flex gap-2">
-          <Input
-            ref={inputRef}
-            value={input}
-            onChange={(e) => setInput(e.target.value)}
-            onKeyDown={(e) => {
-              if (e.key === "Enter" && !e.shiftKey) {
-                e.preventDefault();
-                handleSend();
-              }
-            }}
-            placeholder="輸入您的問題..."
-            className="flex-1"
-            disabled={isTyping || !personaId}
-          />
-          <Button onClick={handleSend} disabled={!input.trim() || isTyping || !personaId}>
-            <Send className="h-4 w-4" />
-          </Button>
+      {/* Input Area - Only show when conversation started */}
+      {messages.length > 0 && (
+        <div className="border-t bg-background p-4">
+          <div className="max-w-3xl mx-auto flex gap-2">
+            <Input
+              ref={inputRef}
+              value={input}
+              onChange={(e) => setInput(e.target.value)}
+              onKeyDown={handleKeyDown}
+              placeholder="輸入您的問題..."
+              className="flex-1"
+              disabled={isTyping || !personaId}
+            />
+            <Button onClick={handleSend} disabled={!input.trim() || isTyping || !personaId}>
+              <Send className="h-4 w-4" />
+            </Button>
+          </div>
         </div>
-      </div>
+      )}
     </div>
   );
 }

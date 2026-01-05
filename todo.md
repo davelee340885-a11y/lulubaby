@@ -869,3 +869,8 @@
 - [x] 修復 /chat/1 版面顯示（移除頭部資訊、調整序、小標籤樣式）
 - [x] 修復 lulubaby.xyz 版面顯示（與版面預覽一致）
 - [x] 驗證三個版面顯示完全一致
+
+## 修復 lulubaby.xyz 顯示不匹配問題
+- [ ] 對比 /chat/1 和 lulubaby.xyz 找出差異
+- [ ] 修復 CustomDomainChat.tsx 使其與正確設計一致
+- [ ] 驗證三個版面完全一致
