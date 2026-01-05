@@ -350,7 +350,7 @@ export default function Appearance() {
         <p className="text-muted-foreground mt-1">自訂您的AI助手外觀、行為和對話頁面設定</p>
       </div>
 
-      <div className="grid lg:grid-cols-[1fr,280px] gap-6">
+      <div className="grid gap-6" style={{ gridTemplateColumns: '1fr 320px' }}>
         {/* Left: Settings with Tabs */}
         <Tabs defaultValue="ai" className="space-y-6">
           <TabsList className="grid w-full grid-cols-4">
@@ -811,7 +811,7 @@ export default function Appearance() {
         </Tabs>
 
         {/* Right: Compact Preview Panel */}
-        <div className="lg:sticky lg:top-6">
+        <div className="sticky top-20 self-start h-[calc(100vh-6rem)] overflow-hidden">
           <CompactChatPreview
             agentName={agentName}
             avatarUrl={avatarUrl}

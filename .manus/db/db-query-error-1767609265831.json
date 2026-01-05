@@ -1,0 +1,8 @@
+{
+  "query": "UPDATE domain_orders SET ssl_status = 'active', updated_at = NOW() WHERE domain_name = 'lulubaby.xyz' AND id = 210003;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user VqBKoEwKfw4feq4.6cd8cd1ff95f --database aavW9BLbZ6sZHaPEemayyD --execute UPDATE domain_orders SET ssl_status = 'active', updated_at = NOW() WHERE domain_name = 'lulubaby.xyz' AND id = 210003;",
+  "returncode": 1,
+  "logs": [
+    "ERROR 1054 (42S22) at line 1: Unknown column 'domain_name' in 'where clause'"
+  ]
+}
