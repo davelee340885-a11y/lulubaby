@@ -479,27 +479,6 @@ function MinimalLayout({
 
   return (
     <div className="min-h-screen flex flex-col bg-background">
-      {/* Minimal Header */}
-      <header className="sticky top-0 z-10 border-b border-border/40 bg-background/95 backdrop-blur">
-        <div className="container max-w-sm mx-auto py-1.5 px-4">
-          <div className="flex items-center gap-1.5">
-            <Avatar className="h-5 w-5">
-              <AvatarImage src={persona.avatarUrl || undefined} />
-              <AvatarFallback style={{ backgroundColor: `${primaryColor}15`, color: primaryColor }}>
-                <Bot className="h-2.5 w-2.5" />
-              </AvatarFallback>
-            </Avatar>
-            <div className="flex-1 min-w-0">
-              <h1 className="font-medium text-xs truncate">{persona.agentName}</h1>
-            </div>
-            <span className="flex items-center gap-0.5 text-[10px] text-green-600">
-              <span className="w-1 h-1 rounded-full bg-green-500" />
-              在線
-            </span>
-          </div>
-        </div>
-      </header>
-
       {/* Main Content Area */}
       <div className="flex-1 flex flex-col">
         {/* Welcome State - Compact & Centered Layout */}
@@ -694,30 +673,7 @@ function ProfessionalLayout({
   const hasStartedChat = messages.length > 0;
 
   return (
-    <div className="min-h-screen flex flex-col" style={{ backgroundColor: `${primaryColor}05` }}>
-      {/* Minimal Header */}
-      <header className="sticky top-0 z-10 border-b border-border/40 bg-background/95 backdrop-blur">
-        <div className="container max-w-sm mx-auto py-1.5 px-4">
-          <div className="flex items-center gap-1.5">
-            <Avatar className="h-5 w-5">
-              <AvatarImage src={persona.avatarUrl || undefined} />
-              <AvatarFallback style={{ backgroundColor: `${primaryColor}15`, color: primaryColor }}>
-                <Bot className="h-2.5 w-2.5" />
-              </AvatarFallback>
-            </Avatar>
-            <div className="flex-1 min-w-0">
-              <h1 className="font-medium text-xs truncate">{persona.agentName}</h1>
-            </div>
-            <span className="flex items-center gap-0.5 text-[10px] text-green-600">
-              <span className="w-1 h-1 rounded-full bg-green-500" />
-              在線
-            </span>
-          </div>
-        </div>
-      </header>
-
-
-
+    <div className="min-h-screen flex flex-col bg-background">
       {/* Main Content Area */}
       <div className="flex-1 flex flex-col">
         {/* Welcome State - Compact & Centered Layout */}
@@ -931,32 +887,6 @@ function CustomLayout({
     >
       {/* Overlay */}
       {backgroundImage && <div className="fixed inset-0 bg-black/40 -z-10" />}
-
-      {/* Header */}
-      <header className="sticky top-0 z-10 bg-background/80 backdrop-blur border-b">
-        <div className="container max-w-2xl py-2">
-          <div className="flex items-center gap-2">
-            {persona.profilePhotoUrl ? (
-              <img
-                src={persona.profilePhotoUrl}
-                alt={persona.agentName}
-                className="w-8 h-8 rounded-full object-cover border-2 border-white/50"
-              />
-            ) : (
-              <Avatar className="h-8 w-8">
-                <AvatarImage src={persona.avatarUrl || undefined} />
-                <AvatarFallback style={{ backgroundColor: `${primaryColor}15`, color: primaryColor }}>
-                  <Bot className="h-4 w-4" />
-                </AvatarFallback>
-              </Avatar>
-            )}
-            <div className="flex-1 min-w-0">
-              <h1 className="font-semibold text-sm truncate">{persona.agentName}</h1>
-              {persona.tagline && <p className="text-xs text-muted-foreground truncate">{persona.tagline}</p>}
-            </div>
-          </div>
-        </div>
-      </header>
 
       {/* Main Content */}
       <div className="flex-1 flex flex-col">
