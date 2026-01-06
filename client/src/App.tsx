@@ -4,6 +4,7 @@ import NotFound from "@/pages/NotFound";
 import { Route, Switch } from "wouter";
 import ErrorBoundary from "./components/ErrorBoundary";
 import { ThemeProvider } from "./contexts/ThemeContext";
+import { useNetworkStatus } from "./hooks/useNetworkStatus";
 import DashboardLayout from "./components/DashboardLayout";
 import Dashboard from "./pages/Dashboard";
 // Settings page content has been merged into Appearance page
@@ -87,12 +88,19 @@ function Router() {
   );
 }
 
+// Network status monitor component
+function NetworkStatusMonitor() {
+  useNetworkStatus();
+  return null;
+}
+
 function App() {
   return (
     <ErrorBoundary>
       <ThemeProvider defaultTheme="light">
         <TooltipProvider>
           <Toaster />
+          <NetworkStatusMonitor />
           <Router />
         </TooltipProvider>
       </ThemeProvider>
