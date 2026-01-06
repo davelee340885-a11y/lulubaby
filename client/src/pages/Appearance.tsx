@@ -825,6 +825,9 @@ export default function Appearance() {
             }))}
             buttonDisplayMode={buttonDisplayMode}
             chatPlaceholder={chatPlaceholder}
+            layoutStyle={layoutStyle}
+            profilePhotoUrl={profilePhotoUrl}
+            backgroundImageUrl={backgroundImageUrl}
           />
         </div>
       </div>

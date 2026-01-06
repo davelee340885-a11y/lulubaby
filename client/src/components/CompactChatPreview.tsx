@@ -1,7 +1,8 @@
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Bot, Send, MessageSquare, Calendar, Phone, ShoppingBag, User, Building2, Search, Link, FileText, HelpCircle } from "lucide-react";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Bot, Send, MessageSquare, Calendar, Phone, ShoppingBag, User, Building2, Search, Link, FileText, HelpCircle, Smartphone, Monitor } from "lucide-react";
 
 type PreviewProps = {
   agentName: string;
@@ -16,6 +17,9 @@ type PreviewProps = {
   }>;
   buttonDisplayMode: string;
   chatPlaceholder: string;
+  layoutStyle?: string;
+  profilePhotoUrl?: string;
+  backgroundImageUrl?: string;
 };
 
 const iconMap: Record<string, React.ComponentType<{ className?: string }>> = {
@@ -39,7 +43,7 @@ const iconMap: Record<string, React.ComponentType<{ className?: string }>> = {
   faq: HelpCircle,
 };
 
-export default function CompactChatPreview({
+function PreviewContent({
   agentName,
   avatarUrl,
   welcomeMessage,
@@ -48,22 +52,39 @@ export default function CompactChatPreview({
   quickButtons,
   buttonDisplayMode,
   chatPlaceholder,
-}: PreviewProps) {
+  layoutStyle,
+  profilePhotoUrl,
+  backgroundImageUrl,
+  isMobile,
+}: PreviewProps & { isMobile: boolean }) {
+  // Determine which avatar to display based on layout style
+  const displayAvatarUrl = layoutStyle === "professional" && profilePhotoUrl 
+    ? profilePhotoUrl 
+    : avatarUrl;
+
+  // Determine background style
+  const backgroundStyle = layoutStyle === "custom" && backgroundImageUrl
+    ? { backgroundImage: `url(${backgroundImageUrl})`, backgroundSize: "cover", backgroundPosition: "center" }
+    : {};
+
   return (
-    <div className="sticky top-4 w-full h-[calc(100vh-8rem)] bg-background border border-border rounded-lg shadow-sm overflow-hidden flex flex-col">
+    <div 
+      className="w-full h-full bg-background border border-border rounded-lg shadow-sm overflow-hidden flex flex-col"
+      style={backgroundStyle}
+    >
       {/* Minimal Header */}
       <div className="border-b border-border/40 bg-background/95 backdrop-blur px-3 py-2">
         <div className="flex items-center gap-2">
-          <Avatar className="h-6 w-6">
-            <AvatarImage src={avatarUrl} />
+          <Avatar className={isMobile ? "h-6 w-6" : "h-8 w-8"}>
+            <AvatarImage src={displayAvatarUrl} />
             <AvatarFallback style={{ backgroundColor: `${primaryColor}15`, color: primaryColor }}>
-              <Bot className="h-3 w-3" />
+              <Bot className={isMobile ? "h-3 w-3" : "h-4 w-4"} />
             </AvatarFallback>
           </Avatar>
           <div className="flex-1 min-w-0">
-            <h3 className="font-medium text-xs truncate">{agentName || "AI 助手"}</h3>
+            <h3 className={`font-medium truncate ${isMobile ? "text-xs" : "text-sm"}`}>{agentName || "AI 助手"}</h3>
           </div>
-          <span className="flex items-center gap-1 text-[10px] text-green-600">
+          <span className={`flex items-center gap-1 text-green-600 ${isMobile ? "text-[10px]" : "text-xs"}`}>
             <span className="w-1.5 h-1.5 rounded-full bg-green-500" />
             在線
           </span>
@@ -72,41 +93,41 @@ export default function CompactChatPreview({
 
       {/* Content Area */}
       <div className="flex-1 flex flex-col items-center justify-center px-4 py-6 overflow-auto">
-        <div className="w-full max-w-md text-center space-y-4">
+        <div className={`w-full text-center space-y-4 ${isMobile ? "max-w-md" : "max-w-2xl"}`}>
           {/* Welcome Message */}
-          <h2 className="text-lg font-semibold text-foreground">
+          <h2 className={`font-semibold text-foreground ${isMobile ? "text-lg" : "text-2xl"}`}>
             {welcomeMessage || "您好！我是您的AI助手"}
           </h2>
 
           {/* Input Area */}
           <div className="relative w-full">
-            <div className="flex items-center bg-background border border-border/60 rounded-xl shadow-sm px-3 py-2">
+            <div className={`flex items-center bg-background border border-border/60 rounded-xl shadow-sm ${isMobile ? "px-3 py-2" : "px-4 py-3"}`}>
               <Input
                 placeholder={chatPlaceholder || "輸入您的問題..."}
                 disabled
-                className="border-0 shadow-none focus-visible:ring-0 h-auto text-xs px-0 bg-transparent pointer-events-none"
+                className={`border-0 shadow-none focus-visible:ring-0 h-auto px-0 bg-transparent pointer-events-none ${isMobile ? "text-xs" : "text-sm"}`}
               />
               <Button
                 size="icon"
-                className="rounded-full h-7 w-7 shrink-0 ml-2 pointer-events-none"
+                className={`rounded-full shrink-0 ml-2 pointer-events-none ${isMobile ? "h-7 w-7" : "h-9 w-9"}`}
                 style={{ backgroundColor: primaryColor }}
               >
-                <Send className="h-3 w-3" />
+                <Send className={isMobile ? "h-3 w-3" : "h-4 w-4"} />
               </Button>
             </div>
           </div>
 
           {/* Suggested Questions */}
           {suggestedQuestions.length > 0 && (
-            <div className="flex flex-wrap justify-center gap-1.5">
+            <div className={`flex flex-wrap justify-center ${isMobile ? "gap-1.5" : "gap-2"}`}>
               {suggestedQuestions.slice(0, 3).map((question, index) => (
                 <button
                   key={index}
                   disabled
-                  className="inline-flex items-center gap-1 px-2 py-1 rounded-full border border-border/60 bg-background text-[10px] text-muted-foreground pointer-events-none"
+                  className={`inline-flex items-center gap-1 rounded-full border border-border/60 bg-background text-muted-foreground pointer-events-none ${isMobile ? "px-2 py-1 text-[10px]" : "px-3 py-1.5 text-xs"}`}
                 >
-                  <MessageSquare className="h-2.5 w-2.5" />
-                  <span className="max-w-[100px] truncate">{question}</span>
+                  <MessageSquare className={isMobile ? "h-2.5 w-2.5" : "h-3 w-3"} />
+                  <span className={isMobile ? "max-w-[100px] truncate" : "max-w-[150px] truncate"}>{question}</span>
                 </button>
               ))}
             </div>
@@ -114,7 +135,7 @@ export default function CompactChatPreview({
 
           {/* Quick Buttons */}
           {quickButtons.length > 0 && (
-            <div className="flex flex-wrap justify-center gap-1.5">
+            <div className={`flex flex-wrap justify-center ${isMobile ? "gap-1.5" : "gap-2"}`}>
               {buttonDisplayMode === "icon" ? (
                 // Icon mode
                 quickButtons.slice(0, 6).map((button, index) => {
@@ -123,10 +144,10 @@ export default function CompactChatPreview({
                     <button
                       key={index}
                       disabled
-                      className="p-1.5 rounded-lg hover:bg-muted/80 transition-colors pointer-events-none"
+                      className={`rounded-lg hover:bg-muted/80 transition-colors pointer-events-none ${isMobile ? "p-1.5" : "p-2"}`}
                       style={{ color: primaryColor }}
                     >
-                      <IconComponent className="h-3.5 w-3.5" />
+                      <IconComponent className={isMobile ? "h-3.5 w-3.5" : "h-4 w-4"} />
                     </button>
                   );
                 })
@@ -138,10 +159,10 @@ export default function CompactChatPreview({
                     <button
                       key={index}
                       disabled
-                      className="inline-flex items-center gap-1 px-2 py-1 text-[10px] rounded-md border hover:bg-muted/50 transition-colors pointer-events-none"
+                      className={`inline-flex items-center gap-1 rounded-md border hover:bg-muted/50 transition-colors pointer-events-none ${isMobile ? "px-2 py-1 text-[10px]" : "px-3 py-1.5 text-xs"}`}
                     >
-                      <IconComponent className="h-2.5 w-2.5" />
-                      <span className="max-w-[50px] truncate">{button.label}</span>
+                      <IconComponent className={isMobile ? "h-2.5 w-2.5" : "h-3 w-3"} />
+                      <span className={isMobile ? "max-w-[50px] truncate" : "max-w-[80px] truncate"}>{button.label}</span>
                     </button>
                   );
                 })
@@ -155,10 +176,10 @@ export default function CompactChatPreview({
                       variant="outline"
                       size="sm"
                       disabled
-                      className="h-6 px-2 text-[10px] rounded-md font-normal pointer-events-none"
+                      className={`rounded-md font-normal pointer-events-none ${isMobile ? "h-6 px-2 text-[10px]" : "h-8 px-3 text-xs"}`}
                     >
-                      <IconComponent className="h-2.5 w-2.5 mr-1" />
-                      <span className="max-w-[60px] truncate">{button.label}</span>
+                      <IconComponent className={isMobile ? "h-2.5 w-2.5 mr-1" : "h-3 w-3 mr-1.5"} />
+                      <span className={isMobile ? "max-w-[60px] truncate" : "max-w-[100px] truncate"}>{button.label}</span>
                     </Button>
                   );
                 })
@@ -170,8 +191,41 @@ export default function CompactChatPreview({
 
       {/* Preview Label */}
       <div className="border-t border-border/40 bg-muted/30 px-3 py-1.5 text-center">
-        <p className="text-[10px] text-muted-foreground">即時預覽</p>
+        <p className={isMobile ? "text-[10px] text-muted-foreground" : "text-xs text-muted-foreground"}>即時預覽</p>
       </div>
+    </div>
+  );
+}
+
+export default function CompactChatPreview(props: PreviewProps) {
+  return (
+    <div className="sticky top-4 w-full h-[calc(100vh-8rem)]">
+      <Tabs defaultValue="mobile" className="w-full h-full flex flex-col">
+        <TabsList className="grid w-full grid-cols-2 mb-2">
+          <TabsTrigger value="mobile" className="text-xs">
+            <Smartphone className="h-3.5 w-3.5 mr-1.5" />
+            手機版
+          </TabsTrigger>
+          <TabsTrigger value="desktop" className="text-xs">
+            <Monitor className="h-3.5 w-3.5 mr-1.5" />
+            桌面版
+          </TabsTrigger>
+        </TabsList>
+        
+        <TabsContent value="mobile" className="flex-1 mt-0">
+          <div className="w-full h-full flex items-center justify-center">
+            <div className="w-[375px] h-full">
+              <PreviewContent {...props} isMobile={true} />
+            </div>
+          </div>
+        </TabsContent>
+        
+        <TabsContent value="desktop" className="flex-1 mt-0">
+          <div className="w-full h-full">
+            <PreviewContent {...props} isMobile={false} />
+          </div>
+        </TabsContent>
+      </Tabs>
     </div>
   );
 }
