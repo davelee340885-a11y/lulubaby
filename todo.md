@@ -669,4 +669,10 @@
 - [x] 支持 layoutStyle === "custom" 顯示背景圖片
 - [x] 支持 layoutStyle === "professional" 顯示個人照片
 - [x] 使用相同的 chatPlaceholder 設定
-- [ ] 重新發布網站讓 lulubaby.xyz 使用最新代碼
+- [x] 重新發布網站讓 lulubaby.xyz 使用最新代碼
+
+## 修復歡迎訊息文字顏色問題
+- [x] 檢查 CustomDomainChat.tsx 的文字顏色設定
+- [x] 驗證歡迎訊息文字顏色正確（有背景圖時白色，無背景時黑色）
+- [x] lulubaby.xyz 與預覽連結 /chat/1 外觀完全一致
+- [x] 測試並驗證修復效果
