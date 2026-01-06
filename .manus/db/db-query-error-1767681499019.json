@@ -1,0 +1,8 @@
+{
+  "query": "SELECT id, domain_name, persona_id, is_published, dns_status, ssl_status FROM domain_orders WHERE domain_name LIKE '%lulubaby%'",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user VqBKoEwKfw4feq4.6cd8cd1ff95f --database aavW9BLbZ6sZHaPEemayyD --execute SELECT id, domain_name, persona_id, is_published, dns_status, ssl_status FROM domain_orders WHERE domain_name LIKE '%lulubaby%'",
+  "returncode": 1,
+  "logs": [
+    "ERROR 1054 (42S22) at line 1: Unknown column 'domain_name' in 'where clause'"
+  ]
+}

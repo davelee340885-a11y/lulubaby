@@ -753,3 +753,11 @@
 - [x] 為錯誤處理組件添加測試（error-handling.test.ts - 21 個測試通過）
 - [x] 為網絡狀態 hook 添加測試
 - [x] 為域名路由功能添加測試（已有 domain-routing.test.ts）
+
+
+## Bug 修復：lulubaby.xyz 與預覽版面不相符
+- [x] 檢查 /chat/1 頁面版面
+- [x] 檢查 lulubaby.xyz 頁面版面
+- [x] 找出差異原因：當 layoutStyle="custom" 但沒有背景圖片時，顯示的是 primaryColor 淡色背景而不是白色
+- [x] 修復版面不相符問題：當沒有背景圖片時回退到 minimal 佈局（白色背景）
+- [x] 測試驗證 - 預覽版面已顯示白色背景，lulubaby.xyz 需要重新發布才能生效

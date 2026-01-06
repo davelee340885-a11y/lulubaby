@@ -343,13 +343,13 @@ export default function CustomDomainChat() {
 
 
   // Custom Layout with Background Image
-  if (layoutStyle === "custom") {
+  // If no background image, fall back to minimal layout (white background)
+  if (layoutStyle === "custom" && backgroundImage) {
     return (
       <div 
         className="min-h-screen flex flex-col bg-cover bg-center bg-fixed"
         style={{ 
-          backgroundImage: backgroundImage ? `url(${backgroundImage})` : undefined,
-          backgroundColor: backgroundImage ? undefined : `${primaryColor}10`
+          backgroundImage: `url(${backgroundImage})`
         }}
       >
         {backgroundImage && <div className="fixed inset-0 bg-black/40 -z-10" />}
