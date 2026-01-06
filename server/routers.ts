@@ -1486,6 +1486,24 @@ ${knowledgeContent.substring(0, 10000)}
       return getDomainsByUserId(ctx.user.id);
     }),
 
+    // Get published domain for current user
+    getPublished: protectedProcedure.query(async ({ ctx }) => {
+      const persona = await getPersonaByUserId(ctx.user.id);
+      if (!persona) return null;
+      
+      const orders = await getRegisteredDomainOrders(ctx.user.id);
+      const publishedOrder = orders.find(order => 
+        order.isPublished && 
+        order.personaId === persona.id &&
+        order.dnsStatus === 'active'
+      );
+      
+      return publishedOrder ? {
+        domain: publishedOrder.domain,
+        url: `https://${publishedOrder.domain}`
+      } : null;
+    }),
+
     // Get a specific domain by ID
     get: protectedProcedure
       .input(z.object({ id: z.number() }))

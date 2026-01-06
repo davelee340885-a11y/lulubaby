@@ -584,7 +584,11 @@ export default function Domain() {
     },
   });
   
-  const chatUrl = persona ? `${window.location.origin}/chat/${persona.id}` : null;
+  const { data: publishedDomain } = trpc.domains.getPublished.useQuery();
+  
+  const chatUrl = persona 
+    ? `${publishedDomain?.url || window.location.origin}/chat/${persona.id}` 
+    : null;
 
   const copyUrl = () => {
     if (chatUrl) {

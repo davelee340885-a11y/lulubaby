@@ -16,8 +16,11 @@ export default function Dashboard() {
   const { data: dailyStats, isLoading: dailyLoading } = trpc.analytics.dailyStats.useQuery({ days: 14 });
   const { data: popularQuestions, isLoading: questionsLoading } = trpc.analytics.popularQuestions.useQuery({ limit: 10 });
   const { data: recentConversations, isLoading: conversationsLoading } = trpc.analytics.recentConversations.useQuery({ limit: 10 });
+  const { data: publishedDomain } = trpc.domains.getPublished.useQuery();
 
-  const chatUrl = persona ? `${window.location.origin}/chat/${persona.id}` : null;
+  const chatUrl = persona 
+    ? `${publishedDomain?.url || window.location.origin}/chat/${persona.id}` 
+    : null;
 
   const copyUrl = () => {
     if (chatUrl) {
