@@ -1,3 +1,4 @@
+import React from "react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -248,9 +249,11 @@ function PreviewContent({
 }
 
 export default function CompactChatPreview(props: PreviewProps) {
+  const [activeTab, setActiveTab] = React.useState("mobile");
+
   return (
     <div className="sticky top-4 w-full h-[calc(100vh-8rem)]">
-      <Tabs defaultValue="mobile" className="w-full h-full flex flex-col">
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full h-full flex flex-col">
         <TabsList className="grid w-full grid-cols-2 mb-2">
           <TabsTrigger value="mobile" className="text-xs">
             <Smartphone className="h-3.5 w-3.5 mr-1.5" />
@@ -263,17 +266,21 @@ export default function CompactChatPreview(props: PreviewProps) {
         </TabsList>
         
         <TabsContent value="mobile" className="flex-1 mt-0">
-          <div className="w-full h-full flex items-center justify-center">
-            <div className="w-[375px] h-full">
-              <PreviewContent {...props} isMobile={true} />
+          {activeTab === "mobile" && (
+            <div className="w-full h-full flex items-center justify-center">
+              <div className="w-[375px] h-full">
+                <PreviewContent {...props} isMobile={true} />
+              </div>
             </div>
-          </div>
+          )}
         </TabsContent>
         
         <TabsContent value="desktop" className="flex-1 mt-0">
-          <div className="w-full h-full">
-            <PreviewContent {...props} isMobile={false} />
-          </div>
+          {activeTab === "desktop" && (
+            <div className="w-full h-full">
+              <PreviewContent {...props} isMobile={false} />
+            </div>
+          )}
         </TabsContent>
       </Tabs>
     </div>

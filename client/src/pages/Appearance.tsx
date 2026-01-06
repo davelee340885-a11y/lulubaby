@@ -156,7 +156,7 @@ export default function Appearance() {
       setChatPlaceholder(persona.chatPlaceholder || "輸入您的問題...");
       setBackgroundType((persona.backgroundType as "none" | "color" | "image") || "none");
       setBackgroundColor(persona.backgroundColor || "#FFFFFF");
-      setImmersiveMode(persona.immersiveMode || false);
+      setImmersiveMode(persona.immersiveMode ?? false);
       
       if (persona.suggestedQuestions) {
         try {

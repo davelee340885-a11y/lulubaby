@@ -838,7 +838,7 @@
 - [x] 修復 CustomDomainChat.tsx 的背景顏色支持
 - [x] 測試驗證功能
 
-## 修復版面設定預覽即時更新
+## 修復預覽版面和沉浸式風格
 - [x] 檢查 CompactChatPreview 組件接收的 props
 - [x] 確保 backgroundType 和 backgroundColor 傳遞到預覽組件
 - [x] 修復預覽組件的背景顏色渲染邏輯
@@ -861,3 +861,10 @@
 - [x] 更新 CustomDomainChat.tsx 的沉浸式風格樣式
 - [x] 更新 CompactChatPreview 的沉浸式風格樣式
 - [x] 測試預覽和實際對話頁面效果
+
+## 修復預覽和沉浸式風格問題（最終修復）
+- [x] 修復 CompactChatPreview Tabs 同時渲染問題（使用條件渲染）
+- [x] 修復 Appearance.tsx immersiveMode 載入邏輯（使用 ?? 運算符）
+- [x] 測試預覽只顯示一個輸入框
+- [x] 測試沉浸式風格保存後保持勾選
+
