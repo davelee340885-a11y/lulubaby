@@ -20,6 +20,8 @@ type PreviewProps = {
   layoutStyle?: string;
   profilePhotoUrl?: string;
   backgroundImageUrl?: string;
+  backgroundType?: "none" | "color" | "image";
+  backgroundColor?: string;
 };
 
 const iconMap: Record<string, React.ComponentType<{ className?: string }>> = {
@@ -55,6 +57,8 @@ function PreviewContent({
   layoutStyle,
   profilePhotoUrl,
   backgroundImageUrl,
+  backgroundType,
+  backgroundColor,
   isMobile,
 }: PreviewProps & { isMobile: boolean }) {
   // Determine which avatar to display based on layout style
@@ -62,15 +66,27 @@ function PreviewContent({
     ? profilePhotoUrl 
     : avatarUrl;
 
-  // Determine background style
-  const backgroundStyle = layoutStyle === "custom" && backgroundImageUrl
-    ? { 
-        backgroundImage: `url(${backgroundImageUrl})`, 
-        backgroundSize: "cover", 
-        backgroundPosition: "center",
-        backgroundRepeat: "no-repeat"
+  // Determine background style based on type
+  const getBackgroundStyle = () => {
+    if (layoutStyle === "custom") {
+      if (backgroundType === "image" && backgroundImageUrl) {
+        return { 
+          backgroundImage: `url(${backgroundImageUrl})`, 
+          backgroundSize: "cover", 
+          backgroundPosition: "center",
+          backgroundRepeat: "no-repeat"
+        };
+      } else if (backgroundType === "color" && backgroundColor) {
+        return {
+          backgroundColor: backgroundColor,
+        };
       }
-    : {};
+    }
+    return {};
+  };
+
+  const backgroundStyle = getBackgroundStyle();
+  const hasBackgroundImage = layoutStyle === "custom" && backgroundType === "image" && backgroundImageUrl;
 
   // Check if we should show profile photo in the welcome area (professional layout)
   const showProfilePhoto = layoutStyle === "professional" && profilePhotoUrl;
@@ -115,7 +131,7 @@ function PreviewContent({
           )}
 
           {/* Welcome Message */}
-          <h2 className={`font-semibold ${layoutStyle === "custom" && backgroundImageUrl ? "text-white drop-shadow-lg" : "text-foreground"} ${isMobile ? "text-lg" : "text-2xl"}`}>
+          <h2 className={`font-semibold ${hasBackgroundImage ? "text-white drop-shadow-lg" : "text-foreground"} ${isMobile ? "text-lg" : "text-2xl"}`}>
             {welcomeMessage || "您好！我是您的AI助手"}
           </h2>
 

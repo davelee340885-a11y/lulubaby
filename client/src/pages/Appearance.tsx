@@ -969,6 +969,8 @@ export default function Appearance() {
             layoutStyle={layoutStyle}
             profilePhotoUrl={profilePhotoUrl}
             backgroundImageUrl={backgroundImageUrl}
+            backgroundType={backgroundType}
+            backgroundColor={backgroundColor}
           />
         </div>
       </div>

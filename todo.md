@@ -801,3 +801,9 @@
 - [x] 修復 Chat.tsx 的 CustomLayout 條件判斷
 - [x] 修復 CustomDomainChat.tsx 的背景顏色支持
 - [x] 測試驗證功能
+
+## 修復版面設定預覽即時更新
+- [x] 檢查 CompactChatPreview 組件接收的 props
+- [x] 確保 backgroundType 和 backgroundColor 傳遞到預覽組件
+- [x] 修復預覽組件的背景顏色渲染邏輯
+- [x] 測試選擇背景顏色後預覽即時更新
