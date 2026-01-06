@@ -794,8 +794,10 @@
 
 
 ## 繼續完成版面設定優化
-- [ ] 在 UI 中添加背景類型選擇（圖片/顏色）
-- [ ] 添加顏色選擇器組件
-- [ ] 在頁面中渲染 ImageCropper 組件
-- [ ] 更新 handleSave 函數以保存 backgroundType 和 backgroundColor
-- [ ] 測試驗證功能
+- [x] 在 UI 中添加背景類型選擇（圖片/顏色）
+- [x] 添加顏色選擇器組件
+- [x] 在頁面中渲染 ImageCropper 組件
+- [x] 更新 handleSave 函數以保存 backgroundType 和 backgroundColor
+- [x] 修復 Chat.tsx 的 CustomLayout 條件判斷
+- [x] 修復 CustomDomainChat.tsx 的背景顏色支持
+- [x] 測試驗證功能

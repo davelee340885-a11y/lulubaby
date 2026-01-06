@@ -282,8 +282,8 @@ export default function Chat() {
     />;
   }
 
-  // Custom layout only when background image exists, otherwise fall back to minimal
-  if (layoutStyle === "custom" && persona.backgroundImageUrl) {
+  // Custom layout for custom background (image or color)
+  if (layoutStyle === "custom") {
     return <CustomLayout 
       persona={persona} 
       primaryColor={primaryColor}

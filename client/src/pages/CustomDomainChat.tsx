@@ -340,17 +340,38 @@ export default function CustomDomainChat() {
   const buttonDisplayMode = persona.buttonDisplayMode || "full";
   const backgroundImage = persona.backgroundImageUrl;
   const profilePhoto = persona.profilePhotoUrl;
+  const backgroundType = (persona as any).backgroundType || "none";
+  const backgroundColor = (persona as any).backgroundColor;
 
+  // Determine background style for custom layout
+  const getBackgroundStyle = () => {
+    if (backgroundType === "image" && backgroundImage) {
+      return {
+        backgroundImage: `url(${backgroundImage})`,
+        backgroundColor: undefined,
+      };
+    } else if (backgroundType === "color" && backgroundColor) {
+      return {
+        backgroundImage: undefined,
+        backgroundColor: backgroundColor,
+      };
+    } else {
+      return {
+        backgroundImage: undefined,
+        backgroundColor: "#ffffff",
+      };
+    }
+  };
 
-  // Custom Layout with Background Image
-  // If no background image, fall back to minimal layout (white background)
-  if (layoutStyle === "custom" && backgroundImage) {
+  // Custom Layout with Background (Image or Color)
+  if (layoutStyle === "custom") {
+    const backgroundStyle = getBackgroundStyle();
+    const hasBackgroundImage = backgroundType === "image" && backgroundImage;
+    
     return (
       <div 
-        className="min-h-screen flex flex-col bg-cover bg-center bg-fixed"
-        style={{ 
-          backgroundImage: `url(${backgroundImage})`
-        }}
+        className={`min-h-screen flex flex-col ${hasBackgroundImage ? "bg-cover bg-center bg-fixed" : ""}`}
+        style={backgroundStyle}
       >
         {backgroundImage && <div className="fixed inset-0 bg-black/40 -z-10" />}
 
@@ -358,7 +379,7 @@ export default function CustomDomainChat() {
           {messages.length === 0 && (
             <div className="flex-1 flex flex-col items-center justify-center px-4 py-6">
               <div className="w-full max-w-xl text-center space-y-5">
-                <h2 className={`text-lg font-semibold ${backgroundImage ? 'text-white drop-shadow-lg' : 'text-foreground'}`}>
+                <h2 className={`text-lg font-semibold ${hasBackgroundImage ? 'text-white drop-shadow-lg' : 'text-foreground'}`}>
                   {persona.welcomeMessage || "您好！我是您的AI助手"}
                 </h2>
                 
