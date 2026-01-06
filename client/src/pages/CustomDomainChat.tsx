@@ -295,7 +295,7 @@ export default function CustomDomainChat() {
                   </div>
                 )}
               </div>
-            </div>
+          </div>
         )}
 
         {/* Chat Messages */}
