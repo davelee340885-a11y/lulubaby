@@ -98,8 +98,13 @@ function PreviewContent({
       className="w-full h-full bg-background border border-border rounded-lg shadow-sm overflow-hidden flex flex-col relative"
       style={immersiveMode ? backgroundStyle : {}}
     >
-      {/* Overlay for immersive mode */}
-      {immersiveMode && hasBackgroundImage && <div className="absolute inset-0 bg-black/40 z-0" />}
+      {/* Gradient Overlay for Immersive Mode */}
+      {immersiveMode && (
+        <div className="absolute inset-0 z-0">
+          <div className="absolute inset-0 bg-gradient-to-b from-black/20 via-black/30 to-black/60" />
+          <div className="absolute inset-0 backdrop-blur-[2px]" style={{ maskImage: 'linear-gradient(to bottom, transparent 0%, black 100%)' }} />
+        </div>
+      )}
       {/* Minimal Header */}
       <div className="border-b border-border/40 bg-background/95 backdrop-blur px-3 py-2">
         <div className="flex items-center gap-2">
@@ -143,24 +148,6 @@ function PreviewContent({
           <h2 className={`font-semibold ${hasBackgroundImage ? "text-white drop-shadow-lg" : "text-foreground"} ${isMobile ? "text-lg" : "text-2xl"}`}>
             {welcomeMessage || "您好！我是您的AI助手"}
           </h2>
-
-          {/* Input Area */}
-          <div className="relative w-full">
-            <div className={`flex items-center bg-background border border-border/60 rounded-xl shadow-sm ${isMobile ? "px-3 py-2" : "px-4 py-3"}`}>
-              <Input
-                placeholder={chatPlaceholder || "輸入您的問題..."}
-                disabled
-                className={`border-0 shadow-none focus-visible:ring-0 h-auto px-0 bg-transparent pointer-events-none ${isMobile ? "text-xs" : "text-sm"}`}
-              />
-              <Button
-                size="icon"
-                className={`rounded-full shrink-0 ml-2 pointer-events-none ${isMobile ? "h-7 w-7" : "h-9 w-9"}`}
-                style={{ backgroundColor: primaryColor }}
-              >
-                <Send className={isMobile ? "h-3 w-3" : "h-4 w-4"} />
-              </Button>
-            </div>
-          </div>
 
           {/* Suggested Questions */}
           {suggestedQuestions.length > 0 && (
@@ -231,6 +218,24 @@ function PreviewContent({
               )}
             </div>
           )}
+
+          {/* Input Area */}
+          <div className="relative w-full">
+            <div className={`flex items-center bg-background border border-border/60 rounded-xl shadow-sm ${isMobile ? "px-3 py-2" : "px-4 py-3"}`}>
+              <Input
+                placeholder={chatPlaceholder || "輸入您的問題..."}
+                disabled
+                className={`border-0 shadow-none focus-visible:ring-0 h-auto px-0 bg-transparent pointer-events-none ${isMobile ? "text-xs" : "text-sm"}`}
+              />
+              <Button
+                size="icon"
+                className={`rounded-full shrink-0 ml-2 pointer-events-none ${isMobile ? "h-7 w-7" : "h-9 w-9"}`}
+                style={{ backgroundColor: primaryColor }}
+              >
+                <Send className={isMobile ? "h-3 w-3" : "h-4 w-4"} />
+              </Button>
+            </div>
+          </div>
         </div>
       </div>
 

@@ -819,3 +819,45 @@
 
 - [x] 更新 CompactChatPreview 支持沉浸式模式預覽
 - [x] 測試沉浸式模式在不同背景類型下的顯示效果
+
+## 修復預覽版面和沉浸式風格
+- [ ] 檢查 CompactChatPreview 組件找出重複輸入框
+- [ ] 移除預覽下方的重複輸入框
+- [ ] 修改沉浸式風格為下方漸變模糊效果
+- [ ] 更新 Chat.tsx 的沉浸式風格樣式
+- [ ] 更新 CustomDomainChat.tsx 的沉浸式風格樣式
+- [ ] 測試預覽和實際對話頁面效果
+
+
+## 繼續完成版面設定優化
+- [x] 在 UI 中添加背景類型選擇（圖片/顏色）
+- [x] 添加顏色選擇器組件
+- [x] 在頁面中渲染 ImageCropper 組件
+- [x] 更新 handleSave 函數以保存 backgroundType 和 backgroundColor
+- [x] 修復 Chat.tsx 的 CustomLayout 條件判斷
+- [x] 修復 CustomDomainChat.tsx 的背景顏色支持
+- [x] 測試驗證功能
+
+## 修復版面設定預覽即時更新
+- [x] 檢查 CompactChatPreview 組件接收的 props
+- [x] 確保 backgroundType 和 backgroundColor 傳遞到預覽組件
+- [x] 修復預覽組件的背景顏色渲染邏輯
+- [x] 測試選擇背景顏色後預覽即時更新
+
+## 添加沉浸式風格勾選選項
+- [x] 更新 persona 表 schema 添加 immersiveMode 欄位
+- [x] 在 Appearance.tsx 添加沉浸式風格勾選框
+- [x] 更新 tRPC router 支持 immersiveMode
+- [x] 修改 Chat.tsx 的 CustomLayout 渲染邏輯
+- [x] 修改 CustomDomainChat.tsx 的 CustomLayout 渲染邏輯
+- [x] 更新 CompactChatPreview 支持沉浸式預覽
+- [x] 測試沉浸式風格功能
+
+## 修復預覽版面和沉浸式風格
+- [x] 檢查 CompactChatPreview 組件找出重複輸入框
+- [x] 移除預覽下方的重複輸入框（調整順序）
+- [x] 修改沉浸式風格為下方漸變模糊效果
+- [x] 更新 Chat.tsx 的沉浸式風格樣式
+- [x] 更新 CustomDomainChat.tsx 的沉浸式風格樣式
+- [x] 更新 CompactChatPreview 的沉浸式風格樣式
+- [x] 測試預覽和實際對話頁面效果
