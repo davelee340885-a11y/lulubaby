@@ -34,7 +34,7 @@ export const aiPersonas = mysqlTable("ai_personas", {
   // Layout and appearance settings
   layoutStyle: mysqlEnum("layoutStyle", ["minimal", "professional", "custom"]).default("minimal").notNull(),
   backgroundImageUrl: varchar("backgroundImageUrl", { length: 512 }),
-  profilePhotoUrl: varchar("profilePhotoUrl", { length: 512 }),
+  profilePhotoUrl: text("profilePhotoUrl"),
   tagline: varchar("tagline", { length: 255 }),
   suggestedQuestions: text("suggestedQuestions"), // JSON array of suggested questions
   showQuickButtons: boolean("showQuickButtons").default(true).notNull(),

@@ -1,0 +1,1 @@
+ALTER TABLE `ai_personas` MODIFY COLUMN `profilePhotoUrl` text;
