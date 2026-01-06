@@ -648,3 +648,25 @@
 - [x] 修復對話連結使用發布域名而不是 localhost
 - [x] 確保對話連結格式：https://lulubaby.xyz/chat/1
 - [x] 測試並驗證修復效果
+
+## 修復 lulubaby.xyz 域名路由
+- [ ] 檢查當前域名路由配置（App.tsx 或 server 路由）
+- [ ] 修復訪問 lulubaby.xyz 時自動導向 /chat/1
+- [ ] 確保域名根路徑（/）導向對話頁面
+- [ ] 測試並驗證修復效果
+
+## 修復 CustomDomainChat 與 Chat 外觀不一致
+- [ ] 對比 Chat.tsx 和 CustomDomainChat.tsx 的佈局差異
+- [ ] CustomDomainChat 缺少個人照片顯示（專業名片風格）
+- [ ] CustomDomainChat 缺少背景圖案/圖片
+- [ ] 修復 CustomDomainChat 使用相同的佈局風格設定
+- [ ] 確保 lulubaby.xyz 與 /chat/1 外觀完全一致
+
+
+## 修復 CustomDomainChat 與 Chat 外觀不一致
+- [x] 對比 Chat.tsx 和 CustomDomainChat.tsx 的差異
+- [x] 更新 CustomDomainChat.tsx 使用相同的佈局風格邏輯
+- [x] 支持 layoutStyle === "custom" 顯示背景圖片
+- [x] 支持 layoutStyle === "professional" 顯示個人照片
+- [x] 使用相同的 chatPlaceholder 設定
+- [ ] 重新發布網站讓 lulubaby.xyz 使用最新代碼
