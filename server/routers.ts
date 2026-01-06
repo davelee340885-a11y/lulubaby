@@ -82,6 +82,7 @@ export const appRouter = router({
         backgroundType: z.enum(["none", "color", "image"]).optional(),
         backgroundColor: z.string().optional().nullable(),
         backgroundImageUrl: z.string().optional().nullable(),
+        immersiveMode: z.boolean().optional(),
         profilePhotoUrl: z.string().optional().nullable(),
         tagline: z.string().optional().nullable(),
         suggestedQuestions: z.string().optional().nullable(),

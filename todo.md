@@ -807,3 +807,15 @@
 - [x] 確保 backgroundType 和 backgroundColor 傳遞到預覽組件
 - [x] 修復預覽組件的背景顏色渲染邏輯
 - [x] 測試選擇背景顏色後預覽即時更新
+
+## 添加沉浸式風格勾選選項
+- [x] 更新 persona 表 schema 添加 immersiveMode 欄位
+- [x] 在 Appearance.tsx 添加沉浸式風格勾選框
+- [x] 更新 tRPC router 支持 immersiveMode
+- [x] 修改 Chat.tsx 的 CustomLayout 渲染邏輯
+- [x] 修改 CustomDomainChat.tsx 的 CustomLayout 渲染邏輯
+- [x] 更新 CompactChatPreview 支持沉浸式預覽
+- [x] 測試沉浸式風格功能
+
+- [x] 更新 CompactChatPreview 支持沉浸式模式預覽
+- [x] 測試沉浸式模式在不同背景類型下的顯示效果

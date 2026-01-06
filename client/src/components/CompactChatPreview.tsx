@@ -22,6 +22,7 @@ type PreviewProps = {
   backgroundImageUrl?: string;
   backgroundType?: "none" | "color" | "image";
   backgroundColor?: string;
+  immersiveMode?: boolean;
 };
 
 const iconMap: Record<string, React.ComponentType<{ className?: string }>> = {
@@ -59,6 +60,7 @@ function PreviewContent({
   backgroundImageUrl,
   backgroundType,
   backgroundColor,
+  immersiveMode,
   isMobile,
 }: PreviewProps & { isMobile: boolean }) {
   // Determine which avatar to display based on layout style
@@ -93,9 +95,11 @@ function PreviewContent({
 
   return (
     <div 
-      className="w-full h-full bg-background border border-border rounded-lg shadow-sm overflow-hidden flex flex-col"
-      style={backgroundStyle}
+      className="w-full h-full bg-background border border-border rounded-lg shadow-sm overflow-hidden flex flex-col relative"
+      style={immersiveMode ? backgroundStyle : {}}
     >
+      {/* Overlay for immersive mode */}
+      {immersiveMode && hasBackgroundImage && <div className="absolute inset-0 bg-black/40 z-0" />}
       {/* Minimal Header */}
       <div className="border-b border-border/40 bg-background/95 backdrop-blur px-3 py-2">
         <div className="flex items-center gap-2">
@@ -116,8 +120,13 @@ function PreviewContent({
       </div>
 
       {/* Content Area */}
-      <div className="flex-1 flex flex-col items-center justify-center px-4 py-6 overflow-auto">
-        <div className={`w-full text-center space-y-4 ${isMobile ? "max-w-md" : "max-w-2xl"}`}>
+      <div 
+        className="flex-1 flex flex-col items-center justify-center px-4 py-6 overflow-auto relative"
+        style={!immersiveMode ? backgroundStyle : {}}
+      >
+        {/* Overlay for non-immersive mode */}
+        {!immersiveMode && hasBackgroundImage && <div className="absolute inset-0 bg-black/40 z-0" />}
+        <div className={`w-full text-center space-y-4 relative z-10 ${isMobile ? "max-w-md" : "max-w-2xl"}`}>
           {/* Professional Layout: Show Profile Photo */}
           {showProfilePhoto && (
             <div className="flex justify-center mb-2">

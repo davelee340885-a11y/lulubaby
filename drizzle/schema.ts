@@ -36,6 +36,7 @@ export const aiPersonas = mysqlTable("ai_personas", {
   backgroundType: mysqlEnum("backgroundType", ["none", "color", "image"]).default("none").notNull(), // Background type
   backgroundColor: varchar("backgroundColor", { length: 20 }), // Hex color code
   backgroundImageUrl: varchar("backgroundImageUrl", { length: 512 }),
+  immersiveMode: boolean("immersiveMode").default(false).notNull(), // Immersive background mode
   profilePhotoUrl: text("profilePhotoUrl"),
   tagline: varchar("tagline", { length: 255 }),
   suggestedQuestions: text("suggestedQuestions"), // JSON array of suggested questions

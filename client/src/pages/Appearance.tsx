@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Textarea } from "@/components/ui/textarea";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -120,6 +121,7 @@ export default function Appearance() {
   const [uploadingBackground, setUploadingBackground] = useState(false);
   const [backgroundType, setBackgroundType] = useState<"none" | "color" | "image">("none");
   const [backgroundColor, setBackgroundColor] = useState("#FFFFFF");
+  const [immersiveMode, setImmersiveMode] = useState(false);
   
   // Image cropper state
   const [cropperOpen, setCropperOpen] = useState(false);
@@ -154,6 +156,7 @@ export default function Appearance() {
       setChatPlaceholder(persona.chatPlaceholder || "輸入您的問題...");
       setBackgroundType((persona.backgroundType as "none" | "color" | "image") || "none");
       setBackgroundColor(persona.backgroundColor || "#FFFFFF");
+      setImmersiveMode(persona.immersiveMode || false);
       
       if (persona.suggestedQuestions) {
         try {
@@ -314,6 +317,7 @@ export default function Appearance() {
       backgroundType,
       backgroundColor: backgroundColor || null,
       backgroundImageUrl: backgroundImageUrl || null,
+      immersiveMode,
       profilePhotoUrl: profilePhotoUrl || null,
       tagline: tagline || null,
       suggestedQuestions: JSON.stringify(suggestedQuestions),
@@ -707,6 +711,26 @@ export default function Appearance() {
                       />
                     </div>
                   )}
+
+                  {/* Immersive Mode Checkbox - shown when background is set */}
+                  {(backgroundType === "color" || backgroundType === "image") && (
+                    <div className="flex items-start space-x-3 p-4 rounded-lg border bg-muted/30">
+                      <Checkbox 
+                        id="immersiveMode" 
+                        checked={immersiveMode}
+                        onCheckedChange={(checked) => setImmersiveMode(checked as boolean)}
+                        className="mt-0.5"
+                      />
+                      <div className="flex-1">
+                        <Label htmlFor="immersiveMode" className="cursor-pointer font-medium">
+                          沉浸式風格
+                        </Label>
+                        <p className="text-xs text-muted-foreground mt-1">
+                          啟用後，背景將延伸到整個對話區域，包括輸入框和按鈕，創造更具沉浸感的視覺體驗
+                        </p>
+                      </div>
+                    </div>
+                  )}
                 </CardContent>
               </Card>
             )}
@@ -971,6 +995,7 @@ export default function Appearance() {
             backgroundImageUrl={backgroundImageUrl}
             backgroundType={backgroundType}
             backgroundColor={backgroundColor}
+            immersiveMode={immersiveMode}
           />
         </div>
       </div>

@@ -879,6 +879,7 @@ function CustomLayout({
   const backgroundType = (persona as any).backgroundType || "none";
   const backgroundColor = (persona as any).backgroundColor;
   const backgroundImage = persona.backgroundImageUrl;
+  const immersiveMode = (persona as any).immersiveMode || false;
 
   // Determine background style based on type
   const getBackgroundStyle = () => {
@@ -906,20 +907,25 @@ function CustomLayout({
 
   return (
     <div 
-      className={`min-h-screen flex flex-col ${hasBackgroundImage ? "bg-cover bg-center bg-fixed" : ""}`}
-      style={backgroundStyle}
+      className={`min-h-screen flex flex-col ${immersiveMode && hasBackgroundImage ? "bg-cover bg-center bg-fixed" : ""}`}
+      style={immersiveMode ? backgroundStyle : {}}
     >
       {/* Overlay */}
-      {backgroundImage && <div className="fixed inset-0 bg-black/40 -z-10" />}
+      {immersiveMode && backgroundImage && <div className="fixed inset-0 bg-black/40 -z-10" />}
 
       {/* Main Content */}
       <div className="flex-1 flex flex-col">
         {/* Welcome State - Compact & Centered Layout */}
         {!hasStartedChat && (
-          <div className="flex-1 flex flex-col items-center justify-center px-4 py-6">
-            <div className="w-full max-w-xl text-center space-y-5">
+          <div 
+            className={`flex-1 flex flex-col items-center justify-center px-4 py-6 relative ${!immersiveMode && hasBackgroundImage ? "bg-cover bg-center" : ""}`}
+            style={!immersiveMode ? backgroundStyle : {}}
+          >
+            {/* Overlay for non-immersive mode */}
+            {!immersiveMode && backgroundImage && <div className="absolute inset-0 bg-black/40 -z-10" />}
+            <div className="w-full max-w-xl text-center space-y-5 relative z-10">
               {/* Welcome Message - Hero Title */}
-              <h2 className="text-lg font-semibold text-foreground">
+              <h2 className={`text-lg font-semibold ${!immersiveMode && hasBackgroundImage ? "text-white" : "text-foreground"}`}>
                 {persona.welcomeMessage || "您好！我是您的AI助手"}
               </h2>
               
