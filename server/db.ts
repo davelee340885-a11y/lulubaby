@@ -128,6 +128,8 @@ export async function upsertPersona(data: InsertAiPersona): Promise<AiPersona | 
       systemPrompt: data.systemPrompt,
       primaryColor: data.primaryColor,
       layoutStyle: data.layoutStyle,
+      backgroundType: data.backgroundType,
+      backgroundColor: data.backgroundColor,
       backgroundImageUrl: data.backgroundImageUrl,
       profilePhotoUrl: data.profilePhotoUrl,
       tagline: data.tagline,

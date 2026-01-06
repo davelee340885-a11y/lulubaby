@@ -876,15 +876,38 @@ function CustomLayout({
   handleSuggestedQuestion,
 }: LayoutProps) {
   const hasStartedChat = messages.length > 0;
+  const backgroundType = (persona as any).backgroundType || "none";
+  const backgroundColor = (persona as any).backgroundColor;
   const backgroundImage = persona.backgroundImageUrl;
+
+  // Determine background style based on type
+  const getBackgroundStyle = () => {
+    if (backgroundType === "image" && backgroundImage) {
+      return {
+        backgroundImage: `url(${backgroundImage})`,
+        backgroundColor: undefined,
+      };
+    } else if (backgroundType === "color" && backgroundColor) {
+      return {
+        backgroundImage: undefined,
+        backgroundColor: backgroundColor,
+      };
+    } else {
+      // Default to white background (none)
+      return {
+        backgroundImage: undefined,
+        backgroundColor: "#ffffff",
+      };
+    }
+  };
+
+  const backgroundStyle = getBackgroundStyle();
+  const hasBackgroundImage = backgroundType === "image" && backgroundImage;
 
   return (
     <div 
-      className="min-h-screen flex flex-col bg-cover bg-center bg-fixed"
-      style={{ 
-        backgroundImage: backgroundImage ? `url(${backgroundImage})` : undefined,
-        backgroundColor: backgroundImage ? undefined : `${primaryColor}10`
-      }}
+      className={`min-h-screen flex flex-col ${hasBackgroundImage ? "bg-cover bg-center bg-fixed" : ""}`}
+      style={backgroundStyle}
     >
       {/* Overlay */}
       {backgroundImage && <div className="fixed inset-0 bg-black/40 -z-10" />}

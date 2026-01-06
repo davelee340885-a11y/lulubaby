@@ -10,6 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Loader2, Upload, X, Plus, Trash2, Image as ImageIcon, Bot, Send, MessageSquare, User, Package, Calendar, Phone, HelpCircle, Search, Link, Building2, FileText, Mail, ExternalLink, ShoppingBag, Star, Info, Palette, Zap, MessageCircle, Settings2, Save } from "lucide-react";
 import CompactChatPreview from "@/components/CompactChatPreview";
+import ImageCropper from "@/components/ImageCropper";
 import { toast } from "sonner";
 import { useState, useRef, useEffect } from "react";
 import {
@@ -310,6 +311,8 @@ export default function Appearance() {
       systemPrompt: systemPrompt || null,
       primaryColor,
       layoutStyle,
+      backgroundType,
+      backgroundColor: backgroundColor || null,
       backgroundImageUrl: backgroundImageUrl || null,
       profilePhotoUrl: profilePhotoUrl || null,
       tagline: tagline || null,
@@ -567,7 +570,9 @@ export default function Appearance() {
                         {uploadingProfile ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <Upload className="h-4 w-4 mr-2" />}
                         上傳照片
                       </Button>
-                      <p className="text-xs text-muted-foreground mt-1">建議 400x400 像素</p>
+                      <p className="text-xs text-muted-foreground mt-1">
+                        建議 400x400 像素，JPG/PNG 格式，最大 5MB
+                      </p>
                     </div>
                   </div>
                   <input ref={profileInputRef} type="file" accept="image/*" className="hidden" onChange={(e) => { const file = e.target.files?.[0]; if (file) handleImageSelect(file, "profile"); }} />
@@ -579,27 +584,129 @@ export default function Appearance() {
               </Card>
             )}
 
-            {/* Background Image - for custom style */}
+            {/* Background Settings - for custom style */}
             {layoutStyle === "custom" && (
               <Card>
                 <CardHeader className="pb-3">
-                  <CardTitle className="text-base">背景圖片</CardTitle>
-                  <CardDescription>上傳自訂背景，打造獨特品牌風格</CardDescription>
+                  <CardTitle className="text-base">背景設定</CardTitle>
+                  <CardDescription>選擇使用圖片或顏色作為背景</CardDescription>
                 </CardHeader>
-                <CardContent>
-                  {backgroundImageUrl ? (
-                    <div className="relative rounded-lg overflow-hidden">
-                      <img src={backgroundImageUrl} alt="Background" className="w-full h-24 object-cover" />
-                      <button onClick={() => setBackgroundImageUrl("")} className="absolute top-2 right-2 h-6 w-6 rounded-full bg-black/50 text-white flex items-center justify-center hover:bg-black/70">
-                        <X className="h-3 w-3" />
+                <CardContent className="space-y-4">
+                  {/* Background Type Selection */}
+                  <div className="space-y-2">
+                    <Label>背景類型</Label>
+                    <div className="grid grid-cols-3 gap-2">
+                      <button
+                        onClick={() => {
+                          setBackgroundType("none");
+                          setBackgroundImageUrl("");
+                        }}
+                        className={`p-3 rounded-lg border-2 text-center transition-all ${
+                          backgroundType === "none"
+                            ? "border-primary bg-primary/5"
+                            : "border-border hover:border-primary/50"
+                        }`}
+                      >
+                        <div className="text-sm font-medium">無背景</div>
+                        <div className="text-xs text-muted-foreground mt-0.5">白色背景</div>
+                      </button>
+                      <button
+                        onClick={() => setBackgroundType("color")}
+                        className={`p-3 rounded-lg border-2 text-center transition-all ${
+                          backgroundType === "color"
+                            ? "border-primary bg-primary/5"
+                            : "border-border hover:border-primary/50"
+                        }`}
+                      >
+                        <div className="text-sm font-medium">純色背景</div>
+                        <div className="text-xs text-muted-foreground mt-0.5">選擇顏色</div>
+                      </button>
+                      <button
+                        onClick={() => setBackgroundType("image")}
+                        className={`p-3 rounded-lg border-2 text-center transition-all ${
+                          backgroundType === "image"
+                            ? "border-primary bg-primary/5"
+                            : "border-border hover:border-primary/50"
+                        }`}
+                      >
+                        <div className="text-sm font-medium">圖片背景</div>
+                        <div className="text-xs text-muted-foreground mt-0.5">上傳圖片</div>
                       </button>
                     </div>
-                  ) : (
-                    <div onClick={() => backgroundInputRef.current?.click()} className="h-24 rounded-lg border-2 border-dashed border-muted-foreground/25 flex flex-col items-center justify-center cursor-pointer hover:border-primary/50 transition-colors">
-                      {uploadingBackground ? <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" /> : <><ImageIcon className="h-5 w-5 text-muted-foreground mb-1" /><p className="text-xs text-muted-foreground">點擊上傳背景圖片</p></>}
+                  </div>
+
+                  {/* Color Picker - shown when backgroundType is "color" */}
+                  {backgroundType === "color" && (
+                    <div className="space-y-2">
+                      <Label htmlFor="backgroundColor">背景顏色</Label>
+                      <div className="flex items-center gap-3">
+                        <input
+                          type="color"
+                          id="backgroundColor"
+                          value={backgroundColor}
+                          onChange={(e) => setBackgroundColor(e.target.value)}
+                          className="h-10 w-20 rounded border cursor-pointer"
+                        />
+                        <Input
+                          value={backgroundColor}
+                          onChange={(e) => setBackgroundColor(e.target.value)}
+                          className="w-32"
+                          placeholder="#FFFFFF"
+                        />
+                        <div 
+                          className="h-10 flex-1 rounded border"
+                          style={{ backgroundColor: backgroundColor }}
+                        />
+                      </div>
+                      <p className="text-xs text-muted-foreground">選擇一個顏色作為對話頁面的背景</p>
                     </div>
                   )}
-                  <input ref={backgroundInputRef} type="file" accept="image/*" className="hidden" onChange={(e) => { const file = e.target.files?.[0]; if (file) handleImageSelect(file, "background"); }} />
+
+                  {/* Image Upload - shown when backgroundType is "image" */}
+                  {backgroundType === "image" && (
+                    <div className="space-y-2">
+                      <Label>背景圖片</Label>
+                      {backgroundImageUrl ? (
+                        <div className="relative rounded-lg overflow-hidden">
+                          <img src={backgroundImageUrl} alt="Background" className="w-full h-32 object-cover" />
+                          <button 
+                            onClick={() => {
+                              setBackgroundImageUrl("");
+                              setBackgroundType("none");
+                            }} 
+                            className="absolute top-2 right-2 h-6 w-6 rounded-full bg-black/50 text-white flex items-center justify-center hover:bg-black/70"
+                          >
+                            <X className="h-3 w-3" />
+                          </button>
+                        </div>
+                      ) : (
+                        <div 
+                          onClick={() => backgroundInputRef.current?.click()} 
+                          className="h-32 rounded-lg border-2 border-dashed border-muted-foreground/25 flex flex-col items-center justify-center cursor-pointer hover:border-primary/50 transition-colors"
+                        >
+                          {uploadingBackground ? (
+                            <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+                          ) : (
+                            <>
+                              <ImageIcon className="h-6 w-6 text-muted-foreground mb-2" />
+                              <p className="text-sm text-muted-foreground">點擊上傳背景圖片</p>
+                              <p className="text-xs text-muted-foreground mt-1">建議 1920x1080 像素，最大 5MB</p>
+                            </>
+                          )}
+                        </div>
+                      )}
+                      <input 
+                        ref={backgroundInputRef} 
+                        type="file" 
+                        accept="image/*" 
+                        className="hidden" 
+                        onChange={(e) => { 
+                          const file = e.target.files?.[0]; 
+                          if (file) handleImageSelect(file, "background"); 
+                        }} 
+                      />
+                    </div>
+                  )}
                 </CardContent>
               </Card>
             )}
@@ -946,6 +1053,17 @@ export default function Appearance() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* Image Cropper Dialog */}
+      <ImageCropper
+        open={cropperOpen}
+        onClose={() => setCropperOpen(false)}
+        imageSrc={cropperImage}
+        onCropComplete={handleCropComplete}
+        aspectRatio={cropperType === "profile" ? 1 : 16 / 9}
+        cropShape={cropperType === "profile" ? "round" : "rect"}
+        title={cropperType === "profile" ? "裁切個人照片" : "裁切背景圖片"}
+      />
     </div>
   );
 }
