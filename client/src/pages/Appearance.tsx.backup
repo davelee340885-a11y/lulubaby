@@ -117,13 +117,6 @@ export default function Appearance() {
   const [chatPlaceholder, setChatPlaceholder] = useState("輸入您的問題...");
   const [uploadingProfile, setUploadingProfile] = useState(false);
   const [uploadingBackground, setUploadingBackground] = useState(false);
-  const [backgroundType, setBackgroundType] = useState<"none" | "color" | "image">("none");
-  const [backgroundColor, setBackgroundColor] = useState("#FFFFFF");
-  
-  // Image cropper state
-  const [cropperOpen, setCropperOpen] = useState(false);
-  const [cropperImage, setCropperImage] = useState("");
-  const [cropperType, setCropperType] = useState<"profile" | "background">("profile");
 
   // Button state
   const [dialogOpen, setDialogOpen] = useState(false);
@@ -151,8 +144,6 @@ export default function Appearance() {
       setShowQuickButtons(persona.showQuickButtons ?? true);
       setButtonDisplayMode((persona.buttonDisplayMode as "full" | "compact" | "icon") || "full");
       setChatPlaceholder(persona.chatPlaceholder || "輸入您的問題...");
-      setBackgroundType((persona.backgroundType as "none" | "color" | "image") || "none");
-      setBackgroundColor(persona.backgroundColor || "#FFFFFF");
       
       if (persona.suggestedQuestions) {
         try {
@@ -220,63 +211,37 @@ export default function Appearance() {
 
   const uploadImageMutation = trpc.images.uploadImage.useMutation();
 
-  const handleImageSelect = (file: File, type: "profile" | "background") => {
-    // Validate file size (max 5MB)
-    if (file.size > 5 * 1024 * 1024) {
-      toast.error("圖片大小不能超過 5MB");
-      return;
-    }
-
-    // Validate file type
-    if (!file.type.startsWith("image/")) {
-      toast.error("請選擇圖片文件");
-      return;
-    }
-
-    // Read file and open cropper
-    const reader = new FileReader();
-    reader.onload = () => {
-      setCropperImage(reader.result as string);
-      setCropperType(type);
-      setCropperOpen(true);
-    };
-    reader.readAsDataURL(file);
-  };
-
-  const handleCropComplete = async (croppedBlob: Blob) => {
-    const type = cropperType;
+  const handleImageUpload = async (file: File, type: "profile" | "background") => {
     const setUploading = type === "profile" ? setUploadingProfile : setUploadingBackground;
     const setUrl = type === "profile" ? setProfilePhotoUrl : setBackgroundImageUrl;
 
     setUploading(true);
     try {
-      // Convert blob to base64
+      // Read file as base64
       const reader = new FileReader();
       const base64Promise = new Promise<string>((resolve, reject) => {
         reader.onload = () => {
           const dataUrl = reader.result as string;
+          // Remove data URL prefix to get pure base64
           const base64 = dataUrl.split(",")[1];
           resolve(base64);
         };
         reader.onerror = () => reject(new Error("讀取文件失敗"));
-        reader.readAsDataURL(croppedBlob);
+        reader.readAsDataURL(file);
       });
 
       const base64Content = await base64Promise;
 
       // Upload to S3 via tRPC
       const result = await uploadImageMutation.mutateAsync({
-        fileName: `${type}_${Date.now()}.jpg`,
+        fileName: file.name,
         fileContent: base64Content,
-        mimeType: "image/jpeg",
+        mimeType: file.type,
         imageType: type,
       });
 
       // Set the S3 URL
       setUrl(result.url);
-      if (type === "background") {
-        setBackgroundType("image");
-      }
       toast.success("圖片上傳成功");
       setUploading(false);
     } catch (error) {
@@ -434,6 +399,25 @@ export default function Appearance() {
                 <CardDescription>設定AI助手的名稱和頭像</CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
+                <div className="flex items-center gap-6">
+                  <Avatar className="h-16 w-16">
+                    <AvatarImage src={avatarUrl} />
+                    <AvatarFallback className="text-xl bg-primary text-primary-foreground">
+                      <Bot className="h-8 w-8" />
+                    </AvatarFallback>
+                  </Avatar>
+                  <div className="flex-1 space-y-2">
+                    <Label htmlFor="avatarUrl">頭像網址</Label>
+                    <Input
+                      id="avatarUrl"
+                      placeholder="https://example.com/avatar.jpg"
+                      value={avatarUrl}
+                      onChange={(e) => setAvatarUrl(e.target.value)}
+                    />
+                    <p className="text-xs text-muted-foreground">輸入圖片網址，建議使用正方形圖片</p>
+                  </div>
+                </div>
+
                 <div className="space-y-2">
                   <Label htmlFor="agentName">AI助手名稱 *</Label>
                   <Input
@@ -570,7 +554,7 @@ export default function Appearance() {
                       <p className="text-xs text-muted-foreground mt-1">建議 400x400 像素</p>
                     </div>
                   </div>
-                  <input ref={profileInputRef} type="file" accept="image/*" className="hidden" onChange={(e) => { const file = e.target.files?.[0]; if (file) handleImageSelect(file, "profile"); }} />
+                  <input ref={profileInputRef} type="file" accept="image/*" className="hidden" onChange={(e) => { const file = e.target.files?.[0]; if (file) handleImageUpload(file, "profile"); }} />
                   <div className="space-y-2">
                     <Label htmlFor="tagline">個人標語</Label>
                     <Input id="tagline" value={tagline} onChange={(e) => setTagline(e.target.value)} placeholder="例如：專業保險顧問，為您的未來保駕護航" maxLength={100} />
@@ -599,7 +583,7 @@ export default function Appearance() {
                       {uploadingBackground ? <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" /> : <><ImageIcon className="h-5 w-5 text-muted-foreground mb-1" /><p className="text-xs text-muted-foreground">點擊上傳背景圖片</p></>}
                     </div>
                   )}
-                  <input ref={backgroundInputRef} type="file" accept="image/*" className="hidden" onChange={(e) => { const file = e.target.files?.[0]; if (file) handleImageSelect(file, "background"); }} />
+                  <input ref={backgroundInputRef} type="file" accept="image/*" className="hidden" onChange={(e) => { const file = e.target.files?.[0]; if (file) handleImageUpload(file, "background"); }} />
                 </CardContent>
               </Card>
             )}

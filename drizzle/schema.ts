@@ -33,6 +33,8 @@ export const aiPersonas = mysqlTable("ai_personas", {
   
   // Layout and appearance settings
   layoutStyle: mysqlEnum("layoutStyle", ["minimal", "professional", "custom"]).default("minimal").notNull(),
+  backgroundType: mysqlEnum("backgroundType", ["none", "color", "image"]).default("none").notNull(), // Background type
+  backgroundColor: varchar("backgroundColor", { length: 20 }), // Hex color code
   backgroundImageUrl: varchar("backgroundImageUrl", { length: 512 }),
   profilePhotoUrl: text("profilePhotoUrl"),
   tagline: varchar("tagline", { length: 255 }),
