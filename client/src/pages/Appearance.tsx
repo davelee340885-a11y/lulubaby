@@ -209,25 +209,43 @@ export default function Appearance() {
     },
   });
 
+  const uploadImageMutation = trpc.images.uploadImage.useMutation();
+
   const handleImageUpload = async (file: File, type: "profile" | "background") => {
     const setUploading = type === "profile" ? setUploadingProfile : setUploadingBackground;
     const setUrl = type === "profile" ? setProfilePhotoUrl : setBackgroundImageUrl;
 
     setUploading(true);
     try {
+      // Read file as base64
       const reader = new FileReader();
-      reader.onload = () => {
-        const dataUrl = reader.result as string;
-        setUrl(dataUrl);
-        toast.success("圖片上傳成功");
-        setUploading(false);
-      };
-      reader.onerror = () => {
-        toast.error("圖片上傳失敗");
-        setUploading(false);
-      };
-      reader.readAsDataURL(file);
-    } catch {
+      const base64Promise = new Promise<string>((resolve, reject) => {
+        reader.onload = () => {
+          const dataUrl = reader.result as string;
+          // Remove data URL prefix to get pure base64
+          const base64 = dataUrl.split(",")[1];
+          resolve(base64);
+        };
+        reader.onerror = () => reject(new Error("讀取文件失敗"));
+        reader.readAsDataURL(file);
+      });
+
+      const base64Content = await base64Promise;
+
+      // Upload to S3 via tRPC
+      const result = await uploadImageMutation.mutateAsync({
+        fileName: file.name,
+        fileContent: base64Content,
+        mimeType: file.type,
+        imageType: type,
+      });
+
+      // Set the S3 URL
+      setUrl(result.url);
+      toast.success("圖片上傳成功");
+      setUploading(false);
+    } catch (error) {
+      console.error("Upload error:", error);
       toast.error("圖片上傳失敗");
       setUploading(false);
     }

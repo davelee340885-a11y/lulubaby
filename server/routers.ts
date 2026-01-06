@@ -150,6 +150,25 @@ export const appRouter = router({
       }),
   }),
 
+  // Image upload to S3
+  images: router({    uploadImage: protectedProcedure
+      .input(z.object({
+        fileName: z.string(),
+        fileContent: z.string(), // base64 encoded
+        mimeType: z.string(),
+        imageType: z.enum(["profile", "background", "avatar"]),
+      }))
+      .mutation(async ({ ctx, input }) => {
+        const fileBuffer = Buffer.from(input.fileContent, "base64");
+        const fileExt = input.fileName.split(".").pop() || "jpg";
+        const fileKey = `images/${ctx.user.id}/${input.imageType}/${nanoid()}.${fileExt}`;
+        
+        const { url } = await storagePut(fileKey, fileBuffer, input.mimeType);
+        
+        return { url, fileKey };
+      }),
+  }),
+
   // Knowledge base management
   knowledge: router({
     list: protectedProcedure.query(async ({ ctx }) => {

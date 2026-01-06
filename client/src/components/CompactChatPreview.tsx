@@ -64,8 +64,16 @@ function PreviewContent({
 
   // Determine background style
   const backgroundStyle = layoutStyle === "custom" && backgroundImageUrl
-    ? { backgroundImage: `url(${backgroundImageUrl})`, backgroundSize: "cover", backgroundPosition: "center" }
+    ? { 
+        backgroundImage: `url(${backgroundImageUrl})`, 
+        backgroundSize: "cover", 
+        backgroundPosition: "center",
+        backgroundRepeat: "no-repeat"
+      }
     : {};
+
+  // Check if we should show profile photo in the welcome area (professional layout)
+  const showProfilePhoto = layoutStyle === "professional" && profilePhotoUrl;
 
   return (
     <div 
@@ -94,8 +102,20 @@ function PreviewContent({
       {/* Content Area */}
       <div className="flex-1 flex flex-col items-center justify-center px-4 py-6 overflow-auto">
         <div className={`w-full text-center space-y-4 ${isMobile ? "max-w-md" : "max-w-2xl"}`}>
+          {/* Professional Layout: Show Profile Photo */}
+          {showProfilePhoto && (
+            <div className="flex justify-center mb-2">
+              <Avatar className={isMobile ? "h-16 w-16" : "h-24 w-24"}>
+                <AvatarImage src={profilePhotoUrl} className="object-cover" />
+                <AvatarFallback style={{ backgroundColor: `${primaryColor}15`, color: primaryColor }}>
+                  <User className={isMobile ? "h-8 w-8" : "h-12 w-12"} />
+                </AvatarFallback>
+              </Avatar>
+            </div>
+          )}
+
           {/* Welcome Message */}
-          <h2 className={`font-semibold text-foreground ${isMobile ? "text-lg" : "text-2xl"}`}>
+          <h2 className={`font-semibold ${layoutStyle === "custom" && backgroundImageUrl ? "text-white drop-shadow-lg" : "text-foreground"} ${isMobile ? "text-lg" : "text-2xl"}`}>
             {welcomeMessage || "您好！我是您的AI助手"}
           </h2>
 
@@ -124,7 +144,7 @@ function PreviewContent({
                 <button
                   key={index}
                   disabled
-                  className={`inline-flex items-center gap-1 rounded-full border border-border/60 bg-background text-muted-foreground pointer-events-none ${isMobile ? "px-2 py-1 text-[10px]" : "px-3 py-1.5 text-xs"}`}
+                  className={`inline-flex items-center gap-1 rounded-full border border-border/60 ${layoutStyle === "custom" && backgroundImageUrl ? "bg-white/90 text-foreground" : "bg-background text-muted-foreground"} pointer-events-none ${isMobile ? "px-2 py-1 text-[10px]" : "px-3 py-1.5 text-xs"}`}
                 >
                   <MessageSquare className={isMobile ? "h-2.5 w-2.5" : "h-3 w-3"} />
                   <span className={isMobile ? "max-w-[100px] truncate" : "max-w-[150px] truncate"}>{question}</span>
@@ -144,7 +164,7 @@ function PreviewContent({
                     <button
                       key={index}
                       disabled
-                      className={`rounded-lg hover:bg-muted/80 transition-colors pointer-events-none ${isMobile ? "p-1.5" : "p-2"}`}
+                      className={`rounded-lg hover:bg-muted/80 transition-colors pointer-events-none ${layoutStyle === "custom" && backgroundImageUrl ? "bg-white/90" : ""} ${isMobile ? "p-1.5" : "p-2"}`}
                       style={{ color: primaryColor }}
                     >
                       <IconComponent className={isMobile ? "h-3.5 w-3.5" : "h-4 w-4"} />
@@ -159,7 +179,7 @@ function PreviewContent({
                     <button
                       key={index}
                       disabled
-                      className={`inline-flex items-center gap-1 rounded-md border hover:bg-muted/50 transition-colors pointer-events-none ${isMobile ? "px-2 py-1 text-[10px]" : "px-3 py-1.5 text-xs"}`}
+                      className={`inline-flex items-center gap-1 rounded-md border hover:bg-muted/50 transition-colors pointer-events-none ${layoutStyle === "custom" && backgroundImageUrl ? "bg-white/90 border-white/20" : ""} ${isMobile ? "px-2 py-1 text-[10px]" : "px-3 py-1.5 text-xs"}`}
                     >
                       <IconComponent className={isMobile ? "h-2.5 w-2.5" : "h-3 w-3"} />
                       <span className={isMobile ? "max-w-[50px] truncate" : "max-w-[80px] truncate"}>{button.label}</span>
@@ -176,7 +196,7 @@ function PreviewContent({
                       variant="outline"
                       size="sm"
                       disabled
-                      className={`rounded-md font-normal pointer-events-none ${isMobile ? "h-6 px-2 text-[10px]" : "h-8 px-3 text-xs"}`}
+                      className={`rounded-md font-normal pointer-events-none ${layoutStyle === "custom" && backgroundImageUrl ? "bg-white/90 border-white/20" : ""} ${isMobile ? "h-6 px-2 text-[10px]" : "h-8 px-3 text-xs"}`}
                     >
                       <IconComponent className={isMobile ? "h-2.5 w-2.5 mr-1" : "h-3 w-3 mr-1.5"} />
                       <span className={isMobile ? "max-w-[60px] truncate" : "max-w-[100px] truncate"}>{button.label}</span>
