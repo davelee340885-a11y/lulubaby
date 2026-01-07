@@ -896,3 +896,15 @@
 - [x] 檢查漸變覆蓋層的 z-index 和層級問題（背景色覆蓋了漸變層）
 - [x] 修復背景層級問題（將背景色移到漸變覆蓋層容器中）
 - [x] 測試沉浸式風格的完整視覺效果（漸變已生效）
+
+
+## 修復生產環境沉浸式風格類缺失問題
+- [ ] 修復 CustomLayout 中的空條件判斷（className 中的 immersiveMode 條件）
+- [ ] 確保沉浸式模式下不添加 bg-cover 等類（這些類對純色背景無效）
+- [ ] 測試生產環境的更新效果
+
+
+## 修復 CustomDomainChat 組件的重複輸入框問題
+- [x] 檢查 CustomDomainChat.tsx 的輸入框結構
+- [x] 應用與 Chat.tsx 相同的修復（Custom Layout 底部輸入框添加條件判斷）
+- [ ] 測試自定義域名首頁（lulubaby.xyz）
