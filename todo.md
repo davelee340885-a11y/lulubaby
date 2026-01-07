@@ -907,4 +907,11 @@
 ## 修復 CustomDomainChat 組件的重複輸入框問題
 - [x] 檢查 CustomDomainChat.tsx 的輸入框結構
 - [x] 應用與 Chat.tsx 相同的修復（Custom Layout 底部輸入框添加條件判斷）
-- [ ] 測試自定義域名首頁（lulubaby.xyz）
+- [x] 測試自定義域名首頁（lulubaby.xyz）（需要發布後測試）
+
+
+## 修復 CustomDomainChat 的沉浸式風格漸變效果
+- [x] 檢查 CustomDomainChat 是否讀取了 immersiveMode 設定
+- [x] 檢查 CustomDomainChat 的 Custom Layout 背景層級結構（背景色覆蓋了漸變層）
+- [x] 應用與 Chat.tsx 相同的沉浸式風格修復（將背景色移到漸變覆蓋層容器）
+- [ ] 測試 lulubaby.xyz 首頁的漸變效果
