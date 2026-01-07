@@ -922,3 +922,11 @@
 - [x] 找出 src 屬性為空字符串的元素（CompactChatPreview 中的 AvatarImage）
 - [x] 修復為使用條件渲染（只在 URL 非空時渲染 AvatarImage）
 - [x] 測試 Appearance 頁面確認錯誤消失（無錯誤訊息）
+
+
+## 重新檢查 /chat/1 頁面的兩個輸入框問題
+- [x] 訪問 /chat/1 頁面並截圖
+- [x] 識別兩個輸入框的位置和來源（ProfessionalLayout）
+- [x] 檢查是否是不同的布局組件（使用 ProfessionalLayout）
+- [x] 修復重複輸入框問題（ProfessionalLayout 底部輸入框添加條件判斷）
+- [x] 測試確認只有一個輸入框

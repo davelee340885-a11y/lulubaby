@@ -815,7 +815,8 @@ function ProfessionalLayout({
         )}
       </div>
 
-      {/* Input Area */}
+      {/* Input Area - Only show at bottom when chatting */}
+      {hasStartedChat && (
       <div className="sticky bottom-0 border-t bg-background">
         <div className="container max-w-2xl py-3">
           {/* Quick Buttons when chatting */}
@@ -852,6 +853,7 @@ function ProfessionalLayout({
           </div>
         </div>
       </div>
+      )}
     </div>
   );
 }
