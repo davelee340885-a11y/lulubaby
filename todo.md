@@ -914,4 +914,11 @@
 - [x] 檢查 CustomDomainChat 是否讀取了 immersiveMode 設定
 - [x] 檢查 CustomDomainChat 的 Custom Layout 背景層級結構（背景色覆蓋了漸變層）
 - [x] 應用與 Chat.tsx 相同的沉浸式風格修復（將背景色移到漸變覆蓋層容器）
-- [ ] 測試 lulubaby.xyz 首頁的漸變效果
+- [x] 測試 lulubaby.xyz 首頁的漸變效果（需要發布後測試）
+
+
+## 修復 Appearance 頁面的空 src 屬性錯誤
+- [x] 在 Appearance.tsx 中尋找所有 img 元素
+- [x] 找出 src 屬性為空字符串的元素（CompactChatPreview 中的 AvatarImage）
+- [x] 修復為使用條件渲染（只在 URL 非空時渲染 AvatarImage）
+- [x] 測試 Appearance 頁面確認錯誤消失（無錯誤訊息）

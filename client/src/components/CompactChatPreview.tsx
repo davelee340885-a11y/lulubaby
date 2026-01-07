@@ -110,7 +110,7 @@ function PreviewContent({
       <div className="border-b border-border/40 bg-background/95 backdrop-blur px-3 py-2">
         <div className="flex items-center gap-2">
           <Avatar className={isMobile ? "h-6 w-6" : "h-8 w-8"}>
-            <AvatarImage src={displayAvatarUrl} />
+            {displayAvatarUrl && <AvatarImage src={displayAvatarUrl} />}
             <AvatarFallback style={{ backgroundColor: `${primaryColor}15`, color: primaryColor }}>
               <Bot className={isMobile ? "h-3 w-3" : "h-4 w-4"} />
             </AvatarFallback>
@@ -137,7 +137,7 @@ function PreviewContent({
           {showProfilePhoto && (
             <div className="flex justify-center mb-2">
               <Avatar className={isMobile ? "h-16 w-16" : "h-24 w-24"}>
-                <AvatarImage src={profilePhotoUrl} className="object-cover" />
+                {profilePhotoUrl && <AvatarImage src={profilePhotoUrl} className="object-cover" />}
                 <AvatarFallback style={{ backgroundColor: `${primaryColor}15`, color: primaryColor }}>
                   <User className={isMobile ? "h-8 w-8" : "h-12 w-12"} />
                 </AvatarFallback>
