@@ -374,12 +374,14 @@ function QuickButtonGroup({
   buttons, 
   displayMode, 
   primaryColor,
-  onButtonClick 
+  onButtonClick,
+  hasBackground = false
 }: { 
   buttons: PersonaData["quickButtons"];
   displayMode: string;
   primaryColor: string;
   onButtonClick: (button: PersonaData["quickButtons"][0]) => void;
+  hasBackground?: boolean;
 }) {
   if (buttons.length === 0) return null;
 
@@ -395,7 +397,11 @@ function QuickButtonGroup({
                 <TooltipTrigger asChild>
                   <button
                     onClick={() => onButtonClick(button)}
-                    className="p-2 rounded-lg hover:bg-muted/80 transition-colors group"
+                    className={`p-2 rounded-lg transition-colors group ${
+                      hasBackground 
+                        ? "bg-white/90 hover:bg-white shadow-sm" 
+                        : "hover:bg-muted/80"
+                    }`}
                     style={{ color: primaryColor }}
                   >
                     <IconComponent className="h-4 w-4" />
@@ -422,7 +428,11 @@ function QuickButtonGroup({
             <button
               key={button.id}
               onClick={() => onButtonClick(button)}
-              className="inline-flex items-center gap-1 px-2 py-1 text-xs rounded-md border hover:bg-muted/50 transition-colors"
+              className={`inline-flex items-center gap-1 px-2 py-1 text-xs rounded-md border transition-colors ${
+                hasBackground 
+                  ? "bg-white/90 hover:bg-white shadow-sm" 
+                  : "hover:bg-muted/50"
+              }`}
             >
               <IconComponent className="h-3 w-3" />
               <span className="max-w-[60px] truncate">{button.label}</span>
@@ -444,7 +454,9 @@ function QuickButtonGroup({
             key={button.id}
             variant="outline"
             size="sm"
-            className="h-6 px-2 text-[11px] rounded-md font-normal"
+            className={`h-6 px-2 text-[11px] rounded-md font-normal ${
+              hasBackground ? "bg-white/90 hover:bg-white shadow-sm" : ""
+            }`}
             onClick={() => onButtonClick(button)}
           >
             <IconComponent className="h-3 w-3 mr-1" />
@@ -984,6 +996,7 @@ function CustomLayout({
                     displayMode={buttonDisplayMode}
                     primaryColor={primaryColor}
                     onButtonClick={handleQuickButton}
+                    hasBackground={!!backgroundImage || !!backgroundColor}
                   />
                 </div>
               )}
@@ -1077,6 +1090,7 @@ function CustomLayout({
                   displayMode={buttonDisplayMode}
                   primaryColor={primaryColor}
                   onButtonClick={handleQuickButton}
+                  hasBackground={!!backgroundImage || !!backgroundColor}
                 />
               </div>
             )}

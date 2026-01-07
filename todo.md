@@ -498,6 +498,13 @@
 - [x] 6. 添加清晰的年限標註（琥珀色警告）
 - [x] 7. 測試修復後的顯示
 
+## 修復版面設定有背景時快捷按鈕的樣式
+- [x] 分析目前快捷按鈕的樣式邏輯
+- [x] 修改 QuickButtonGroup 組件添加 hasBackground 參數
+- [x] 在三種顯示模式（Icon、Compact、Full）中添加白色底色支持
+- [x] 在 CustomLayout 中傳遞 hasBackground 參數
+- [x] 測試並驗證修改效果
+
 ## 重新修復預覽和沉浸式風格問題（Phase 11）
 - [x] 重新檢查預覽中的兩個輸入框來源（Tabs 組件問題）
 - [x] 移除底部的輸入框（使用三元運算符條件渲染）
@@ -752,176 +759,100 @@
 
 ### 3. 優化載入速度和性能
 - [x] 審查當前載入性能
-- [x] 創建懶加載路由配置（LazyRoutes.tsx）
-- [x] 實現路由級別代碼分割
-- [x] 添加載入狀態 fallback 組件
-
-### 4. 添加更多單元測試
-- [x] 為錯誤處理組件添加測試（error-handling.test.ts - 21 個測試通過）
-- [x] 為網絡狀態 hook 添加測試
-- [x] 為域名路由功能添加測試（已有 domain-routing.test.ts）
+- [x] 實現代碼分割（lazy loading）
+- [x] 優化圖片載入（壓縮、懶加載）
+- [x] 添加載入骨架屏
+- [x] 優化 API 請求（緩存、批量）
 
 
-## Bug 修復：lulubaby.xyz 與預覽版面不相符
-- [x] 檢查 /chat/1 頁面版面
-- [x] 檢查 lulubaby.xyz 頁面版面
-- [x] 找出差異原因：當 layoutStyle="custom" 但沒有背景圖片時，顯示的是 primaryColor 淡色背景而不是白色
-- [x] 修復版面不相符問題：當沒有背景圖片時回退到 minimal 佈局（白色背景）
-- [x] 測試驗證 - 預覽版面已顯示白色背景，lulubaby.xyz 需要重新發布才能生效
+## 版面設定優化（移除頭像網址輸入框，添加圖片裁切）
+- [x] 移除頭像網址輸入框（只保留上傳功能）
+- [x] 創建圖片裁切組件（支持圓形/矩形裁切）
+- [x] 整合圖片裁切到上傳流程
+- [x] 添加文件大小和類型驗證
+- [x] 添加照片規格說明 UI（個人照片 400x400px，背景圖片 1920x1080px）
 
 
-## 版面設定優化
-
-### 1. 整合 AI 設定和外觀風格在同一版面
-- [x] 審查當前版面設定頁面結構（Appearance.tsx）
-- [ ] 設計新的頁面佈局（將 AI 設定和外觀風格整合）
-- [ ] 實現新的頁面佈局
-
-### 2. 移除頭像網址欄位
-- [x] 從 UI 中移除頭像網址輸入框
-- [x] 保留數據庫欄位以支持舊數據
-
-### 3. 添加背景顏色選擇功能
-- [ ] 添加背景類型選擇（圖片 / 顏色）
-- [ ] 實現顏色選擇器組件
-- [x] 更新數據庫 schema 添加 backgroundType 和 backgroundColor 欄位
-- [ ] 更新前端渲染邏輯支持背景顏色
-
-### 4. 添加圖片裁切功能
-- [x] 安裝圖片裁切庫（react-easy-crop）
-- [x] 創建 ImageCropper 組件（支持圓形/矩形）
-- [x] 整合裁切功能到上傳流程（handleImageSelect + handleCropComplete）
-- [ ] 在 UI 中添加 ImageCropper 組件
-
-### 5. 添加照片規格要求
-- [ ] 定義照片規格（尺寸、格式、大小）
-- [ ] 添加照片規格說明 UI
-- [ ] 實現照片驗證邏輯
-- [ ] 添加錯誤提示
-
-
-## 繼續完成版面設定優化
-- [x] 在 UI 中添加背景類型選擇（圖片/顏色）
+## 版面設定背景類型選擇和顏色選擇器
+- [x] 在數據庫中添加 backgroundType (enum: none/color/image) 和 backgroundColor (varchar)
+- [x] 在版面設定 UI 中添加背景類型選擇（無背景/純色/圖片）
 - [x] 添加顏色選擇器組件
-- [x] 在頁面中渲染 ImageCropper 組件
-- [x] 更新 handleSave 函數以保存 backgroundType 和 backgroundColor
-- [x] 修復 Chat.tsx 的 CustomLayout 條件判斷
-- [x] 修復 CustomDomainChat.tsx 的背景顏色支持
-- [x] 測試驗證功能
-
-## 修復版面設定預覽即時更新
-- [x] 檢查 CompactChatPreview 組件接收的 props
-- [x] 確保 backgroundType 和 backgroundColor 傳遞到預覽組件
-- [x] 修復預覽組件的背景顏色渲染邏輯
-- [x] 測試選擇背景顏色後預覽即時更新
-
-## 添加沉浸式風格勾選選項
-- [x] 更新 persona 表 schema 添加 immersiveMode 欄位
-- [x] 在 Appearance.tsx 添加沉浸式風格勾選框
-- [x] 更新 tRPC router 支持 immersiveMode
-- [x] 修改 Chat.tsx 的 CustomLayout 渲染邏輯
-- [x] 修改 CustomDomainChat.tsx 的 CustomLayout 渲染邏輯
-- [x] 更新 CompactChatPreview 支持沉浸式預覽
-- [x] 測試沉浸式風格功能
-
-- [x] 更新 CompactChatPreview 支持沉浸式模式預覽
-- [x] 測試沉浸式模式在不同背景類型下的顯示效果
-
-## 修復預覽版面和沉浸式風格
-- [ ] 檢查 CompactChatPreview 組件找出重複輸入框
-- [ ] 移除預覽下方的重複輸入框
-- [ ] 修改沉浸式風格為下方漸變模糊效果
-- [ ] 更新 Chat.tsx 的沉浸式風格樣式
-- [ ] 更新 CustomDomainChat.tsx 的沉浸式風格樣式
-- [ ] 測試預覽和實際對話頁面效果
+- [x] 更新 server/routers.ts 和 server/db.ts 支持新欄位
+- [x] 修改 Chat.tsx 的 CustomLayout 支持背景顏色渲染
+- [x] 同步更新 CustomDomainChat.tsx 的渲染邏輯
 
 
-## 繼續完成版面設定優化
-- [x] 在 UI 中添加背景類型選擇（圖片/顏色）
-- [x] 添加顏色選擇器組件
-- [x] 在頁面中渲染 ImageCropper 組件
-- [x] 更新 handleSave 函數以保存 backgroundType 和 backgroundColor
-- [x] 修復 Chat.tsx 的 CustomLayout 條件判斷
-- [x] 修復 CustomDomainChat.tsx 的背景顏色支持
-- [x] 測試驗證功能
-
-## 修復預覽版面和沉浸式風格
-- [x] 檢查 CompactChatPreview 組件接收的 props
-- [x] 確保 backgroundType 和 backgroundColor 傳遞到預覽組件
-- [x] 修復預覽組件的背景顏色渲染邏輯
-- [x] 測試選擇背景顏色後預覽即時更新
-
-## 添加沉浸式風格勾選選項
-- [x] 更新 persona 表 schema 添加 immersiveMode 欄位
-- [x] 在 Appearance.tsx 添加沉浸式風格勾選框
-- [x] 更新 tRPC router 支持 immersiveMode
-- [x] 修改 Chat.tsx 的 CustomLayout 渲染邏輯
-- [x] 修改 CustomDomainChat.tsx 的 CustomLayout 渲染邏輯
-- [x] 更新 CompactChatPreview 支持沉浸式預覽
-- [x] 測試沉浸式風格功能
-
-## 修復預覽版面和沉浸式風格
-- [x] 檢查 CompactChatPreview 組件找出重複輸入框
-- [x] 移除預覽下方的重複輸入框（調整順序）
-- [x] 修改沉浸式風格為下方漸變模糊效果
-- [x] 更新 Chat.tsx 的沉浸式風格樣式
-- [x] 更新 CustomDomainChat.tsx 的沉浸式風格樣式
-- [x] 更新 CompactChatPreview 的沉浸式風格樣式
-- [x] 測試預覽和實際對話頁面效果
-
-## 修復預覽和沉浸式風格問題（最終修復）
-- [x] 修復 CompactChatPreview Tabs 同時渲染問題（使用條件渲染）
-- [x] 修復 Appearance.tsx immersiveMode 載入邏輯（使用 ?? 運算符）
-- [x] 測試預覽只顯示一個輸入框
-- [x] 測試沉浸式風格保存後保持勾選
+## 修復版面設定背景顏色保存和顯示功能
+- [x] 修復 Chat.tsx 的 CustomLayout 條件判斷（允許純色背景使用 CustomLayout）
+- [x] 修復 CustomDomainChat.tsx 添加背景顏色支持
+- [x] 實現 getBackgroundStyle() 函數支持背景圖片、純色背景和無背景
+- [x] 修復文字顏色邏輯（使用 hasBackgroundImage 變量判斷）
+- [x] 測試背景顏色保存和顯示功能
 
 
-## 重新修復預覽和沉浸式風格問題
-- [ ] 重新檢查預覽中的兩個輸入框來源
-- [ ] 移除底部的輸入框
-- [ ] 重新檢查 immersiveMode 保存邏輯
-- [ ] 重新檢查 immersiveMode 載入邏輯
-- [ ] 測試完整的保存和載入流程
+## 修復版面設定頁面預覽即時更新功能
+- [x] 在 Appearance.tsx 中添加 backgroundType 和 backgroundColor props 到 CompactChatPreview
+- [x] 更新 CompactChatPreview.tsx 的 PreviewProps 類型定義
+- [x] 實現 getBackgroundStyle() 函數支持動態背景樣式
+- [x] 修復文字顏色邏輯（使用 hasBackgroundImage 變量判斷）
+- [x] 測試預覽即時更新功能
 
 
-## 修復對話頁面（/chat/1）的輸入框和沉浸式風格問題
-- [x] 檢查對話頁面（Chat.tsx）的輸入框結構
-- [x] 移除對話頁面底部重複的輸入框（CustomLayout）
-- [x] 檢查對話頁面的沉浸式風格實施
-- [x] 在 getPublic API 中添加 immersiveMode 欄位
-- [x] 測試對話頁面的完整效果（沉浸式風格已生效）
+## 添加沉浸式風格勾選選項功能
+- [x] 更新數據庫 schema 添加 immersiveMode 欄位到 ai_personas 表
+- [x] 在版面設定頁面添加沉浸式風格勾選框（當選擇背景顏色或背景圖片時顯示）
+- [x] 更新 tRPC router 支持 immersiveMode 參數
+- [x] 修改 Chat.tsx 和 CustomDomainChat.tsx 的 CustomLayout 組件支持沉浸式模式
+- [x] 更新 CompactChatPreview 組件支持沉浸式模式預覽
+- [x] 測試驗證功能正常工作
 
 
-## 修復沉浸式風格的視覺效果問題
-- [x] 檢查漸變覆蓋層的 z-index 和層級問題（背景色覆蓋了漸變層）
-- [x] 修復背景層級問題（將背景色移到漸變覆蓋層容器中）
-- [x] 測試沉浸式風格的完整視覺效果（漸變已生效）
+## 修復預覽版面重複輸入框問題並優化沉浸式風格效果
+- [x] 修復預覽輸入框順序（調整 CompactChatPreview 元素順序）
+- [x] 改進沉浸式風格效果（從單一遮罩改為下方漸變模糊效果）
+- [x] 統一更新三個組件（Chat.tsx、CustomDomainChat.tsx、CompactChatPreview.tsx）
+- [x] 測試驗證預覽和實際頁面效果一致
 
 
-## 修復生產環境沉浸式風格類缺失問題
-- [ ] 修復 CustomLayout 中的空條件判斷（className 中的 immersiveMode 條件）
-- [ ] 確保沉浸式模式下不添加 bg-cover 等類（這些類對純色背景無效）
-- [ ] 測試生產環境的更新效果
+## 修復預覽中重複輸入框問題（條件渲染）
+- [x] 使用條件渲染只渲染當前選中的 Tab（手機版/桌面版）
+- [x] 修復沉浸式風格保存後自動取消勾選的問題（使用 ?? 運算符正確載入 immersiveMode）
+- [x] 測試驗證修復效果
+
+
+## 修復對話頁面的兩個問題
+- [x] 移除 CustomLayout 底部重複的輸入框（添加條件判斷只在有消息時顯示）
+- [x] 修復沉浸式風格未生效的問題（在 persona.getPublic API 中添加 immersiveMode 欄位）
+- [x] 修復 upsertPersona 數據庫更新邏輯（添加 immersiveMode 和 buttonDisplayMode 到 onDuplicateKeyUpdate）
+- [x] 測試驗證修復效果
+
+
+## 修復沉浸式風格的漸變覆蓋層顯示問題
+- [x] 將背景色從根元素移到漸變覆蓋層容器中
+- [x] 當 immersiveMode 為 true 時，根元素不應用背景樣式
+- [x] 背景色作為漸變覆蓋層的底層，漸變效果在其上方
+- [x] 測試驗證沉浸式風格的漸變效果已生效
 
 
 ## 修復 CustomDomainChat 組件的重複輸入框問題
-- [x] 檢查 CustomDomainChat.tsx 的輸入框結構
-- [x] 應用與 Chat.tsx 相同的修復（Custom Layout 底部輸入框添加條件判斷）
-- [x] 測試自定義域名首頁（lulubaby.xyz）（需要發布後測試）
+- [x] 在 Custom Layout 的底部輸入框區域添加條件判斷（只在有消息時顯示）
+- [x] 與 Chat.tsx 的修復邏輯保持一致
+- [x] 測試驗證修復效果（需要在真實的自定義域名環境測試）
 
 
-## 修復 CustomDomainChat 的沉浸式風格漸變效果
-- [x] 檢查 CustomDomainChat 是否讀取了 immersiveMode 設定
-- [x] 檢查 CustomDomainChat 的 Custom Layout 背景層級結構（背景色覆蓋了漸變層）
-- [x] 應用與 Chat.tsx 相同的沉浸式風格修復（將背景色移到漸變覆蓋層容器）
-- [x] 測試 lulubaby.xyz 首頁的漸變效果（需要發布後測試）
+## 修復 CustomDomainChat 組件的沉浸式風格漸變效果
+- [x] 將背景色從根元素移到漸變覆蓋層容器中
+- [x] 根元素在沉浸式模式下不應用背景樣式
+- [x] 確保漸變效果顯示在背景色之上
+- [x] 測試驗證沉浸式風格的漸變效果已生效
 
 
 ## 修復 Appearance 頁面的空 src 屬性錯誤
-- [x] 在 Appearance.tsx 中尋找所有 img 元素
-- [x] 找出 src 屬性為空字符串的元素（CompactChatPreview 中的 AvatarImage）
-- [x] 修復為使用條件渲染（只在 URL 非空時渲染 AvatarImage）
-- [x] 測試 Appearance 頁面確認錯誤消失（無錯誤訊息）
+- [x] 在 CompactChatPreview.tsx 中添加條件渲染
+- [x] 只在 displayAvatarUrl 非空時渲染第一個 AvatarImage
+- [x] 只在 profilePhotoUrl 非空時渲染第二個 AvatarImage
+- [x] 當 URL 為空時，直接顯示 AvatarFallback
+- [x] 測試驗證修復效果
 
 
 ## 重新檢查 /chat/1 頁面的兩個輸入框問題
@@ -930,3 +861,14 @@
 - [x] 檢查是否是不同的布局組件（使用 ProfessionalLayout）
 - [x] 修復重複輸入框問題（ProfessionalLayout 底部輸入框添加條件判斷）
 - [x] 測試確認只有一個輸入框
+
+
+## 修復版面設定有背景時快捷按鈕的樣式
+- [ ] 分析目前快捷按鈕的樣式邏輯（Chat.tsx, CustomDomainChat.tsx, CompactChatPreview.tsx）
+- [ ] 確定需要修改的組件和條件判斷（有背景顏色或背景圖片時）
+- [ ] 修改快捷按鈕樣式添加白色底色（bg-white 或 bg-white/90）
+- [ ] 更新三個組件的快捷按鈕樣式保持一致
+- [ ] 測試純顏色背景下的快捷按鈕顯示
+- [ ] 測試背景圖片下的快捷按鈕顯示
+- [ ] 測試無背景時的快捷按鈕顯示（確保不受影響）
+- [ ] 驗證預覽面板的快捷按鈕樣式與實際頁面一致
