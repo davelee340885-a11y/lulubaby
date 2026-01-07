@@ -102,6 +102,7 @@ export const appRouter = router({
           backgroundType: input.backgroundType,
           backgroundColor: input.backgroundColor ?? undefined,
           backgroundImageUrl: input.backgroundImageUrl ?? undefined,
+          immersiveMode: input.immersiveMode,
           profilePhotoUrl: input.profilePhotoUrl ?? undefined,
           tagline: input.tagline ?? undefined,
           suggestedQuestions: input.suggestedQuestions ?? undefined,

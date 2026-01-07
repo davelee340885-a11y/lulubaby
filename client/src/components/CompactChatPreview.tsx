@@ -252,37 +252,41 @@ export default function CompactChatPreview(props: PreviewProps) {
   const [activeTab, setActiveTab] = React.useState("mobile");
 
   return (
-    <div className="sticky top-4 w-full h-[calc(100vh-8rem)]">
-      <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full h-full flex flex-col">
-        <TabsList className="grid w-full grid-cols-2 mb-2">
-          <TabsTrigger value="mobile" className="text-xs">
-            <Smartphone className="h-3.5 w-3.5 mr-1.5" />
-            手機版
-          </TabsTrigger>
-          <TabsTrigger value="desktop" className="text-xs">
-            <Monitor className="h-3.5 w-3.5 mr-1.5" />
-            桌面版
-          </TabsTrigger>
-        </TabsList>
-        
-        <TabsContent value="mobile" className="flex-1 mt-0">
-          {activeTab === "mobile" && (
-            <div className="w-full h-full flex items-center justify-center">
-              <div className="w-[375px] h-full">
-                <PreviewContent {...props} isMobile={true} />
-              </div>
+    <div className="sticky top-4 w-full h-[calc(100vh-8rem)] flex flex-col">
+      <div className="grid w-full grid-cols-2 mb-2 rounded-md bg-muted p-1">
+        <button
+          onClick={() => setActiveTab("mobile")}
+          className={`flex items-center justify-center gap-1.5 text-xs py-2 rounded-sm transition-colors ${
+            activeTab === "mobile" ? "bg-background shadow-sm" : "hover:bg-background/50"
+          }`}
+        >
+          <Smartphone className="h-3.5 w-3.5" />
+          手機版
+        </button>
+        <button
+          onClick={() => setActiveTab("desktop")}
+          className={`flex items-center justify-center gap-1.5 text-xs py-2 rounded-sm transition-colors ${
+            activeTab === "desktop" ? "bg-background shadow-sm" : "hover:bg-background/50"
+          }`}
+        >
+          <Monitor className="h-3.5 w-3.5" />
+          桌面版
+        </button>
+      </div>
+      
+      <div className="flex-1">
+        {activeTab === "mobile" ? (
+          <div className="w-full h-full flex items-center justify-center">
+            <div className="w-[375px] h-full">
+              <PreviewContent {...props} isMobile={true} />
             </div>
-          )}
-        </TabsContent>
-        
-        <TabsContent value="desktop" className="flex-1 mt-0">
-          {activeTab === "desktop" && (
-            <div className="w-full h-full">
-              <PreviewContent {...props} isMobile={false} />
-            </div>
-          )}
-        </TabsContent>
-      </Tabs>
+          </div>
+        ) : (
+          <div className="w-full h-full">
+            <PreviewContent {...props} isMobile={false} />
+          </div>
+        )}
+      </div>
     </div>
   );
 }
