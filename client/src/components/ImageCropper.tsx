@@ -9,10 +9,21 @@ type ImageCropperProps = {
   open: boolean;
   onClose: () => void;
   imageSrc: string;
-  onCropComplete: (croppedImage: Blob) => void;
+  onCropComplete: (croppedImage: Blob, displaySettings?: {
+    backgroundSize: string;
+    backgroundPosition: string;
+    backgroundRepeat: string;
+  }) => void;
   aspectRatio?: number;
   cropShape?: "rect" | "round";
   title?: string;
+  // Display settings (only for background images)
+  showDisplaySettings?: boolean;
+  initialDisplaySettings?: {
+    backgroundSize?: string;
+    backgroundPosition?: string;
+    backgroundRepeat?: string;
+  };
 };
 
 export default function ImageCropper({
@@ -23,11 +34,18 @@ export default function ImageCropper({
   aspectRatio = 1,
   cropShape = "rect",
   title = "裁切圖片",
+  showDisplaySettings = false,
+  initialDisplaySettings = {},
 }: ImageCropperProps) {
   const [crop, setCrop] = useState({ x: 0, y: 0 });
   const [zoom, setZoom] = useState(1);
   const [croppedAreaPixels, setCroppedAreaPixels] = useState<any>(null);
   const [processing, setProcessing] = useState(false);
+  
+  // Display settings state (for background images)
+  const [backgroundSize, setBackgroundSize] = useState(initialDisplaySettings.backgroundSize || "cover");
+  const [backgroundPosition, setBackgroundPosition] = useState(initialDisplaySettings.backgroundPosition || "center");
+  const [backgroundRepeat, setBackgroundRepeat] = useState(initialDisplaySettings.backgroundRepeat || "no-repeat");
 
   const onCropChange = (location: { x: number; y: number }) => {
     setCrop(location);
@@ -96,7 +114,18 @@ export default function ImageCropper({
     try {
       setProcessing(true);
       const croppedImage = await getCroppedImg(imageSrc, croppedAreaPixels);
-      onCropComplete(croppedImage);
+      
+      // Pass display settings if showDisplaySettings is true
+      if (showDisplaySettings) {
+        onCropComplete(croppedImage, {
+          backgroundSize,
+          backgroundPosition,
+          backgroundRepeat,
+        });
+      } else {
+        onCropComplete(croppedImage);
+      }
+      
       onClose();
     } catch (error) {
       console.error("Error cropping image:", error);
@@ -107,7 +136,7 @@ export default function ImageCropper({
 
   return (
     <Dialog open={open} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-[600px]">
+      <DialogContent className="sm:max-w-[800px] max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>{title}</DialogTitle>
         </DialogHeader>
@@ -136,6 +165,82 @@ export default function ImageCropper({
               className="w-full"
             />
           </div>
+          
+          {/* Display Settings - only show for background images */}
+          {showDisplaySettings && (
+            <>
+              <div className="space-y-2 pt-4 border-t">
+                <label className="text-sm font-medium">即時預覽</label>
+                <div 
+                  className="w-full h-32 rounded-md border overflow-hidden bg-muted"
+                  style={{
+                    backgroundImage: `url(${imageSrc})`,
+                    backgroundSize: backgroundSize,
+                    backgroundPosition: backgroundPosition,
+                    backgroundRepeat: backgroundRepeat,
+                  }}
+                >
+                  <div className="w-full h-full flex items-center justify-center">
+                    <div className="bg-white/90 px-3 py-1 rounded text-xs text-muted-foreground">
+                      預覽效果
+                    </div>
+                  </div>
+                </div>
+                <p className="text-xs text-muted-foreground">
+                  顯示背景圖片在對話頁面中的實際效果
+                </p>
+              </div>
+            
+              <div className="space-y-4">
+              <div className="space-y-2">
+                <label className="text-sm font-medium">圖片展示方式</label>
+                <select
+                  value={backgroundSize}
+                  onChange={(e) => setBackgroundSize(e.target.value)}
+                  className="w-full h-9 rounded-md border border-input bg-background px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+                >
+                  <option value="cover">🖼️ 填滿螢幕 - 保持比例（推薦）</option>
+                  <option value="contain">📐 適應螢幕 - 完整顯示</option>
+                  <option value="100% 100%">🔲 拉伸填滿 - 不保持比例</option>
+                  <option value="auto">📍 原始尺寸</option>
+                </select>
+              </div>
+              
+              <div className="space-y-2">
+                <label className="text-sm font-medium">圖片位置</label>
+                <select
+                  value={backgroundPosition}
+                  onChange={(e) => setBackgroundPosition(e.target.value)}
+                  className="w-full h-9 rounded-md border border-input bg-background px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+                >
+                  <option value="center">居中</option>
+                  <option value="top">頂部</option>
+                  <option value="bottom">底部</option>
+                  <option value="left">左側</option>
+                  <option value="right">右側</option>
+                  <option value="top left">左上角</option>
+                  <option value="top right">右上角</option>
+                  <option value="bottom left">左下角</option>
+                  <option value="bottom right">右下角</option>
+                </select>
+              </div>
+              
+              <div className="space-y-2">
+                <label className="text-sm font-medium">圖片重複</label>
+                <select
+                  value={backgroundRepeat}
+                  onChange={(e) => setBackgroundRepeat(e.target.value)}
+                  className="w-full h-9 rounded-md border border-input bg-background px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+                >
+                  <option value="no-repeat">不重複（推薦）</option>
+                  <option value="repeat">🔄 平鋪重複</option>
+                  <option value="repeat-x">↔️ 水平重複</option>
+                  <option value="repeat-y">↕️ 垂直重複</option>
+                </select>
+              </div>
+            </div>
+            </>
+          )}
         </div>
         <DialogFooter>
           <Button variant="outline" onClick={onClose} disabled={processing}>

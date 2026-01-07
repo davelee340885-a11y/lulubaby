@@ -253,7 +253,14 @@ export default function Appearance() {
     reader.readAsDataURL(file);
   };
 
-  const handleCropComplete = async (croppedBlob: Blob) => {
+  const handleCropComplete = async (
+    croppedBlob: Blob,
+    displaySettings?: {
+      backgroundSize: string;
+      backgroundPosition: string;
+      backgroundRepeat: string;
+    }
+  ) => {
     const type = cropperType;
     const setUploading = type === "profile" ? setUploadingProfile : setUploadingBackground;
     const setUrl = type === "profile" ? setProfilePhotoUrl : setBackgroundImageUrl;
@@ -286,6 +293,12 @@ export default function Appearance() {
       setUrl(result.url);
       if (type === "background") {
         setBackgroundType("image");
+        // Apply display settings if provided
+        if (displaySettings) {
+          setBackgroundSize(displaySettings.backgroundSize);
+          setBackgroundPosition(displaySettings.backgroundPosition);
+          setBackgroundRepeat(displaySettings.backgroundRepeat);
+        }
       }
       toast.success("圖片上傳成功");
       setUploading(false);
@@ -721,64 +734,6 @@ export default function Appearance() {
                     </div>
                   )}
 
-                  {/* Background Display Settings - shown when background image is set */}
-                  {backgroundType === "image" && backgroundImageUrl && (
-                    <div className="space-y-4 p-4 rounded-lg border bg-muted/30">
-                      <div className="space-y-2">
-                        <Label htmlFor="backgroundSize">圖片展示方式</Label>
-                        <select
-                          id="backgroundSize"
-                          value={backgroundSize}
-                          onChange={(e) => setBackgroundSize(e.target.value)}
-                          className="w-full h-9 rounded-md border border-input bg-background px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
-                        >
-                          <option value="cover">🖼️ 填滿螢幕 - 圖片填滿整個背景，保持比例（推薦）</option>
-                          <option value="contain">📐 適應螢幕 - 完整顯示圖片，可能有留白</option>
-                          <option value="100% 100%">🔲 拉伸填滿 - 拉伸圖片填滿，不保持比例</option>
-                          <option value="auto">📍 原始尺寸 - 顯示原始大小</option>
-                        </select>
-                        <p className="text-xs text-muted-foreground">選擇背景圖片如何顯示在對話頁面</p>
-                      </div>
-
-                      <div className="space-y-2">
-                        <Label htmlFor="backgroundPosition">圖片位置</Label>
-                        <select
-                          id="backgroundPosition"
-                          value={backgroundPosition}
-                          onChange={(e) => setBackgroundPosition(e.target.value)}
-                          className="w-full h-9 rounded-md border border-input bg-background px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
-                        >
-                          <option value="center">居中</option>
-                          <option value="top">頂部</option>
-                          <option value="bottom">底部</option>
-                          <option value="left">左側</option>
-                          <option value="right">右側</option>
-                          <option value="top left">左上角</option>
-                          <option value="top right">右上角</option>
-                          <option value="bottom left">左下角</option>
-                          <option value="bottom right">右下角</option>
-                        </select>
-                        <p className="text-xs text-muted-foreground">調整圖片在背景中的位置</p>
-                      </div>
-
-                      <div className="space-y-2">
-                        <Label htmlFor="backgroundRepeat">圖片重複</Label>
-                        <select
-                          id="backgroundRepeat"
-                          value={backgroundRepeat}
-                          onChange={(e) => setBackgroundRepeat(e.target.value)}
-                          className="w-full h-9 rounded-md border border-input bg-background px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
-                        >
-                          <option value="no-repeat">不重複（推薦）</option>
-                          <option value="repeat">🔄 平鋪重複</option>
-                          <option value="repeat-x">↔️ 水平重複</option>
-                          <option value="repeat-y">↕️ 垂直重複</option>
-                        </select>
-                        <p className="text-xs text-muted-foreground">設定圖片是否重複顯示</p>
-                      </div>
-                    </div>
-                  )}
-
                   {/* Immersive Mode Checkbox - shown when background is set */}
                   {(backgroundType === "color" || backgroundType === "image") && (
                     <div className="flex items-start space-x-3 p-4 rounded-lg border bg-muted/30">
@@ -1157,6 +1112,12 @@ export default function Appearance() {
         aspectRatio={cropperType === "profile" ? 1 : 16 / 9}
         cropShape={cropperType === "profile" ? "round" : "rect"}
         title={cropperType === "profile" ? "裁切個人照片" : "裁切背景圖片"}
+        showDisplaySettings={cropperType === "background"}
+        initialDisplaySettings={{
+          backgroundSize,
+          backgroundPosition,
+          backgroundRepeat,
+        }}
       />
     </div>
   );
