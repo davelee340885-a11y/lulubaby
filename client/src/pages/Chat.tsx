@@ -907,12 +907,12 @@ function CustomLayout({
 
   return (
     <div 
-      className={`min-h-screen flex flex-col ${immersiveMode ? "bg-cover bg-center bg-fixed" : ""}`}
-      style={immersiveMode ? backgroundStyle : {}}
+      className={`min-h-screen flex flex-col ${immersiveMode ? "" : ""}`}
+      style={immersiveMode ? {} : backgroundStyle}
     >
       {/* Gradient Overlay for Immersive Mode */}
       {immersiveMode && (
-        <div className="fixed inset-0 -z-10">
+        <div className="fixed inset-0 -z-10" style={backgroundStyle}>
           <div className="absolute inset-0 bg-gradient-to-b from-black/20 via-black/30 to-black/60" />
           <div className="absolute inset-0 backdrop-blur-[2px]" style={{ maskImage: 'linear-gradient(to bottom, transparent 0%, black 100%)' }} />
         </div>
