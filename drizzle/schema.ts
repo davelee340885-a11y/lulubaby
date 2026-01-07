@@ -36,6 +36,9 @@ export const aiPersonas = mysqlTable("ai_personas", {
   backgroundType: mysqlEnum("backgroundType", ["none", "color", "image"]).default("none").notNull(), // Background type
   backgroundColor: varchar("backgroundColor", { length: 20 }), // Hex color code
   backgroundImageUrl: varchar("backgroundImageUrl", { length: 512 }),
+  backgroundSize: varchar("backgroundSize", { length: 20 }).default("cover"), // CSS background-size: cover, contain, 100% 100%, auto
+  backgroundPosition: varchar("backgroundPosition", { length: 20 }).default("center"), // CSS background-position: center, top, bottom, etc.
+  backgroundRepeat: varchar("backgroundRepeat", { length: 20 }).default("no-repeat"), // CSS background-repeat: no-repeat, repeat, repeat-x, repeat-y
   immersiveMode: boolean("immersiveMode").default(false).notNull(), // Immersive background mode
   profilePhotoUrl: text("profilePhotoUrl"),
   tagline: varchar("tagline", { length: 255 }),

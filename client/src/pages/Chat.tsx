@@ -893,6 +893,9 @@ function CustomLayout({
   const backgroundType = (persona as any).backgroundType || "none";
   const backgroundColor = (persona as any).backgroundColor;
   const backgroundImage = persona.backgroundImageUrl;
+  const backgroundSize = (persona as any).backgroundSize || "cover";
+  const backgroundPosition = (persona as any).backgroundPosition || "center";
+  const backgroundRepeat = (persona as any).backgroundRepeat || "no-repeat";
   const immersiveMode = (persona as any).immersiveMode || false;
 
   // Determine background style based on type
@@ -900,6 +903,9 @@ function CustomLayout({
     if (backgroundType === "image" && backgroundImage) {
       return {
         backgroundImage: `url(${backgroundImage})`,
+        backgroundSize: backgroundSize,
+        backgroundPosition: backgroundPosition,
+        backgroundRepeat: backgroundRepeat,
         backgroundColor: undefined,
       };
     } else if (backgroundType === "color" && backgroundColor) {
