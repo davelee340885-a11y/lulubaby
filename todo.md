@@ -882,3 +882,11 @@
 - [ ] 重新檢查 immersiveMode 保存邏輯
 - [ ] 重新檢查 immersiveMode 載入邏輯
 - [ ] 測試完整的保存和載入流程
+
+
+## 修復對話頁面（/chat/1）的輸入框和沉浸式風格問題
+- [x] 檢查對話頁面（Chat.tsx）的輸入框結構
+- [x] 移除對話頁面底部重複的輸入框（CustomLayout）
+- [x] 檢查對話頁面的沉浸式風格實施
+- [x] 在 getPublic API 中添加 immersiveMode 欄位
+- [x] 測試對話頁面的完整效果（沉浸式風格已生效）

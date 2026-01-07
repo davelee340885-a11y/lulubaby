@@ -1063,43 +1063,45 @@ function CustomLayout({
         )}
       </div>
 
-      {/* Input Area */}
-      <div className="sticky bottom-0 bg-background/80 backdrop-blur border-t">
-        <div className="container max-w-2xl py-3">
-          {/* Quick Buttons when chatting */}
-          {hasStartedChat && showQuickButtons && persona.quickButtons.length > 0 && (
-            <div className="mb-2">
-              <QuickButtonGroup
-                buttons={persona.quickButtons}
-                displayMode={buttonDisplayMode}
-                primaryColor={primaryColor}
-                onButtonClick={handleQuickButton}
-              />
-            </div>
-          )}
+      {/* Input Area - Only show at bottom when chatting */}
+      {hasStartedChat && (
+        <div className="sticky bottom-0 bg-background/80 backdrop-blur border-t">
+          <div className="container max-w-2xl py-3">
+            {/* Quick Buttons when chatting */}
+            {showQuickButtons && persona.quickButtons.length > 0 && (
+              <div className="mb-2">
+                <QuickButtonGroup
+                  buttons={persona.quickButtons}
+                  displayMode={buttonDisplayMode}
+                  primaryColor={primaryColor}
+                  onButtonClick={handleQuickButton}
+                />
+              </div>
+            )}
 
-          <div className="flex gap-2 items-center">
-            <Input
-              ref={inputRef}
-              placeholder={chatPlaceholder}
-              value={input}
-              onChange={(e) => setInput(e.target.value)}
-              onKeyDown={handleKeyDown}
-              disabled={isTyping}
-              className="rounded-full h-9 text-sm bg-background"
-            />
-            <Button
-              onClick={() => handleSend()}
-              disabled={!input.trim() || isTyping}
-              size="icon"
-              className="rounded-full h-9 w-9 shrink-0"
-              style={{ backgroundColor: primaryColor }}
-            >
-              {isTyping ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
-            </Button>
+            <div className="flex gap-2 items-center">
+              <Input
+                ref={inputRef}
+                placeholder={chatPlaceholder}
+                value={input}
+                onChange={(e) => setInput(e.target.value)}
+                onKeyDown={handleKeyDown}
+                disabled={isTyping}
+                className="rounded-full h-9 text-sm bg-background"
+              />
+              <Button
+                onClick={() => handleSend()}
+                disabled={!input.trim() || isTyping}
+                size="icon"
+                className="rounded-full h-9 w-9 shrink-0"
+                style={{ backgroundColor: primaryColor }}
+              >
+                {isTyping ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
+              </Button>
+            </div>
           </div>
         </div>
-      </div>
+      )}
     </div>
   );
 }

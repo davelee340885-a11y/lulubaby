@@ -131,10 +131,12 @@ export async function upsertPersona(data: InsertAiPersona): Promise<AiPersona | 
       backgroundType: data.backgroundType,
       backgroundColor: data.backgroundColor,
       backgroundImageUrl: data.backgroundImageUrl,
+      immersiveMode: data.immersiveMode,
       profilePhotoUrl: data.profilePhotoUrl,
       tagline: data.tagline,
       suggestedQuestions: data.suggestedQuestions,
       showQuickButtons: data.showQuickButtons,
+      buttonDisplayMode: data.buttonDisplayMode,
       chatPlaceholder: data.chatPlaceholder,
     },
   });

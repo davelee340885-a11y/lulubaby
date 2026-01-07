@@ -143,6 +143,7 @@ export const appRouter = router({
           backgroundImageUrl: persona.backgroundImageUrl,
           profilePhotoUrl: persona.profilePhotoUrl,
           tagline: persona.tagline,
+          immersiveMode: persona.immersiveMode || false,
           suggestedQuestions,
           showQuickButtons: persona.showQuickButtons,
           buttonDisplayMode: persona.buttonDisplayMode || 'full',
