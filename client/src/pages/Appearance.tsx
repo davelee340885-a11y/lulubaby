@@ -695,15 +695,31 @@ export default function Appearance() {
                       {backgroundImageUrl ? (
                         <div className="relative rounded-lg overflow-hidden">
                           <img src={backgroundImageUrl} alt="Background" className="w-full h-32 object-cover" />
-                          <button 
-                            onClick={() => {
-                              setBackgroundImageUrl("");
-                              setBackgroundType("none");
-                            }} 
-                            className="absolute top-2 right-2 h-6 w-6 rounded-full bg-black/50 text-white flex items-center justify-center hover:bg-black/70"
-                          >
-                            <X className="h-3 w-3" />
-                          </button>
+                          <div className="absolute top-2 right-2 flex gap-2">
+                            <button 
+                              onClick={() => {
+                                setCropperImage(backgroundImageUrl);
+                                setCropperType("background");
+                                setCropperOpen(true);
+                              }} 
+                              className="h-6 w-6 rounded-full bg-black/50 text-white flex items-center justify-center hover:bg-black/70"
+                              title="編輯背景圖片"
+                            >
+                              <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3" viewBox="0 0 20 20" fill="currentColor">
+                                <path d="M13.586 3.586a2 2 0 112.828 2.828l-.793.793-2.828-2.828.793-.793zM11.379 5.793L3 14.172V17h2.828l8.38-8.379-2.83-2.828z" />
+                              </svg>
+                            </button>
+                            <button 
+                              onClick={() => {
+                                setBackgroundImageUrl("");
+                                setBackgroundType("none");
+                              }} 
+                              className="h-6 w-6 rounded-full bg-black/50 text-white flex items-center justify-center hover:bg-black/70"
+                              title="刪除背景圖片"
+                            >
+                              <X className="h-3 w-3" />
+                            </button>
+                          </div>
                         </div>
                       ) : (
                         <div 

@@ -39,6 +39,7 @@ export default function ImageCropper({
 }: ImageCropperProps) {
   const [crop, setCrop] = useState({ x: 0, y: 0 });
   const [zoom, setZoom] = useState(1);
+  const [rotation, setRotation] = useState(0);
   const [croppedAreaPixels, setCroppedAreaPixels] = useState<any>(null);
   const [processing, setProcessing] = useState(false);
   
@@ -145,6 +146,7 @@ export default function ImageCropper({
             image={imageSrc}
             crop={crop}
             zoom={zoom}
+            rotation={rotation}
             aspect={aspectRatio}
             cropShape={cropShape}
             showGrid={false}
@@ -164,6 +166,35 @@ export default function ImageCropper({
               step={0.1}
               className="w-full"
             />
+            <div className="flex gap-2 pt-2">
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={() => setZoom(Math.max(1, zoom - 0.1))}
+                className="flex-1"
+              >
+                🔍 縮小
+              </Button>
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={() => setZoom(Math.min(3, zoom + 0.1))}
+                className="flex-1"
+              >
+                🔎 放大
+              </Button>
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={() => setRotation((rotation + 90) % 360)}
+                className="flex-1"
+              >
+                🔄 旋轉
+              </Button>
+            </div>
           </div>
           
           {/* Display Settings - only show for background images */}
@@ -172,22 +203,23 @@ export default function ImageCropper({
               <div className="space-y-2 pt-4 border-t">
                 <label className="text-sm font-medium">即時預覽</label>
                 <div 
-                  className="w-full h-32 rounded-md border overflow-hidden bg-muted"
+                  className="w-full rounded-md border overflow-hidden bg-muted relative"
                   style={{
+                    aspectRatio: '16 / 9',
                     backgroundImage: `url(${imageSrc})`,
                     backgroundSize: backgroundSize,
                     backgroundPosition: backgroundPosition,
                     backgroundRepeat: backgroundRepeat,
                   }}
                 >
-                  <div className="w-full h-full flex items-center justify-center">
+                  <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
                     <div className="bg-white/90 px-3 py-1 rounded text-xs text-muted-foreground">
                       預覽效果
                     </div>
                   </div>
                 </div>
                 <p className="text-xs text-muted-foreground">
-                  顯示背景圖片在對話頁面中的實際效果
+                  顯示背景圖片在對話頁面中的實際效果（16:9 比例）
                 </p>
               </div>
             
