@@ -965,3 +965,124 @@
 - [ ] 添加裁切器旋轉功能（Rotate 按鈕，90度旋轉）
 - [ ] 優化裁切器 UI 佈局（按鈕排列）
 - [ ] 測試所有新功能在不同圖片尺寸下的效果
+
+## 修復圖片裁切器 CORS 錯誤
+- [ ] 分析 Tainted canvas 錯誤原因（S3 圖片跨域問題）
+- [ ] 在 ImageCropper 的 react-easy-crop 組件添加 crossOrigin="anonymous"
+- [ ] 檢查 S3 bucket CORS 配置是否正確
+- [ ] 測試修復後的圖片裁切功能
+
+## 修復圖片裁切器 CORS 錯誤 - 已完成
+- [x] 分析 Tainted canvas 錯誤原因（S3 圖片跨域問題）
+- [x] 在 ImageCropper 的 createImage 函數添加 crossOrigin="anonymous"
+- [x] 修復代碼並等待用戶測試驗證
+
+## 修復圖片裁切器圖片載入錯誤
+- [ ] 改進 createImage 函數的錯誤處理
+- [ ] 顯示詳細的圖片載入錯誤訊息
+- [ ] 檢查 S3 圖片 URL 是否正確
+- [ ] 測試修復後的圖片載入功能
+
+## 修復圖片裁切器圖片載入錯誤 - 已完成
+- [x] 改進 createImage 函數的錯誤處理
+- [x] 顯示詳細的圖片載入錯誤訊息
+- [x] 修改編輯按鈕邏輯：將 S3 圖片轉換為 blob URL
+- [x] 為個人照片添加編輯按鈕
+- [x] 測試修復後的圖片載入功能（等待用戶驗證）
+
+## 修復 S3 圖片 fetch 失敗問題
+- [ ] 分析 fetch() 無法下載 S3 圖片的原因
+- [ ] 實施替代方案：直接傳遞 S3 URL 並確保 CORS 正確配置
+- [ ] 或使用後端代理獲取圖片
+- [ ] 測試修復後的功能
+
+## 實施後端代理解決 CORS 問題 - 已完成
+- [x] 創建 images.getImageAsBase64 API 端點
+- [x] 後端通過 fetch 獲取 S3 圖片並轉換為 base64
+- [x] 更新背景圖片編輯按鈕使用後端代理
+- [x] 更新個人照片編輯按鈕使用後端代理
+- [x] 測試修復後的功能（等待用戶驗證）
+
+## 裁切器即時預覽功能
+- [ ] 分析目前 ImageCropper 的預覽實現
+- [ ] 實現預覽區域同步顯示放大縮小效果
+- [ ] 實現預覽區域同步顯示旋轉效果
+- [ ] 實現預覽區域同步顯示展示方式設定
+- [ ] 測試即時預覽功能
+
+## 裁切器即時預覽功能 - 已完成
+- [x] 分析目前 ImageCropper 的預覽實現
+- [x] 添加 previewUrl 狀態儲存裁切後的預覽圖
+- [x] 使用 useEffect 監聽裁切參數變化（croppedAreaPixels）
+- [x] 即時生成裁切後的 blob URL
+- [x] 更新預覽區域使用裁切後的圖片
+- [x] 預覽區域同步顯示展示方式設定
+- [x] 測試即時預覽功能（等待用戶驗證）
+
+## 歡迎語文字顏色和大小設定
+- [ ] 擴展數據庫 ai_personas 表添加 welcomeMessageColor 和 welcomeMessageSize 欄位
+- [ ] 更新後端 API 支持保存和讀取歡迎語樣式
+- [ ] 在版面設定 UI 添加顏色選擇器（Color Picker）
+- [ ] 在版面設定 UI 添加文字大小選擇器（Small/Medium/Large/XLarge）
+- [ ] 更新對話頁面應用歡迎語樣式（顏色和大小）
+- [ ] 更新預覽組件應用歡迎語樣式
+- [ ] 測試功能
+
+## 歡迎語文字顏色和大小設定 - 已完成
+- [x] 擴展數據庫 ai_personas 表添加 welcomeMessageColor 和 welcomeMessageSize 欄位
+- [x] 更新後端 persona.upsert API 支持保存歡迎語樣式
+- [x] 更新後端 persona.getPublic API 返回歡迎語樣式
+- [x] 在版面設定 UI 添加顏色選擇器（Color Picker + 文字輸入）
+- [x] 在版面設定 UI 添加文字大小選擇器（Small/Medium/Large/XLarge）
+- [x] 更新對話頁面應用歡迎語樣式（MinimalLayout）
+- [x] 更新對話頁面應用歡迎語樣式（ProfessionalLayout）
+- [x] 更新對話頁面應用歡迎語樣式（CustomLayout）
+- [x] 測試功能（等待用戶驗證）
+
+## 修復歡迎語樣式保存後自動重置問題
+- [ ] 檢查預覽組件是否應用歡迎語樣式
+- [ ] 檢查 API 返回的數據是否正確
+- [ ] 修復問題
+- [ ] 測試修復效果
+
+## 修復歡迎語樣式保存後自動重置問題 - 已完成
+- [x] 檢查保存函數的邏輯
+- [x] 發現問題：使用 || null 會導致空字符串被轉換為 null
+- [x] 修復：改為使用預設值（#000000 和 medium）
+- [x] 測試修復效果（等待用戶驗證）
+
+## 真正的問題：upsertPersona 缺少欄位更新
+- [x] 發現 db.ts 中 upsertPersona 的 onDuplicateKeyUpdate 缺少新欄位
+- [x] 添加 welcomeMessageColor 和 welcomeMessageSize 到更新列表
+- [x] 同時添加缺失的 backgroundSize, backgroundPosition, backgroundRepeat
+- [x] 測試修復效果（等待用戶驗證）
+
+## 修復預覽版面即時顯示歡迎語樣式 + 增加字體大小選擇
+- [ ] 找到預覽版面組件並添加歡迎語樣式
+- [ ] 增加更多字體大小選擇（更細緻的選項）
+- [ ] 測試修復效果
+
+## 修復預覽版面即時顯示歡迎語樣式 + 增加字體大小選擇 - 已完成
+- [x] 在 CompactChatPreview 組件添加 welcomeMessageColor 和 welcomeMessageSize props
+- [x] 在預覽歡迎語顯示中應用顏色和大小樣式
+- [x] 增加字體大小選擇：超小(12px)、小(14px)、中(16px)、大(18px)、特大(20px)、超大(24px)、巨大(28px)、極大(32px)、超級大(36px)
+- [x] 更新 Chat.tsx 的字體大小輔助函數
+- [x] 測試修復效果（等待用戶驗證）
+
+## 修復專業名片佈局歡迎語樣式在對話連結不顯示
+- [ ] 檢查 ProfessionalLayout 組件的歡迎語樣式應用
+- [ ] 修復問題
+- [ ] 測試修復效果
+
+## 客戶登入功能和 API 文檔修復
+- [ ] 創建客戶認證後端 API (customerAuthRouter.ts)
+- [ ] 創建客戶登入對話框組件 (CustomerLoginDialog.tsx)
+- [ ] 更新 Chat.tsx 添加登入按鈕
+- [ ] 創建 API 文檔頁面 (ApiDocs.tsx)
+- [ ] 更新路由和後端配置
+- [ ] 測試功能
+- [x] 創建客戶認證後端 API (customerAuthRouter.ts)
+- [x] 創建客戶登入對話框組件 (CustomerLoginDialog.tsx)
+- [x] 更新 Chat.tsx 添加登入按鈕（三種佈局都已添加）
+- [x] 創建 API 文檔頁面 (ApiDocs.tsx)
+- [x] 更新 App.tsx 路由配置

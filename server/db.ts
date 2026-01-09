@@ -14,7 +14,9 @@ let _db: ReturnType<typeof drizzle> | null = null;
 export async function getDb() {
   if (!_db && process.env.DATABASE_URL) {
     try {
+      // Force fresh connection with schema
       _db = drizzle(process.env.DATABASE_URL);
+      console.log("[Database] Connected successfully");
     } catch (error) {
       console.warn("[Database] Failed to connect:", error);
       _db = null;
@@ -113,6 +115,7 @@ export async function getPersonaById(id: number): Promise<AiPersona | undefined>
   const db = await getDb();
   if (!db) return undefined;
   const result = await db.select().from(aiPersonas).where(eq(aiPersonas.id, id)).limit(1);
+  console.log('[getPersonaById] id:', id, 'result:', result[0] ? { welcomeMessageColor: result[0].welcomeMessageColor, welcomeMessageSize: result[0].welcomeMessageSize } : 'not found');
   return result.length > 0 ? result[0] : undefined;
 }
 
@@ -125,12 +128,17 @@ export async function upsertPersona(data: InsertAiPersona): Promise<AiPersona | 
       agentName: data.agentName,
       avatarUrl: data.avatarUrl,
       welcomeMessage: data.welcomeMessage,
+      welcomeMessageColor: data.welcomeMessageColor,
+      welcomeMessageSize: data.welcomeMessageSize,
       systemPrompt: data.systemPrompt,
       primaryColor: data.primaryColor,
       layoutStyle: data.layoutStyle,
       backgroundType: data.backgroundType,
       backgroundColor: data.backgroundColor,
       backgroundImageUrl: data.backgroundImageUrl,
+      backgroundSize: data.backgroundSize,
+      backgroundPosition: data.backgroundPosition,
+      backgroundRepeat: data.backgroundRepeat,
       immersiveMode: data.immersiveMode,
       profilePhotoUrl: data.profilePhotoUrl,
       tagline: data.tagline,

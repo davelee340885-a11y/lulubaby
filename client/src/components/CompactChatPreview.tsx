@@ -9,6 +9,8 @@ type PreviewProps = {
   agentName: string;
   avatarUrl: string;
   welcomeMessage: string;
+  welcomeMessageColor?: string;
+  welcomeMessageSize?: string;
   primaryColor: string;
   suggestedQuestions: string[];
   quickButtons: Array<{
@@ -51,6 +53,8 @@ function PreviewContent({
   agentName,
   avatarUrl,
   welcomeMessage,
+  welcomeMessageColor,
+  welcomeMessageSize,
   primaryColor,
   suggestedQuestions,
   quickButtons,
@@ -146,7 +150,22 @@ function PreviewContent({
           )}
 
           {/* Welcome Message */}
-          <h2 className={`font-semibold ${hasBackgroundImage ? "text-white drop-shadow-lg" : "text-foreground"} ${isMobile ? "text-lg" : "text-2xl"}`}>
+          <h2 
+            className={`font-semibold ${hasBackgroundImage && !welcomeMessageColor ? "text-white drop-shadow-lg" : "text-foreground"}`}
+            style={{
+              color: welcomeMessageColor || undefined,
+              fontSize: welcomeMessageSize === "xsmall" ? "12px"
+                : welcomeMessageSize === "small" ? "14px" 
+                : welcomeMessageSize === "medium" ? "16px"
+                : welcomeMessageSize === "large" ? "18px"
+                : welcomeMessageSize === "xlarge" ? "20px"
+                : welcomeMessageSize === "xxlarge" ? "24px"
+                : welcomeMessageSize === "xxxlarge" ? "28px"
+                : welcomeMessageSize === "huge" ? "32px"
+                : welcomeMessageSize === "massive" ? "36px"
+                : isMobile ? "18px" : "24px",
+            }}
+          >
             {welcomeMessage || "您好！我是您的AI助手"}
           </h2>
 

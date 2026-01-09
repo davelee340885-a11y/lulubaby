@@ -104,6 +104,8 @@ export default function Appearance() {
   const [agentName, setAgentName] = useState("");
   const [avatarUrl, setAvatarUrl] = useState("");
   const [welcomeMessage, setWelcomeMessage] = useState("");
+  const [welcomeMessageColor, setWelcomeMessageColor] = useState("#000000");
+  const [welcomeMessageSize, setWelcomeMessageSize] = useState("medium");
   const [systemPrompt, setSystemPrompt] = useState("");
   const [primaryColor, setPrimaryColor] = useState("#3B82F6");
 
@@ -146,6 +148,8 @@ export default function Appearance() {
       setAgentName(persona.agentName || "");
       setAvatarUrl(persona.avatarUrl || "");
       setWelcomeMessage(persona.welcomeMessage || "");
+      setWelcomeMessageColor(persona.welcomeMessageColor || "#000000");
+      setWelcomeMessageSize(persona.welcomeMessageSize || "medium");
       setSystemPrompt(persona.systemPrompt || "");
       setPrimaryColor(persona.primaryColor || "#3B82F6");
       
@@ -330,6 +334,8 @@ export default function Appearance() {
       agentName,
       avatarUrl: avatarUrl || null,
       welcomeMessage: welcomeMessage || null,
+      welcomeMessageColor: welcomeMessageColor || "#000000",
+      welcomeMessageSize: welcomeMessageSize || "medium",
       systemPrompt: systemPrompt || null,
       primaryColor,
       layoutStyle,
@@ -511,6 +517,49 @@ export default function Appearance() {
                     rows={3}
                   />
                   <p className="text-xs text-muted-foreground">客戶進入對話頁面時看到的第一條訊息</p>
+                  
+                  {/* Welcome Message Styling */}
+                  <div className="grid grid-cols-2 gap-4 mt-3 pt-3 border-t">
+                    <div className="space-y-2">
+                      <Label htmlFor="welcomeMessageColor">文字顏色</Label>
+                      <div className="flex gap-2">
+                        <input
+                          type="color"
+                          id="welcomeMessageColor"
+                          value={welcomeMessageColor}
+                          onChange={(e) => setWelcomeMessageColor(e.target.value)}
+                          className="h-9 w-16 rounded border border-input cursor-pointer"
+                        />
+                        <input
+                          type="text"
+                          value={welcomeMessageColor}
+                          onChange={(e) => setWelcomeMessageColor(e.target.value)}
+                          className="h-9 flex-1 rounded-md border border-input bg-background px-3 py-1 text-sm"
+                          placeholder="#000000"
+                        />
+                      </div>
+                    </div>
+                    
+                    <div className="space-y-2">
+                      <Label htmlFor="welcomeMessageSize">文字大小</Label>
+                      <select
+                        id="welcomeMessageSize"
+                        value={welcomeMessageSize}
+                        onChange={(e) => setWelcomeMessageSize(e.target.value)}
+                        className="h-9 w-full rounded-md border border-input bg-background px-3 py-1 text-sm"
+                      >
+                        <option value="xsmall">超小 (12px)</option>
+                        <option value="small">小 (14px)</option>
+                        <option value="medium">中 (16px)</option>
+                        <option value="large">大 (18px)</option>
+                        <option value="xlarge">特大 (20px)</option>
+                        <option value="xxlarge">超大 (24px)</option>
+                        <option value="xxxlarge">巨大 (28px)</option>
+                        <option value="huge">極大 (32px)</option>
+                        <option value="massive">超級大 (36px)</option>
+                      </select>
+                    </div>
+                  </div>
                 </div>
 
                 <div className="space-y-2">
@@ -582,7 +631,30 @@ export default function Appearance() {
                     {profilePhotoUrl ? (
                       <div className="relative">
                         <img src={profilePhotoUrl} alt="Profile" className="h-14 w-14 rounded-full object-cover border-2 border-background shadow-md" />
-                        <button onClick={() => setProfilePhotoUrl("")} className="absolute -top-1 -right-1 h-5 w-5 rounded-full bg-destructive text-destructive-foreground flex items-center justify-center hover:bg-destructive/90">
+                        <button 
+                          onClick={async () => {
+                            try {
+                              setUploadingProfile(true);
+                              // Use backend proxy to get image as base64
+                              const result = await utils.client.images.getImageAsBase64.query({ imageUrl: profilePhotoUrl });
+                              setCropperImage(result.dataUrl);
+                              setCropperType("profile");
+                              setCropperOpen(true);
+                              setUploadingProfile(false);
+                            } catch (error) {
+                              console.error("Failed to load image:", error);
+                              toast.error("無法載入圖片，請重新上傳");
+                              setUploadingProfile(false);
+                            }
+                          }}
+                          className="absolute -top-1 -right-1 h-5 w-5 rounded-full bg-black/50 text-white flex items-center justify-center hover:bg-black/70"
+                          title="編輯個人照片"
+                        >
+                          <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3" viewBox="0 0 20 20" fill="currentColor">
+                            <path d="M13.586 3.586a2 2 0 112.828 2.828l-.793.793-2.828-2.828.793-.793zM11.379 5.793L3 14.172V17h2.828l8.38-8.379-2.83-2.828z" />
+                          </svg>
+                        </button>
+                        <button onClick={() => setProfilePhotoUrl("")} className="absolute -top-1 -left-1 h-5 w-5 rounded-full bg-destructive text-destructive-foreground flex items-center justify-center hover:bg-destructive/90">
                           <X className="h-3 w-3" />
                         </button>
                       </div>
@@ -697,11 +769,21 @@ export default function Appearance() {
                           <img src={backgroundImageUrl} alt="Background" className="w-full h-32 object-cover" />
                           <div className="absolute top-2 right-2 flex gap-2">
                             <button 
-                              onClick={() => {
-                                setCropperImage(backgroundImageUrl);
-                                setCropperType("background");
-                                setCropperOpen(true);
-                              }} 
+                              onClick={async () => {
+                                try {
+                                  setUploadingBackground(true);
+                                  // Use backend proxy to get image as base64
+                                  const result = await utils.client.images.getImageAsBase64.query({ imageUrl: backgroundImageUrl });
+                                  setCropperImage(result.dataUrl);
+                                  setCropperType("background");
+                                  setCropperOpen(true);
+                                  setUploadingBackground(false);
+                                } catch (error) {
+                                  console.error("Failed to load image:", error);
+                                  toast.error("無法載入圖片，請重新上傳");
+                                  setUploadingBackground(false);
+                                }
+                              }}
                               className="h-6 w-6 rounded-full bg-black/50 text-white flex items-center justify-center hover:bg-black/70"
                               title="編輯背景圖片"
                             >
@@ -1019,6 +1101,8 @@ export default function Appearance() {
             agentName={agentName}
             avatarUrl={avatarUrl}
             welcomeMessage={welcomeMessage}
+            welcomeMessageColor={welcomeMessageColor}
+            welcomeMessageSize={welcomeMessageSize}
             primaryColor={primaryColor}
             suggestedQuestions={suggestedQuestions}
             quickButtons={(buttons || []).filter(b => b.isActive).map(b => ({

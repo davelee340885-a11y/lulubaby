@@ -1,5 +1,7 @@
-import { COOKIE_NAME } from "@shared/const";
+import { TRPCError } from "@trpc/server";
 import { getSessionCookieOptions } from "./_core/cookies";
+import { customerAuthRouter } from "./customerAuthRouter";
+import { COOKIE_NAME } from "../shared/const";
 import { systemRouter } from "./_core/systemRouter";
 import { publicProcedure, protectedProcedure, router } from "./_core/trpc";
 import { z } from "zod";
@@ -76,6 +78,8 @@ export const appRouter = router({
         agentName: z.string().min(1).max(100),
         avatarUrl: z.string().optional().nullable(),
         welcomeMessage: z.string().optional().nullable(),
+        welcomeMessageColor: z.string().optional().nullable(),
+        welcomeMessageSize: z.string().optional().nullable(),
         systemPrompt: z.string().optional().nullable(),
         primaryColor: z.string().optional(),
         layoutStyle: z.enum(["minimal", "professional", "custom"]).optional(),
@@ -94,11 +98,14 @@ export const appRouter = router({
         chatPlaceholder: z.string().optional().nullable(),
       }))
       .mutation(async ({ ctx, input }) => {
+        console.log('[persona.upsert] input:', { welcomeMessageColor: input.welcomeMessageColor, welcomeMessageSize: input.welcomeMessageSize });
         return upsertPersona({
           userId: ctx.user.id,
           agentName: input.agentName,
           avatarUrl: input.avatarUrl ?? undefined,
           welcomeMessage: input.welcomeMessage ?? undefined,
+          welcomeMessageColor: input.welcomeMessageColor ?? undefined,
+          welcomeMessageSize: input.welcomeMessageSize ?? undefined,
           systemPrompt: input.systemPrompt ?? undefined,
           primaryColor: input.primaryColor,
           layoutStyle: input.layoutStyle,
@@ -142,6 +149,8 @@ export const appRouter = router({
           agentName: persona.agentName,
           avatarUrl: persona.avatarUrl,
           welcomeMessage: persona.welcomeMessage || "您好！我是您的專屬AI助手，請問有什麼可以幫您？",
+          welcomeMessageColor: persona.welcomeMessageColor,
+          welcomeMessageSize: persona.welcomeMessageSize,
           primaryColor: persona.primaryColor,
           layoutStyle: persona.layoutStyle,
           backgroundType: persona.backgroundType,
@@ -166,7 +175,8 @@ export const appRouter = router({
   }),
 
   // Image upload to S3
-  images: router({    uploadImage: protectedProcedure
+  images: router({
+    uploadImage: protectedProcedure
       .input(z.object({
         fileName: z.string(),
         fileContent: z.string(), // base64 encoded
@@ -181,6 +191,37 @@ export const appRouter = router({
         const { url } = await storagePut(fileKey, fileBuffer, input.mimeType);
         
         return { url, fileKey };
+      }),
+
+    // Get image as base64 (proxy to avoid CORS issues)
+    getImageAsBase64: protectedProcedure
+      .input(z.object({
+        imageUrl: z.string(),
+      }))
+      .query(async ({ input }) => {
+        try {
+          // Fetch the image from S3/storage
+          const response = await fetch(input.imageUrl);
+          if (!response.ok) {
+            throw new Error(`Failed to fetch image: ${response.statusText}`);
+          }
+          
+          const arrayBuffer = await response.arrayBuffer();
+          const buffer = Buffer.from(arrayBuffer);
+          const base64 = buffer.toString('base64');
+          
+          // Get content type from response headers
+          const contentType = response.headers.get('content-type') || 'image/jpeg';
+          
+          return {
+            base64,
+            contentType,
+            dataUrl: `data:${contentType};base64,${base64}`,
+          };
+        } catch (error) {
+          console.error('Error fetching image:', error);
+          throw new Error(`Failed to fetch image: ${error}`);
+        }
       }),
   }),
 
@@ -2295,5 +2336,8 @@ ${knowledgeContent.substring(0, 10000)}
       return summary;
     }),
   }),
+
+  // Customer authentication (for chat widget)
+  customerAuth: customerAuthRouter,
 });
 export type AppRouter = typeof appRouter;

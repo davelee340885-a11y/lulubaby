@@ -4,7 +4,8 @@ import { Input } from "@/components/ui/input";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
-import { Send, Loader2, Bot, User, Search, Calendar, Link as LinkIcon, MessageSquare, ExternalLink, Sparkles, FileText, Building2, Phone, HelpCircle, ShoppingBag, UserCircle } from "lucide-react";
+import { Send, Loader2, Bot, User, Search, Calendar, Link as LinkIcon, MessageSquare, ExternalLink, Sparkles, FileText, Building2, Phone, HelpCircle, ShoppingBag, UserCircle, LogIn } from "lucide-react";
+import { CustomerLoginDialog, CustomerLoginButton, CustomerInfo, useCustomerAuth, type CustomerUser } from "@/components/CustomerLoginDialog";
 import { useState, useEffect, useRef } from "react";
 import { useParams } from "wouter";
 import { nanoid } from "nanoid";
@@ -59,6 +60,10 @@ export default function Chat() {
   const [isTyping, setIsTyping] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
+  
+  // Customer login state
+  const { user: customer, login: handleCustomerLogin, logout: handleCustomerLogout } = useCustomerAuth(personaId);
+  const [showLoginDialog, setShowLoginDialog] = useState(false);
 
   const { data: persona, isLoading: personaLoading } = trpc.persona.getPublic.useQuery(
     { personaId },
@@ -279,6 +284,11 @@ export default function Chat() {
       handleKeyDown={handleKeyDown}
       handleQuickButton={handleQuickButton}
       handleSuggestedQuestion={handleSuggestedQuestion}
+      customer={customer}
+      showLoginDialog={showLoginDialog}
+      setShowLoginDialog={setShowLoginDialog}
+      onLogin={handleCustomerLogin}
+      onLogout={handleCustomerLogout}
     />;
   }
 
@@ -301,6 +311,11 @@ export default function Chat() {
       handleKeyDown={handleKeyDown}
       handleQuickButton={handleQuickButton}
       handleSuggestedQuestion={handleSuggestedQuestion}
+      customer={customer}
+      showLoginDialog={showLoginDialog}
+      setShowLoginDialog={setShowLoginDialog}
+      onLogin={handleCustomerLogin}
+      onLogout={handleCustomerLogout}
     />;
   }
 
@@ -322,8 +337,29 @@ export default function Chat() {
     handleKeyDown={handleKeyDown}
     handleQuickButton={handleQuickButton}
     handleSuggestedQuestion={handleSuggestedQuestion}
+    customer={customer}
+    showLoginDialog={showLoginDialog}
+    setShowLoginDialog={setShowLoginDialog}
+    onLogin={handleCustomerLogin}
+    onLogout={handleCustomerLogout}
   />;
 }
+
+// Helper function to get welcome message font size
+const getWelcomeMessageFontSize = (size: string | null) => {
+  switch (size) {
+    case "xsmall": return "12px";
+    case "small": return "14px";
+    case "medium": return "16px";
+    case "large": return "18px";
+    case "xlarge": return "20px";
+    case "xxlarge": return "24px";
+    case "xxxlarge": return "28px";
+    case "huge": return "32px";
+    case "massive": return "36px";
+    default: return "16px";
+  }
+};
 
 // Persona type from API
 type PersonaData = {
@@ -331,6 +367,8 @@ type PersonaData = {
   agentName: string;
   avatarUrl: string | null;
   welcomeMessage: string;
+  welcomeMessageColor: string | null;
+  welcomeMessageSize: string | null;
   primaryColor: string | null;
   layoutStyle: string | null;
   backgroundImageUrl: string | null;
@@ -367,6 +405,12 @@ type LayoutProps = {
   handleKeyDown: (e: React.KeyboardEvent) => void;
   handleQuickButton: (button: NonNullable<LayoutProps["persona"]>["quickButtons"][0]) => void;
   handleSuggestedQuestion: (question: string) => void;
+  // Customer login props
+  customer: CustomerUser | null;
+  showLoginDialog: boolean;
+  setShowLoginDialog: (show: boolean) => void;
+  onLogin: (user: CustomerUser) => void;
+  onLogout: () => void;
 };
 
 // Quick Button Component with different display modes
@@ -487,6 +531,11 @@ function MinimalLayout({
   handleKeyDown,
   handleQuickButton,
   handleSuggestedQuestion,
+  customer,
+  showLoginDialog,
+  setShowLoginDialog,
+  onLogin,
+  onLogout,
 }: LayoutProps) {
   const hasMessages = messages.length > 0;
 
@@ -499,8 +548,14 @@ function MinimalLayout({
           <div className="flex-1 flex flex-col items-center justify-center px-4 py-6">
             <div className="w-full max-w-xl text-center space-y-5">
               {/* Welcome Message - Hero Title */}
-              <h2 className="text-lg font-semibold text-foreground">
-                {persona.welcomeMessage || "您好！我是您的AI助手"}
+              <h2 
+                className="font-semibold text-foreground"
+                style={{
+                  color: persona.welcomeMessageColor || undefined,
+                  fontSize: getWelcomeMessageFontSize(persona.welcomeMessageSize),
+                }}
+              >
+                {persona.welcomeMessage || "您好！我是AI助手"}
               </h2>
               
               {/* Input Area - Centered, Prominent */}
@@ -638,6 +693,12 @@ function MinimalLayout({
             )}
 
             <div className="flex gap-1.5 items-center">
+              {/* Customer Login Button */}
+              {customer ? (
+                <CustomerInfo user={customer} onLogout={onLogout} />
+              ) : (
+                <CustomerLoginButton onClick={() => setShowLoginDialog(true)} />
+              )}
               <Input
                 ref={inputRef}
                 placeholder={chatPlaceholder}
@@ -645,7 +706,7 @@ function MinimalLayout({
                 onChange={(e) => setInput(e.target.value)}
                 onKeyDown={handleKeyDown}
                 disabled={isTyping}
-                className="rounded-full h-8 text-xs px-3"
+                className="rounded-full h-8 text-xs px-3 flex-1"
               />
               <Button
                 onClick={() => handleSend()}
@@ -660,6 +721,15 @@ function MinimalLayout({
           </div>
         </div>
       )}
+      
+      {/* Customer Login Dialog */}
+      <CustomerLoginDialog
+        open={showLoginDialog}
+        onOpenChange={setShowLoginDialog}
+        personaId={persona.id}
+        primaryColor={primaryColor}
+        onLoginSuccess={onLogin}
+      />
     </div>
   );
 }
@@ -682,6 +752,11 @@ function ProfessionalLayout({
   handleKeyDown,
   handleQuickButton,
   handleSuggestedQuestion,
+  customer,
+  showLoginDialog,
+  setShowLoginDialog,
+  onLogin,
+  onLogout,
 }: LayoutProps) {
   const hasStartedChat = messages.length > 0;
 
@@ -694,7 +769,13 @@ function ProfessionalLayout({
           <div className="flex-1 flex flex-col items-center justify-center px-4 py-6">
             <div className="w-full max-w-xl text-center space-y-5">
               {/* Welcome Message - Hero Title */}
-              <h2 className="text-lg font-semibold text-foreground">
+              <h2 
+                className="font-semibold text-foreground"
+                style={{
+                  color: persona.welcomeMessageColor || undefined,
+                  fontSize: getWelcomeMessageFontSize(persona.welcomeMessageSize),
+                }}
+              >
                 {persona.welcomeMessage || "您好！我是您的AI助手"}
               </h2>
               
@@ -844,6 +925,12 @@ function ProfessionalLayout({
           )}
 
           <div className="flex gap-2 items-center">
+            {/* Customer Login Button */}
+            {customer ? (
+              <CustomerInfo user={customer} onLogout={onLogout} />
+            ) : (
+              <CustomerLoginButton onClick={() => setShowLoginDialog(true)} />
+            )}
             <Input
               ref={inputRef}
               placeholder={chatPlaceholder}
@@ -851,7 +938,7 @@ function ProfessionalLayout({
               onChange={(e) => setInput(e.target.value)}
               onKeyDown={handleKeyDown}
               disabled={isTyping}
-              className="rounded-full h-9 text-sm"
+              className="rounded-full h-9 text-sm flex-1"
             />
             <Button
               onClick={() => handleSend()}
@@ -866,6 +953,15 @@ function ProfessionalLayout({
         </div>
       </div>
       )}
+      
+      {/* Customer Login Dialog */}
+      <CustomerLoginDialog
+        open={showLoginDialog}
+        onOpenChange={setShowLoginDialog}
+        personaId={persona.id}
+        primaryColor={primaryColor}
+        onLoginSuccess={onLogin}
+      />
     </div>
   );
 }
@@ -888,6 +984,11 @@ function CustomLayout({
   handleKeyDown,
   handleQuickButton,
   handleSuggestedQuestion,
+  customer,
+  showLoginDialog,
+  setShowLoginDialog,
+  onLogin,
+  onLogout,
 }: LayoutProps) {
   const hasStartedChat = messages.length > 0;
   const backgroundType = (persona as any).backgroundType || "none";
@@ -950,7 +1051,13 @@ function CustomLayout({
             {!immersiveMode && backgroundImage && <div className="absolute inset-0 bg-black/40 -z-10" />}
             <div className="w-full max-w-xl text-center space-y-5 relative z-10">
               {/* Welcome Message - Hero Title */}
-              <h2 className={`text-lg font-semibold ${!immersiveMode && hasBackgroundImage ? "text-white" : "text-foreground"}`}>
+              <h2 
+                className={`font-semibold ${!immersiveMode && hasBackgroundImage ? "text-white" : "text-foreground"}`}
+                style={{
+                  color: persona.welcomeMessageColor || undefined,
+                  fontSize: getWelcomeMessageFontSize(persona.welcomeMessageSize),
+                }}
+              >
                 {persona.welcomeMessage || "您好！我是您的AI助手"}
               </h2>
               
@@ -1102,6 +1209,12 @@ function CustomLayout({
             )}
 
             <div className="flex gap-2 items-center">
+              {/* Customer Login Button */}
+              {customer ? (
+                <CustomerInfo user={customer} onLogout={onLogout} />
+              ) : (
+                <CustomerLoginButton onClick={() => setShowLoginDialog(true)} />
+              )}
               <Input
                 ref={inputRef}
                 placeholder={chatPlaceholder}
@@ -1109,7 +1222,7 @@ function CustomLayout({
                 onChange={(e) => setInput(e.target.value)}
                 onKeyDown={handleKeyDown}
                 disabled={isTyping}
-                className="rounded-full h-9 text-sm bg-background"
+                className="rounded-full h-9 text-sm bg-background flex-1"
               />
               <Button
                 onClick={() => handleSend()}
@@ -1124,6 +1237,15 @@ function CustomLayout({
           </div>
         </div>
       )}
+      
+      {/* Customer Login Dialog */}
+      <CustomerLoginDialog
+        open={showLoginDialog}
+        onOpenChange={setShowLoginDialog}
+        personaId={persona.id}
+        primaryColor={primaryColor}
+        onLoginSuccess={onLogin}
+      />
     </div>
   );
 }

@@ -1,0 +1,37 @@
+{
+  "query": "SELECT * FROM ai_personas WHERE userId = 1;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user VqBKoEwKfw4feq4.6cd8cd1ff95f --database aavW9BLbZ6sZHaPEemayyD --execute SELECT * FROM ai_personas WHERE userId = 1;",
+  "rows": [
+    {
+      "id": "1",
+      "userId": "1",
+      "agentName": "Dave Lee",
+      "avatarUrl": "NULL",
+      "welcomeMessage": "我哋係 UNO SPARK 團隊, 可以點樣幫到你？",
+      "welcomeMessageColor": "#f40bd5",
+      "welcomeMessageSize": "massive",
+      "systemPrompt": "我哋係20年的專業保險團隊, 內容包括個人保險家族辦公室投資移民教育顧問服務可以幫顧客, 希望顧客留低聯絡方法，我們有專人跟進。專業口吻，歡迎客戶的口吻，熱誠的服務去解答客戶問題。",
+      "primaryColor": "#0bead0",
+      "createdAt": "2025-12-31 06:00:10",
+      "updatedAt": "2026-01-08 08:35:20",
+      "layoutStyle": "professional",
+      "backgroundType": "image",
+      "backgroundColor": "#f20785",
+      "backgroundImageUrl": "https://d2xsxph8kpxj0f.cloudfront.net/310519663118989199/aavW9BLbZ6sZHaPEemayyD/images/1/background/keRm5Hw6OB5Qdb8HmCIqE.jpg",
+      "immersiveMode": "1",
+      "profilePhotoUrl": "https://d2xsxph8kpxj0f.cloudfront.net/310519663118989199/aavW9BLbZ6sZHaPEemayyD/images/1/profile/PXKVjQOQVdPNNffH8Tdc_.jpg",
+      "tagline": "友邦專業團隊",
+      "suggestedQuestions": "[\"你們有什麼保險產品？\",\"如何預約諮詢？\"]",
+      "showQuickButtons": "1",
+      "buttonDisplayMode": "full",
+      "chatPlaceholder": "請輸入您的問題...",
+      "backgroundSize": "cover",
+      "backgroundPosition": "center",
+      "backgroundRepeat": "no-repeat"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\tuserId\tagentName\tavatarUrl\twelcomeMessage\twelcomeMessageColor\twelcomeMessageSize\tsystemPrompt\tprimaryColor\tcreatedAt\tupdatedAt\tlayoutStyle\tbackgroundType\tbackgroundColor\tbackgroundImageUrl\timmersiveMode\tprofilePhotoUrl\ttagline\tsuggestedQuestions\tshowQuickButtons\tbuttonDisplayMode\tchatPlaceholder\tbackgroundSize\tbackgroundPosition\tbackgroundRepeat\n1\t1\tDave Lee\tNULL\t我哋係 UNO SPARK 團隊, 可以點樣幫到你？\t#f40bd5\tmassive\t我哋係20年的專業保險團隊, 內容包括個人保險家族辦公室投資移民教育顧問服務可以幫顧客, 希望顧客留低聯絡方法，我們有專人跟進。專業口吻，歡迎客戶的口吻，熱誠的服務去解答客戶問題。\t#0bead0\t2025-12-31 06:00:10\t2026-01-08 08:35:20\tprofessional\timage\t#f20785\thttps://d2xsxph8kpxj0f.cloudfront.net/310519663118989199/aavW9BLbZ6sZHaPEemayyD/images/1/background/keRm5Hw6OB5Qdb8HmCIqE.jpg\t1\thttps://d2xsxph8kpxj0f.cloudfront.net/310519663118989199/aavW9BLbZ6sZHaPEemayyD/images/1/profile/PXKVjQOQVdPNNffH8Tdc_.jpg\t友邦專業團隊\t[\"你們有什麼保險產品？\",\"如何預約諮詢？\"]\t1\tfull\t請輸入您的問題...\tcover\tcenter\tno-repeat\n",
+  "stderr": "",
+  "execution_time_ms": 1592
+}

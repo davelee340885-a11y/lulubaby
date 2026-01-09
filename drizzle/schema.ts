@@ -28,6 +28,8 @@ export const aiPersonas = mysqlTable("ai_personas", {
   agentName: varchar("agentName", { length: 100 }).default("AI Assistant").notNull(),
   avatarUrl: varchar("avatarUrl", { length: 512 }),
   welcomeMessage: text("welcomeMessage"),
+  welcomeMessageColor: varchar("welcomeMessageColor", { length: 20 }).default("#000000"), // Welcome message text color
+  welcomeMessageSize: varchar("welcomeMessageSize", { length: 20 }).default("medium"), // small, medium, large, xlarge
   systemPrompt: text("systemPrompt"),
   primaryColor: varchar("primaryColor", { length: 20 }).default("#3B82F6"),
   

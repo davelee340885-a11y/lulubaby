@@ -22,6 +22,7 @@ import Team from "./pages/Team";
 import Customers from "./pages/Customers";
 import Widget from "./pages/Widget";
 import CustomDomainChat from "./pages/CustomDomainChat";
+import ApiDocs from "./pages/ApiDocs";
 
 function DashboardRoutes() {
   return (
@@ -41,7 +42,7 @@ function DashboardRoutes() {
         <Route path="/team" component={Team} />
         <Route path="/customers" component={Customers} />
         <Route path="/widget" component={Widget} />
-        <Route path="/api-docs" component={Widget} />
+        <Route path="/api-docs" component={ApiDocs} />
         <Route component={NotFound} />
       </Switch>
     </DashboardLayout>

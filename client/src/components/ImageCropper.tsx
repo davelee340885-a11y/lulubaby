@@ -1,4 +1,4 @@
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
 import Cropper from "react-easy-crop";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
@@ -42,6 +42,7 @@ export default function ImageCropper({
   const [rotation, setRotation] = useState(0);
   const [croppedAreaPixels, setCroppedAreaPixels] = useState<any>(null);
   const [processing, setProcessing] = useState(false);
+  const [previewUrl, setPreviewUrl] = useState<string>("");
   
   // Display settings state (for background images)
   const [backgroundSize, setBackgroundSize] = useState(initialDisplaySettings.backgroundSize || "cover");
@@ -63,11 +64,38 @@ export default function ImageCropper({
     []
   );
 
+  // Generate preview when crop/zoom/rotation changes
+  useEffect(() => {
+    if (!croppedAreaPixels || !showDisplaySettings) return;
+
+    const generatePreview = async () => {
+      try {
+        const croppedBlob = await getCroppedImg(imageSrc, croppedAreaPixels);
+        const url = URL.createObjectURL(croppedBlob);
+        setPreviewUrl(url);
+        
+        // Clean up old URL
+        return () => {
+          if (url) URL.revokeObjectURL(url);
+        };
+      } catch (error) {
+        console.error("Error generating preview:", error);
+      }
+    };
+
+    generatePreview();
+  }, [croppedAreaPixels, imageSrc, showDisplaySettings]);
+
   const createImage = (url: string): Promise<HTMLImageElement> =>
     new Promise((resolve, reject) => {
       const image = new Image();
+      image.crossOrigin = "anonymous"; // Fix CORS issue for S3 images
       image.addEventListener("load", () => resolve(image));
-      image.addEventListener("error", (error) => reject(error));
+      image.addEventListener("error", (error) => {
+        console.error("Image load error:", error);
+        console.error("Image URL:", url);
+        reject(new Error(`Failed to load image from URL: ${url}. Error: ${error}`));
+      });
       image.src = url;
     });
 
@@ -206,7 +234,7 @@ export default function ImageCropper({
                   className="w-full rounded-md border overflow-hidden bg-muted relative"
                   style={{
                     aspectRatio: '16 / 9',
-                    backgroundImage: `url(${imageSrc})`,
+                    backgroundImage: previewUrl ? `url(${previewUrl})` : `url(${imageSrc})`,
                     backgroundSize: backgroundSize,
                     backgroundPosition: backgroundPosition,
                     backgroundRepeat: backgroundRepeat,
