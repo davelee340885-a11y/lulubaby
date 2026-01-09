@@ -4,7 +4,8 @@ import { Input } from "@/components/ui/input";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
-import { Send, Loader2, Bot, User, Search, Calendar, Link as LinkIcon, MessageSquare, ExternalLink, Sparkles, FileText, Building2, Phone, HelpCircle, ShoppingBag, UserCircle, AlertCircle } from "lucide-react";
+import { Send, Loader2, Bot, User, Search, Calendar, Link as LinkIcon, MessageSquare, ExternalLink, Sparkles, FileText, Building2, Phone, HelpCircle, ShoppingBag, UserCircle, AlertCircle, LogIn } from "lucide-react";
+import { CustomerLoginDialog, CustomerLoginButton, CustomerInfo, useCustomerAuth, type CustomerUser } from "@/components/CustomerLoginDialog";
 import { useState, useEffect, useRef } from "react";
 import { nanoid } from "nanoid";
 import { Streamdown } from "streamdown";
@@ -172,6 +173,10 @@ export default function CustomDomainChat() {
   const [isTyping, setIsTyping] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
+  
+  // Customer login state
+  const { user: customer, login: handleCustomerLogin, logout: handleCustomerLogout } = useCustomerAuth(personaId);
+  const [showLoginDialog, setShowLoginDialog] = useState(false);
 
   const { data: persona, isLoading: personaLoading } = trpc.persona.getPublic.useQuery(
     { personaId },
@@ -443,6 +448,15 @@ export default function CustomDomainChat() {
                   </div>
                 )}
               </div>
+              
+              {/* Customer Login Button - Fixed Bottom Left */}
+              <div className="fixed bottom-4 left-4 z-50">
+                {customer ? (
+                  <CustomerInfo user={customer} onLogout={handleCustomerLogout} />
+                ) : (
+                  <CustomerLoginButton onClick={() => setShowLoginDialog(true)} />
+                )}
+              </div>
             </div>
           )}
 
@@ -533,6 +547,12 @@ export default function CustomDomainChat() {
               )}
 
               <div className="flex gap-2 items-center">
+                {/* Customer Login Button */}
+                {customer ? (
+                  <CustomerInfo user={customer} onLogout={handleCustomerLogout} />
+                ) : (
+                  <CustomerLoginButton onClick={() => setShowLoginDialog(true)} />
+                )}
                 <Input
                   ref={inputRef}
                   placeholder={chatPlaceholder}
@@ -540,7 +560,7 @@ export default function CustomDomainChat() {
                   onChange={(e) => setInput(e.target.value)}
                   onKeyDown={handleKeyDown}
                   disabled={isTyping}
-                  className="rounded-full h-9 text-sm bg-background"
+                  className="rounded-full h-9 text-sm bg-background flex-1"
                 />
                 <Button
                   onClick={() => handleSend()}
@@ -555,6 +575,15 @@ export default function CustomDomainChat() {
             </div>
           </div>
         )}
+        
+        {/* Customer Login Dialog for custom layout */}
+        <CustomerLoginDialog
+          open={showLoginDialog}
+          onOpenChange={setShowLoginDialog}
+          personaId={persona.id}
+          primaryColor={primaryColor}
+          onLoginSuccess={handleCustomerLogin}
+        />
       </div>
     );
   }
@@ -618,6 +647,15 @@ export default function CustomDomainChat() {
                     onButtonClick={handleQuickButton}
                   />
                 </div>
+              )}
+            </div>
+            
+            {/* Customer Login Button - Fixed Bottom Left */}
+            <div className="fixed bottom-4 left-4 z-50">
+              {customer ? (
+                <CustomerInfo user={customer} onLogout={handleCustomerLogout} />
+              ) : (
+                <CustomerLoginButton onClick={() => setShowLoginDialog(true)} />
               )}
             </div>
           </div>
@@ -710,6 +748,12 @@ export default function CustomDomainChat() {
             )}
 
             <div className="flex gap-2 items-center">
+              {/* Customer Login Button */}
+              {customer ? (
+                <CustomerInfo user={customer} onLogout={handleCustomerLogout} />
+              ) : (
+                <CustomerLoginButton onClick={() => setShowLoginDialog(true)} />
+              )}
               <Input
                 ref={inputRef}
                 placeholder={chatPlaceholder}
@@ -717,7 +761,7 @@ export default function CustomDomainChat() {
                 onChange={(e) => setInput(e.target.value)}
                 onKeyDown={handleKeyDown}
                 disabled={isTyping}
-                className="rounded-full h-9 text-sm"
+                className="rounded-full h-9 text-sm flex-1"
               />
               <Button
                 onClick={() => handleSend()}
@@ -732,6 +776,15 @@ export default function CustomDomainChat() {
           </div>
         </div>
       )}
+      
+      {/* Customer Login Dialog */}
+      <CustomerLoginDialog
+        open={showLoginDialog}
+        onOpenChange={setShowLoginDialog}
+        personaId={persona.id}
+        primaryColor={primaryColor}
+        onLoginSuccess={handleCustomerLogin}
+      />
     </div>
   );
 }

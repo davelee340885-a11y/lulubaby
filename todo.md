@@ -1086,3 +1086,16 @@
 - [x] 更新 Chat.tsx 添加登入按鈕（三種佈局都已添加）
 - [x] 創建 API 文檔頁面 (ApiDocs.tsx)
 - [x] 更新 App.tsx 路由配置
+
+
+## 客戶登入功能修復（緊急修復）
+- [x] 檢查 Chat.tsx 中的登入按鈕實現
+- [x] 檢查 CustomDomainChat.tsx 中的登入按鈕實現
+- [x] 在 Chat.tsx 的 MinimalLayout 歡迎頁面添加固定登入按鈕
+- [x] 在 Chat.tsx 的 ProfessionalLayout 歡迎頁面添加固定登入按鈕
+- [x] 在 Chat.tsx 的 CustomLayout 歡迎頁面添加固定登入按鈕
+- [x] 在 CustomDomainChat.tsx 添加 CustomerLoginDialog 導入
+- [x] 在 CustomDomainChat.tsx 添加客戶登入狀態管理
+- [x] 在 CustomDomainChat.tsx 的 custom 佈局添加登入按鈕和對話框
+- [x] 在 CustomDomainChat.tsx 的 minimal/professional 佈局添加登入按鈕和對話框
+- [x] 測試修復效果

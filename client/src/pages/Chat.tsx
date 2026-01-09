@@ -610,6 +610,15 @@ function MinimalLayout({
                 </div>
               )}
             </div>
+            
+            {/* Customer Login Button - Fixed Bottom Left */}
+            <div className="fixed bottom-4 left-4">
+              {customer ? (
+                <CustomerInfo user={customer} onLogout={onLogout} />
+              ) : (
+                <CustomerLoginButton onClick={() => setShowLoginDialog(true)} />
+              )}
+            </div>
           </div>
         )}
 
@@ -829,6 +838,15 @@ function ProfessionalLayout({
                     onButtonClick={handleQuickButton}
                   />
                 </div>
+              )}
+            </div>
+            
+            {/* Customer Login Button - Fixed Bottom Left */}
+            <div className="fixed bottom-4 left-4">
+              {customer ? (
+                <CustomerInfo user={customer} onLogout={onLogout} />
+              ) : (
+                <CustomerLoginButton onClick={() => setShowLoginDialog(true)} />
               )}
             </div>
           </div>
@@ -1112,6 +1130,15 @@ function CustomLayout({
                     hasBackground={!!backgroundImage || !!backgroundColor}
                   />
                 </div>
+              )}
+            </div>
+            
+            {/* Customer Login Button - Fixed Bottom Left */}
+            <div className="fixed bottom-4 left-4 z-50">
+              {customer ? (
+                <CustomerInfo user={customer} onLogout={onLogout} />
+              ) : (
+                <CustomerLoginButton onClick={() => setShowLoginDialog(true)} />
               )}
             </div>
           </div>
