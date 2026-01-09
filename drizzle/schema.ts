@@ -550,6 +550,15 @@ export const customers = mysqlTable("customers", {
   company: varchar("company", { length: 200 }),
   title: varchar("title", { length: 100 }), // Job title
   
+  // Authentication fields
+  passwordHash: varchar("passwordHash", { length: 255 }), // Hashed password for login
+  isEmailVerified: boolean("isEmailVerified").default(false).notNull(), // Email verification status
+  emailVerificationToken: varchar("emailVerificationToken", { length: 128 }), // Token for email verification
+  emailVerificationExpiry: timestamp("emailVerificationExpiry"), // Expiry time for verification token
+  passwordResetToken: varchar("passwordResetToken", { length: 128 }), // Token for password reset
+  passwordResetExpiry: timestamp("passwordResetExpiry"), // Expiry time for reset token
+  lastLoginAt: timestamp("lastLoginAt"), // Last successful login time
+  
   // Customer preferences and notes
   preferredLanguage: varchar("preferredLanguage", { length: 20 }).default("zh-TW"),
   tags: text("tags"), // JSON array of tags for categorization

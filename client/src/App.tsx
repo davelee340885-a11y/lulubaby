@@ -21,6 +21,7 @@ import Team from "./pages/Team";
 import Customers from "./pages/Customers";
 import Widget from "./pages/Widget";
 import CustomDomainChat from "./pages/CustomDomainChat";
+import CustomerDashboard from "./pages/CustomerDashboard";
 
 function DashboardRoutes() {
   return (
@@ -55,8 +56,13 @@ function Router() {
     !window.location.hostname.includes('manus.computer');
   
   // If custom domain, show custom domain chat page for root path
-  if (isCustomDomain && window.location.pathname === '/') {
-    return <CustomDomainChat />;
+  if (isCustomDomain) {
+    if (window.location.pathname === '/') {
+      return <CustomDomainChat />;
+    }
+    if (window.location.pathname === '/dashboard') {
+      return <CustomerDashboard />;
+    }
   }
   
   return (

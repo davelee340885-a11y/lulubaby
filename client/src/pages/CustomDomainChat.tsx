@@ -4,17 +4,31 @@ import { Input } from "@/components/ui/input";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
-import { Send, Loader2, Bot, User, Search, Calendar, Link as LinkIcon, MessageSquare, ExternalLink, Sparkles, FileText, Building2, Phone, HelpCircle, ShoppingBag, UserCircle, AlertCircle } from "lucide-react";
+import { Send, Loader2, Bot, User, Search, Calendar, Link as LinkIcon, MessageSquare, ExternalLink, Sparkles, FileText, Building2, Phone, HelpCircle, ShoppingBag, UserCircle, AlertCircle, LogIn, LogOut, LayoutDashboard } from "lucide-react";
 import { useState, useEffect, useRef } from "react";
 import { nanoid } from "nanoid";
 import { Streamdown } from "streamdown";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { CustomerAuthDialog } from "@/components/CustomerAuthDialog";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 type Message = {
   id: string;
   role: "user" | "assistant";
   content: string;
   timestamp: Date;
+};
+
+type CustomerInfo = {
+  id: number;
+  email: string | null;
+  name: string | null;
 };
 
 // Extended icon map with more options
@@ -66,6 +80,37 @@ export default function CustomDomainChat() {
   const [isTyping, setIsTyping] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
+
+  // Customer authentication state
+  const [showAuthDialog, setShowAuthDialog] = useState(false);
+  const [customer, setCustomer] = useState<CustomerInfo | null>(() => {
+    // Try to restore customer from localStorage
+    if (personaId) {
+      const stored = localStorage.getItem(`customer-${personaId}`);
+      if (stored) {
+        try {
+          return JSON.parse(stored);
+        } catch {
+          return null;
+        }
+      }
+    }
+    return null;
+  });
+
+  // Update customer state when personaId changes
+  useEffect(() => {
+    if (personaId) {
+      const stored = localStorage.getItem(`customer-${personaId}`);
+      if (stored) {
+        try {
+          setCustomer(JSON.parse(stored));
+        } catch {
+          setCustomer(null);
+        }
+      }
+    }
+  }, [personaId]);
 
   const { data: persona, isLoading: personaLoading } = trpc.persona.getPublic.useQuery(
     { personaId },
@@ -158,6 +203,22 @@ export default function CustomDomainChat() {
     }
   };
 
+  const handleLoginSuccess = (customerInfo: CustomerInfo) => {
+    setCustomer(customerInfo);
+  };
+
+  const handleLogout = () => {
+    if (personaId) {
+      localStorage.removeItem(`customer-${personaId}`);
+    }
+    setCustomer(null);
+  };
+
+  const handleOpenDashboard = () => {
+    // Navigate to customer dashboard
+    window.location.href = `/dashboard`;
+  };
+
   // Loading state
   if (domainLoading || personaLoading) {
     return (
@@ -215,6 +276,55 @@ export default function CustomDomainChat() {
 
   return (
     <div className="flex flex-col h-screen bg-background">
+      {/* Customer Auth Button - Fixed Position */}
+      <div className="fixed bottom-4 left-4 z-50">
+        {customer ? (
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="outline" size="sm" className="gap-2 shadow-lg bg-background">
+                <Avatar className="h-6 w-6">
+                  <AvatarFallback className="text-xs">
+                    {customer.name?.[0] || customer.email?.[0]?.toUpperCase() || "U"}
+                  </AvatarFallback>
+                </Avatar>
+                <span className="max-w-[120px] truncate text-sm">
+                  {customer.name || customer.email || "用戶"}
+                </span>
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="start">
+              <DropdownMenuItem onClick={handleOpenDashboard}>
+                <LayoutDashboard className="mr-2 h-4 w-4" />
+                我的帳戶
+              </DropdownMenuItem>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem onClick={handleLogout} className="text-red-600">
+                <LogOut className="mr-2 h-4 w-4" />
+                登出
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        ) : (
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setShowAuthDialog(true)}
+            className="gap-2 shadow-lg bg-background"
+          >
+            <LogIn className="h-4 w-4" />
+            登入 / 註冊
+          </Button>
+        )}
+      </div>
+
+      {/* Customer Auth Dialog */}
+      <CustomerAuthDialog
+        open={showAuthDialog}
+        onOpenChange={setShowAuthDialog}
+        personaId={personaId}
+        onLoginSuccess={handleLoginSuccess}
+      />
+
       {/* Chat Messages Area */}
       <ScrollArea ref={scrollRef} className="flex-1 p-4">
         <div className="max-w-3xl mx-auto space-y-4">
@@ -312,7 +422,11 @@ export default function CustomDomainChat() {
                 {message.role === "user" && (
                   <Avatar className="h-8 w-8 mt-1">
                     <AvatarFallback>
-                      <User className="h-4 w-4" />
+                      {customer ? (
+                        customer.name?.[0] || customer.email?.[0]?.toUpperCase() || "U"
+                      ) : (
+                        <User className="h-4 w-4" />
+                      )}
                     </AvatarFallback>
                   </Avatar>
                 )}
@@ -349,7 +463,7 @@ export default function CustomDomainChat() {
                 handleSend();
               }
             }}
-            placeholder="輸入您的問題..."
+            placeholder={persona.chatPlaceholder || "輸入您的問題..."}
             className="flex-1"
             disabled={isTyping || !personaId}
           />

@@ -19,6 +19,8 @@ import {
   getTeamStats,
   // Customer memory operations
   getOrCreateCustomer, getCustomerById, getCustomersByPersonaId, updateCustomer, deleteCustomer, incrementCustomerMessageCount,
+  // Customer authentication operations
+  registerCustomer, loginCustomer, getCustomerByEmail, generatePasswordResetToken, resetPasswordWithToken, updateCustomerPassword,
   addCustomerMemory, getCustomerMemories, getCustomerMemoryContext, deleteCustomerMemory,
   addConversationSummary, getCustomerConversationSummaries, getRecentConversationContext, getCustomerStats,
   // Domain operations
@@ -2242,6 +2244,107 @@ ${knowledgeContent.substring(0, 10000)}
       
       return summary;
     }),
+  }),
+
+  // Customer Authentication (for end-users of the AI chat)
+  customerAuth: router({
+    // Register a new customer account
+    register: publicProcedure
+      .input(z.object({
+        personaId: z.number(),
+        email: z.string().email(),
+        password: z.string().min(6, '密碼至少需要6個字符'),
+        name: z.string().optional(),
+      }))
+      .mutation(async ({ input }) => {
+        return registerCustomer(input.personaId, input.email, input.password, input.name);
+      }),
+
+    // Login with email and password
+    login: publicProcedure
+      .input(z.object({
+        personaId: z.number(),
+        email: z.string().email(),
+        password: z.string(),
+      }))
+      .mutation(async ({ input }) => {
+        return loginCustomer(input.personaId, input.email, input.password);
+      }),
+
+    // Request password reset
+    requestPasswordReset: publicProcedure
+      .input(z.object({
+        personaId: z.number(),
+        email: z.string().email(),
+      }))
+      .mutation(async ({ input }) => {
+        const result = await generatePasswordResetToken(input.personaId, input.email);
+        // In production, send email with reset link here
+        // For now, just return success (don't reveal if email exists)
+        return { success: true, message: '如果此電郵已註冊，您將收到重設密碼的連結' };
+      }),
+
+    // Reset password with token
+    resetPassword: publicProcedure
+      .input(z.object({
+        token: z.string(),
+        newPassword: z.string().min(6, '密碼至少需要6個字符'),
+      }))
+      .mutation(async ({ input }) => {
+        return resetPasswordWithToken(input.token, input.newPassword);
+      }),
+
+    // Get customer profile (for logged-in customers)
+    getProfile: publicProcedure
+      .input(z.object({
+        customerId: z.number(),
+      }))
+      .query(async ({ input }) => {
+        const customer = await getCustomerById(input.customerId);
+        if (!customer) return null;
+        // Return safe customer data (exclude password hash)
+        return {
+          id: customer.id,
+          personaId: customer.personaId,
+          name: customer.name,
+          email: customer.email,
+          phone: customer.phone,
+          company: customer.company,
+          title: customer.title,
+          preferredLanguage: customer.preferredLanguage,
+          totalConversations: customer.totalConversations,
+          totalMessages: customer.totalMessages,
+          lastVisitAt: customer.lastVisitAt,
+          firstVisitAt: customer.firstVisitAt,
+          createdAt: customer.createdAt,
+        };
+      }),
+
+    // Update customer profile
+    updateProfile: publicProcedure
+      .input(z.object({
+        customerId: z.number(),
+        name: z.string().optional(),
+        phone: z.string().optional(),
+        company: z.string().optional(),
+        title: z.string().optional(),
+        preferredLanguage: z.string().optional(),
+      }))
+      .mutation(async ({ input }) => {
+        const { customerId, ...data } = input;
+        return updateCustomer(customerId, data);
+      }),
+
+    // Change password (when logged in)
+    changePassword: publicProcedure
+      .input(z.object({
+        customerId: z.number(),
+        currentPassword: z.string(),
+        newPassword: z.string().min(6, '密碼至少需要6個字符'),
+      }))
+      .mutation(async ({ input }) => {
+        return updateCustomerPassword(input.customerId, input.currentPassword, input.newPassword);
+      }),
   }),
 });
 export type AppRouter = typeof appRouter;
