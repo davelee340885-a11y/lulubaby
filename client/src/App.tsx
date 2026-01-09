@@ -23,6 +23,7 @@ import Customers from "./pages/Customers";
 import Widget from "./pages/Widget";
 import CustomDomainChat from "./pages/CustomDomainChat";
 import ApiDocs from "./pages/ApiDocs";
+import GoogleAuthCallback from "./pages/GoogleAuthCallback";
 
 function DashboardRoutes() {
   return (
@@ -63,6 +64,9 @@ function Router() {
   
   return (
     <Switch>
+      {/* Google OAuth callback */}
+      <Route path="/auth/google/callback" component={GoogleAuthCallback} />
+      
       {/* Public chat page - no auth required */}
       <Route path="/chat/:personaId" component={Chat} />
       

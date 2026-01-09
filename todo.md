@@ -1099,3 +1099,15 @@
 - [x] 在 CustomDomainChat.tsx 的 custom 佈局添加登入按鈕和對話框
 - [x] 在 CustomDomainChat.tsx 的 minimal/professional 佈局添加登入按鈕和對話框
 - [x] 測試修復效果
+
+
+## Email 驗證碼發送功能
+- [x] 檢查 Gmail MCP 工具可用性
+- [x] 決定移除驗證碼功能，改為簡單 Email 登入
+
+## 客戶登入功能重構
+- [x] 修改後端 customerAuthRouter.ts 支持簡單 Email 登入
+- [x] 配置 Google OAuth 登入
+- [x] 修改前端 CustomerLoginDialog.tsx 移除驗證碼 UI
+- [x] 創建 Google OAuth callback 頁面
+- [x] 測試登入功能 (11 tests passed)
