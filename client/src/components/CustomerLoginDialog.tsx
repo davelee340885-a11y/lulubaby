@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useLocation } from 'wouter';
 import { trpc } from '@/lib/trpc';
 import { Eye, EyeOff, Mail, Lock, User } from 'lucide-react';
 
@@ -10,6 +11,7 @@ interface CustomerLoginDialogProps {
 }
 
 export function CustomerLoginDialog({ isOpen, onClose, personaId = '1', onLoginSuccess }: CustomerLoginDialogProps) {
+  const [, setLocation] = useLocation();
   const [mode, setMode] = useState<'login' | 'signup'>('login');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -43,10 +45,19 @@ export function CustomerLoginDialog({ isOpen, onClose, personaId = '1', onLoginS
         personaId: parseInt(personaId),
       } as any);
       console.log('Login successful:', result);
+      
+      // Save token to localStorage
+      if (result.token) {
+        localStorage.setItem('customerToken', result.token);
+      }
+      
       if (onLoginSuccess) {
         onLoginSuccess(result.user);
       }
       onClose();
+      
+      // Redirect to customer dashboard
+      setLocation('/customer-dashboard');
     } catch (err: any) {
       console.error('Login error:', err);
       setError(err?.message || '登入失敗，請檢查電郵和密碼');
@@ -83,10 +94,19 @@ export function CustomerLoginDialog({ isOpen, onClose, personaId = '1', onLoginS
         personaId: parseInt(personaId),
       });
       console.log('Signup successful:', result);
+      
+      // Save token to localStorage
+      if (result.token) {
+        localStorage.setItem('customerToken', result.token);
+      }
+      
       if (onLoginSuccess) {
         onLoginSuccess(result.user);
       }
       onClose();
+      
+      // Redirect to customer dashboard
+      setLocation('/customer-dashboard');
     } catch (err: any) {
       console.error('Signup error:', err);
       setError(err?.message || '註冊失敗');
