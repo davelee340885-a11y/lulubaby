@@ -19,6 +19,26 @@ export type User = typeof users.$inferSelect;
 export type InsertUser = typeof users.$inferInsert;
 
 /**
+ * Customer users table for end-customer authentication
+ * Separate from admin users - stores email-based customer accounts
+ */
+export const customerUsers = mysqlTable("customer_users", {
+  id: int("id").autoincrement().primaryKey(),
+  email: varchar("email", { length: 320 }).notNull().unique(),
+  name: varchar("name", { length: 100 }),
+  passwordHash: varchar("passwordHash", { length: 255 }).notNull(),
+  personaId: int("personaId").notNull(), // Which AI persona this customer belongs to
+  provider: mysqlEnum("provider", ["email", "google", "apple", "microsoft"]).default("email").notNull(),
+  isActive: boolean("isActive").default(true).notNull(),
+  lastLoginAt: timestamp("lastLoginAt"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+
+export type CustomerUser = typeof customerUsers.$inferSelect;
+export type InsertCustomerUser = typeof customerUsers.$inferInsert;
+
+/**
  * AI Persona configuration for each user
  * Includes layout and appearance settings for the chat page
  */

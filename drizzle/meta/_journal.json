@@ -120,6 +120,13 @@
       "when": 1767853608166,
       "tag": "0016_last_shadowcat",
       "breakpoints": true
+    },
+    {
+      "idx": 17,
+      "version": "5",
+      "when": 1768040744492,
+      "tag": "0017_wealthy_morg",
+      "breakpoints": true
     }
   ]
 }

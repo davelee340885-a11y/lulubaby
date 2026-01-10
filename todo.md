@@ -724,15 +724,21 @@
 - [x] 查詢用戶的發布域名設定（lulubaby.xyz）
 - [x] 修復對話連結使用發布域名而不是 localhost
 - [x] 確保對話連結格式：https://lulubaby.xyz/chat/1
-- [x] 測試並驗證修復效果
-
-## 修復 lulubaby.xyz 域名路由
+- [x] 測試並驗證修復效果## 修復 lulubaby.xyz 域名路由
 - [ ] 檢查當前域名路由配置（App.tsx 或 server 路由）
 - [ ] 修復訪問 lulubaby.xyz 時自動導向 /chat/1
 - [ ] 確保域名根路徑（/）導向對話頁面
 - [ ] 測試並驗證修復效果
 
-## 修復 CustomDomainChat 與 Chat 外觀不一致
+## 登入系統重新設計（2026-01-10 下午）
+- [ ] 分析 Manus AI 版面設計，提取設計要點
+- [ ] 設計新的登入系統架構（電郵 + 密碼登入流程）
+- [ ] 實現 emailLogin API（驗證電郵和密碼）
+- [ ] 實現 emailSignup API（完整的註冊邏輯）
+- [ ] 重新設計登入對話框 UI（參考 Manus 風格）
+- [ ] 實現登入後導向儀表板功能
+- [ ] 完整的 UAT 測試
+- [ ] 保存檢查點DomainChat 與 Chat 外觀不一致
 - [ ] 對比 Chat.tsx 和 CustomDomainChat.tsx 的佈局差異
 - [ ] CustomDomainChat 缺少個人照片顯示（專業名片風格）
 - [ ] CustomDomainChat 缺少背景圖案/圖片

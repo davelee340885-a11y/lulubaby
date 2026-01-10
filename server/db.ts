@@ -1,13 +1,15 @@
 import { eq, and, asc, desc, sql, count, gte } from "drizzle-orm";
-import { drizzle } from "drizzle-orm/mysql2";
+import { drizzle } from "drizzle-orm/mysql2"; 
 import { 
   InsertUser, users, 
   aiPersonas, InsertAiPersona, AiPersona,
   knowledgeBases, InsertKnowledgeBase, KnowledgeBase,
   quickButtons, InsertQuickButton, QuickButton,
-  conversations, InsertConversation, Conversation
+  conversations, InsertConversation, Conversation,
+  customerUsers, InsertCustomerUser, CustomerUser
 } from "../drizzle/schema";
 import { ENV } from './_core/env';
+import bcrypt from "bcryptjs";
 
 let _db: ReturnType<typeof drizzle> | null = null;
 
@@ -2141,4 +2143,122 @@ export async function getPublishedDomainByName(domain: string): Promise<DomainOr
     .limit(1);
   
   return result.length > 0 ? result[0] : undefined;
+}
+
+
+// ==================== Customer User Operations ====================
+
+/**
+ * Create a new customer user with email and password
+ */
+export async function createCustomerUser(
+  email: string,
+  name: string,
+  password: string,
+  personaId: number,
+  provider: "email" | "google" | "apple" | "microsoft" = "email"
+): Promise<CustomerUser> {
+  const db = await getDb();
+  if (!db) {
+    throw new Error("Database not available");
+  }
+
+  // Hash password
+  const passwordHash = await bcrypt.hash(password, 10);
+
+  const result = await db.insert(customerUsers).values({
+    email,
+    name,
+    passwordHash,
+    personaId,
+    provider,
+    isActive: true,
+  });
+
+  // Fetch and return the created user
+  const user = await db
+    .select()
+    .from(customerUsers)
+    .where(eq(customerUsers.email, email))
+    .limit(1);
+
+  if (!user.length) {
+    throw new Error("Failed to create customer user");
+  }
+
+  return user[0];
+}
+
+/**
+ * Get customer user by email
+ */
+export async function getCustomerUserByEmail(
+  email: string
+): Promise<CustomerUser | undefined> {
+  const db = await getDb();
+  if (!db) return undefined;
+
+  const result = await db
+    .select()
+    .from(customerUsers)
+    .where(eq(customerUsers.email, email))
+    .limit(1);
+
+  return result.length > 0 ? result[0] : undefined;
+}
+
+/**
+ * Get customer user by ID
+ */
+export async function getCustomerUserById(
+  id: number
+): Promise<CustomerUser | undefined> {
+  const db = await getDb();
+  if (!db) return undefined;
+
+  const result = await db
+    .select()
+    .from(customerUsers)
+    .where(eq(customerUsers.id, id))
+    .limit(1);
+
+  return result.length > 0 ? result[0] : undefined;
+}
+
+/**
+ * Verify customer user password
+ */
+export async function verifyCustomerPassword(
+  email: string,
+  password: string
+): Promise<boolean> {
+  const user = await getCustomerUserByEmail(email);
+  if (!user) return false;
+
+  try {
+    return await bcrypt.compare(password, user.passwordHash);
+  } catch {
+    return false;
+  }
+}
+
+/**
+ * Update customer user last login time
+ */
+export async function updateCustomerLastLogin(id: number): Promise<void> {
+  const db = await getDb();
+  if (!db) return;
+
+  await db
+    .update(customerUsers)
+    .set({ lastLoginAt: new Date() })
+    .where(eq(customerUsers.id, id));
+}
+
+/**
+ * Check if customer email already exists
+ */
+export async function customerEmailExists(email: string): Promise<boolean> {
+  const user = await getCustomerUserByEmail(email);
+  return user !== undefined;
 }
