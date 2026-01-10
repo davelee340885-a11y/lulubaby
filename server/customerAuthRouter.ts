@@ -240,6 +240,29 @@ export const customerAuthRouter = router({
       return { user: session };
     }),
 
+  // Email signup
+  emailSignup: publicProcedure
+    .input(z.object({
+      name: z.string().min(1).max(100),
+      email: z.string().email(),
+      password: z.string().min(8),
+      personaId: z.number(),
+    }))
+    .mutation(async ({ input }) => {
+      // Create customer session with email signup
+      const session: CustomerSession = {
+        id: `email:${input.email}`,
+        email: input.email,
+        name: input.name,
+        provider: "email",
+        personaId: input.personaId,
+      };
+      
+      const token = createCustomerToken(session);
+      
+      return { success: true, token, user: session };
+    }),
+
   // Logout (client-side only - just clear the token)
   logout: publicProcedure
     .mutation(async () => {

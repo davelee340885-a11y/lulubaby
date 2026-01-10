@@ -1,309 +1,398 @@
-import { useState, useEffect } from "react";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Separator } from "@/components/ui/separator";
-import { trpc } from "@/lib/trpc";
-import { Mail, User, LogOut, Loader2 } from "lucide-react";
-
-// Customer session stored in localStorage
-const CUSTOMER_TOKEN_KEY = "customer_auth_token";
-
-export type CustomerUser = {
-  id: string;
-  email: string;
-  name?: string;
-  avatarUrl?: string;
-  provider: "email" | "google" | "apple" | "microsoft";
-  personaId: number;
-};
+import { useState } from 'react';
+import { trpc } from '@/lib/trpc';
 
 interface CustomerLoginDialogProps {
-  open: boolean;
-  onOpenChange: (open: boolean) => void;
-  personaId: number;
-  primaryColor?: string;
-  onLoginSuccess?: (user: CustomerUser) => void;
+  isOpen: boolean;
+  onClose: () => void;
+  personaId?: string;
+  onLoginSuccess?: (user: any) => void;
 }
 
-export function CustomerLoginDialog({
-  open,
-  onOpenChange,
-  personaId,
-  primaryColor = "#3B82F6",
-  onLoginSuccess,
-}: CustomerLoginDialogProps) {
-  const [email, setEmail] = useState("");
-  const [error, setError] = useState("");
+export function CustomerLoginDialog({ isOpen, onClose, personaId = '1', onLoginSuccess }: CustomerLoginDialogProps) {
+  const [mode, setMode] = useState<'login' | 'signup' | 'forgotPassword'>('login');
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [name, setName] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
+  const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
 
+  // tRPC mutations
   const emailLoginMutation = trpc.customerAuth.emailLogin.useMutation();
-  
-  // Get Google auth URL
-  const redirectUri = typeof window !== "undefined" 
-    ? `${window.location.origin}/auth/google/callback`
-    : "";
-  
-  const googleAuthQuery = trpc.customerAuth.getGoogleAuthUrl.useQuery(
-    { personaId, redirectUri },
-    { enabled: false } // Don't auto-fetch
-  );
+  const emailSignupMutation = (trpc.customerAuth as any).emailSignup.useMutation();
 
   const handleEmailLogin = async () => {
-    if (!email || !email.includes("@")) {
-      setError("請輸入有效的電郵地址");
+    if (!email.trim()) {
+      setError('請輸入電郵地址');
+      return;
+    }
+    setIsLoading(true);
+    setError('');
+    try {
+      const result = await emailLoginMutation.mutateAsync({
+        email,
+        personaId: parseInt(personaId),
+      });
+      console.log('Login successful:', result);
+      if (onLoginSuccess) {
+        onLoginSuccess(result.user);
+      }
+      onClose();
+    } catch (err) {
+      console.error('Login error:', err);
+      setError(err instanceof Error ? err.message : '登入失敗');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleSignup = async () => {
+    if (!name.trim()) {
+      setError('請輸入姓名');
+      return;
+    }
+    if (!email.trim()) {
+      setError('請輸入電郵地址');
+      return;
+    }
+    if (password.length < 8) {
+      setError('密碼至少需要 8 個字符');
+      return;
+    }
+    if (password !== confirmPassword) {
+      setError('密碼不符');
       return;
     }
 
     setIsLoading(true);
-    setError("");
-
+    setError('');
     try {
-      const result = await emailLoginMutation.mutateAsync({ email, personaId });
-      if (result.success && result.token) {
-        localStorage.setItem(CUSTOMER_TOKEN_KEY, result.token);
-        onLoginSuccess?.(result.user as CustomerUser);
-        onOpenChange(false);
-        resetForm();
+      const result = await emailSignupMutation.mutateAsync({
+        name,
+        email,
+        password,
+        personaId: parseInt(personaId),
+      });
+      console.log('Signup successful:', result);
+      if (onLoginSuccess) {
+        onLoginSuccess(result.user);
       }
-    } catch (err: unknown) {
-      const error = err as { message?: string };
-      setError(error.message || "登入失敗，請稍後再試");
+      onClose();
+    } catch (err) {
+      console.error('Signup error:', err);
+      setError(err instanceof Error ? err.message : '註冊失敗');
     } finally {
       setIsLoading(false);
     }
   };
 
-  const handleGoogleLogin = async () => {
+  const handleForgotPassword = async () => {
+    if (!email.trim()) {
+      setError('請輸入電郵地址');
+      return;
+    }
     setIsLoading(true);
-    setError("");
-    
+    setError('');
     try {
-      const result = await googleAuthQuery.refetch();
-      if (result.data?.url) {
-        // Save personaId to localStorage for callback
-        localStorage.setItem("google_auth_persona_id", personaId.toString());
-        // Redirect to Google OAuth
-        window.location.href = result.data.url;
-      } else {
-        setError("Google 登入暫時無法使用");
-      }
-    } catch (err: unknown) {
-      const error = err as { message?: string };
-      setError(error.message || "Google 登入失敗");
+      // TODO: Implement password reset
+      setError('');
+      setMode('login');
+      alert('密碼重置連結已發送到您的電郵');
+    } catch (err) {
+      setError(err instanceof Error ? err.message : '發送失敗');
     } finally {
       setIsLoading(false);
     }
   };
 
-  const resetForm = () => {
-    setEmail("");
-    setError("");
+  const handleGoogleLogin = () => {
+    // TODO: Implement Google OAuth
+    console.log('Google login clicked');
   };
 
-  const handleSocialLogin = (provider: "apple" | "microsoft") => {
-    // Social login would typically redirect to OAuth flow
-    // For now, show a message that this feature is coming soon
-    setError(`${provider === "apple" ? "Apple" : "Microsoft"} 登入即將推出`);
-  };
+  if (!isOpen) return null;
 
   return (
-    <Dialog open={open} onOpenChange={(newOpen) => {
-      if (!newOpen) resetForm();
-      onOpenChange(newOpen);
-    }}>
-      <DialogContent className="sm:max-w-md">
-        <DialogHeader>
-          <DialogTitle className="text-center">客戶登入</DialogTitle>
-          <DialogDescription className="text-center">
-            登入後可以保存您的對話記錄
-          </DialogDescription>
-        </DialogHeader>
+    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+      <div className="bg-white rounded-lg w-full max-w-md shadow-lg overflow-hidden" style={{ maxHeight: '85vh' }}>
+        {/* Header - Fixed */}
+        <div className="flex justify-between items-center p-6 pb-4 border-b flex-shrink-0">
+          <h2 className="text-xl font-bold">
+            {mode === 'login' ? '客戶登入' : mode === 'signup' ? '建立帳戶' : '忘記密碼'}
+          </h2>
+          <button
+            onClick={onClose}
+            className="text-gray-500 hover:text-gray-700 text-2xl leading-none"
+          >
+            ✕
+          </button>
+        </div>
 
-        <div className="space-y-4 py-4">
-          <div className="space-y-2">
-            <Label htmlFor="email">電郵地址</Label>
-            <Input
-              id="email"
-              type="email"
-              placeholder="your@email.com"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              onKeyDown={(e) => e.key === "Enter" && handleEmailLogin()}
-            />
-          </div>
+        {/* Description - Fixed */}
+        <p className="text-xs text-gray-600 px-6 pt-4 pb-2 flex-shrink-0">
+          {mode === 'login'
+            ? '登入後可以保存您的對話記錄'
+            : mode === 'signup'
+            ? '建立帳戶以保存您的對話記錄'
+            : '輸入您的電郵地址以重置密碼'}
+        </p>
 
+        {/* Main Content - Scrollable */}
+        <div style={{ 
+          overflowY: 'auto',
+          paddingLeft: '1.5rem',
+          paddingRight: '1.5rem',
+          paddingTop: '1rem',
+          paddingBottom: '1rem',
+          maxHeight: 'calc(85vh - 150px)'
+        }}>
+          {/* Error Message */}
           {error && (
-            <p className="text-sm text-destructive">{error}</p>
+            <div className="mb-3 p-2 bg-red-50 border border-red-200 rounded text-xs text-red-700">
+              {error}
+            </div>
           )}
 
-          <Button
-            className="w-full"
-            style={{ backgroundColor: primaryColor }}
-            onClick={handleEmailLogin}
-            disabled={isLoading}
+          {/* Form */}
+          <form
+            onSubmit={(e) => {
+              e.preventDefault();
+              if (mode === 'login') handleEmailLogin();
+              else if (mode === 'signup') handleSignup();
+              else handleForgotPassword();
+            }}
+            className="space-y-4"
           >
-            {isLoading ? (
-              <Loader2 className="h-4 w-4 animate-spin mr-2" />
-            ) : (
-              <Mail className="h-4 w-4 mr-2" />
+            {/* Email Input Section */}
+            {mode === 'login' && (
+              <>
+                <div>
+                  <label htmlFor="email" className="block text-sm font-medium mb-2">
+                    電郵地址
+                  </label>
+                  <input
+                    id="email"
+                    type="email"
+                    placeholder="your@email.com"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    className="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-cyan-500"
+                  />
+                </div>
+
+                <button
+                  type="submit"
+                  disabled={isLoading}
+                  className="w-full bg-cyan-500 hover:bg-cyan-600 disabled:bg-gray-400 text-white font-medium py-2 rounded transition"
+                >
+                  {isLoading ? '登入中...' : '使用電郵登入'}
+                </button>
+
+                <div className="flex items-center gap-3">
+                  <div className="flex-1 border-t border-gray-300"></div>
+                  <span className="text-gray-500 text-xs">或使用社交帳號</span>
+                  <div className="flex-1 border-t border-gray-300"></div>
+                </div>
+
+                <div className="grid grid-cols-3 gap-2">
+                  <button
+                    type="button"
+                    onClick={handleGoogleLogin}
+                    className="py-2 px-2 border border-gray-300 rounded hover:bg-gray-50 flex items-center justify-center text-sm"
+                    title="Google 登入"
+                  >
+                    🔵
+                  </button>
+                  <button
+                    type="button"
+                    className="py-2 px-2 border border-gray-300 rounded hover:bg-gray-50 flex items-center justify-center text-sm"
+                    title="Apple 登入"
+                  >
+                    🍎
+                  </button>
+                  <button
+                    type="button"
+                    className="py-2 px-2 border border-gray-300 rounded hover:bg-gray-50 flex items-center justify-center text-sm"
+                    title="Microsoft 登入"
+                  >
+                    ⊞
+                  </button>
+                </div>
+
+                {/* Mode Toggle Buttons - Inside Main Content for Login */}
+                <div className="space-y-2 text-xs pt-4 border-t">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setMode('signup');
+                      setError('');
+                      setPassword('');
+                      setConfirmPassword('');
+                      setName('');
+                    }}
+                    className="w-full text-cyan-500 hover:text-cyan-600 font-medium py-2 hover:bg-cyan-50 rounded text-left"
+                  >
+                    還沒有帳戶？<span className="font-semibold">建立帳戶</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setMode('forgotPassword');
+                      setError('');
+                      setPassword('');
+                    }}
+                    className="w-full text-cyan-500 hover:text-cyan-600 font-medium py-2 hover:bg-cyan-50 rounded text-left"
+                  >
+                    <span className="font-semibold">忘記密碼？</span>
+                  </button>
+                </div>
+              </>
             )}
-            使用電郵登入
-          </Button>
 
-          <div className="relative">
-            <div className="absolute inset-0 flex items-center">
-              <Separator className="w-full" />
-            </div>
-            <div className="relative flex justify-center text-xs uppercase">
-              <span className="bg-background px-2 text-muted-foreground">
-                或使用社交帳號
-              </span>
-            </div>
-          </div>
+            {/* Signup Section */}
+            {mode === 'signup' && (
+              <>
+                <div>
+                  <label htmlFor="name" className="block text-sm font-medium mb-2">
+                    姓名
+                  </label>
+                  <input
+                    id="name"
+                    type="text"
+                    placeholder="請輸入您的姓名"
+                    value={name}
+                    onChange={(e) => setName(e.target.value)}
+                    className="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-cyan-500"
+                  />
+                </div>
 
-          <div className="grid grid-cols-3 gap-2">
-            <Button
-              variant="outline"
-              onClick={handleGoogleLogin}
-              className="w-full"
-              disabled={isLoading}
-            >
-              <svg className="h-4 w-4" viewBox="0 0 24 24">
-                <path
-                  fill="currentColor"
-                  d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
-                />
-                <path
-                  fill="currentColor"
-                  d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"
-                />
-                <path
-                  fill="currentColor"
-                  d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"
-                />
-                <path
-                  fill="currentColor"
-                  d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"
-                />
-              </svg>
-            </Button>
-            <Button
-              variant="outline"
-              onClick={() => handleSocialLogin("apple")}
-              className="w-full"
-              disabled={isLoading}
-            >
-              <svg className="h-4 w-4" viewBox="0 0 24 24" fill="currentColor">
-                <path d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.81-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M13 3.5c.73-.83 1.94-1.46 2.94-1.5.13 1.17-.34 2.35-1.04 3.19-.69.85-1.83 1.51-2.95 1.42-.15-1.15.41-2.35 1.05-3.11z" />
-              </svg>
-            </Button>
-            <Button
-              variant="outline"
-              onClick={() => handleSocialLogin("microsoft")}
-              className="w-full"
-              disabled={isLoading}
-            >
-              <svg className="h-4 w-4" viewBox="0 0 24 24" fill="currentColor">
-                <path d="M11.4 24H0V12.6h11.4V24zM24 24H12.6V12.6H24V24zM11.4 11.4H0V0h11.4v11.4zm12.6 0H12.6V0H24v11.4z" />
-              </svg>
-            </Button>
-          </div>
+                <div>
+                  <label htmlFor="signup-email" className="block text-sm font-medium mb-2">
+                    電郵地址
+                  </label>
+                  <input
+                    id="signup-email"
+                    type="email"
+                    placeholder="your@email.com"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    className="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-cyan-500"
+                  />
+                </div>
+
+                <div>
+                  <label htmlFor="signup-password" className="block text-sm font-medium mb-2">
+                    密碼
+                  </label>
+                  <div className="relative">
+                    <input
+                      id="signup-password"
+                      type={showPassword ? 'text' : 'password'}
+                      placeholder="至少 8 個字符"
+                      value={password}
+                      onChange={(e) => setPassword(e.target.value)}
+                      className="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-cyan-500"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowPassword(!showPassword)}
+                      className="absolute right-3 top-2.5 text-gray-500 hover:text-gray-700"
+                    >
+                      {showPassword ? '👁️' : '👁️‍🗨️'}
+                    </button>
+                  </div>
+                </div>
+
+                <div>
+                  <label htmlFor="confirm-password" className="block text-sm font-medium mb-2">
+                    確認密碼
+                  </label>
+                  <input
+                    id="confirm-password"
+                    type={showPassword ? 'text' : 'password'}
+                    placeholder="再次輸入密碼"
+                    value={confirmPassword}
+                    onChange={(e) => setConfirmPassword(e.target.value)}
+                    className="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-cyan-500"
+                  />
+                </div>
+
+                <button
+                  type="submit"
+                  disabled={isLoading}
+                  className="w-full bg-cyan-500 hover:bg-cyan-600 disabled:bg-gray-400 text-white font-medium py-2 rounded transition"
+                >
+                  {isLoading ? '建立中...' : '建立帳戶'}
+                </button>
+
+                {/* Mode Toggle Button - Inside Main Content for Signup */}
+                <div className="text-xs pt-4 border-t">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setMode('login');
+                      setError('');
+                      setPassword('');
+                      setConfirmPassword('');
+                      setName('');
+                    }}
+                    className="w-full text-cyan-500 hover:text-cyan-600 font-medium py-2 hover:bg-cyan-50 rounded text-left"
+                  >
+                    已有帳戶？<span className="font-semibold">返回登入</span>
+                  </button>
+                </div>
+              </>
+            )}
+
+            {/* Forgot Password Section */}
+            {mode === 'forgotPassword' && (
+              <>
+                <div>
+                  <label htmlFor="reset-email" className="block text-sm font-medium mb-2">
+                    電郵地址
+                  </label>
+                  <input
+                    id="reset-email"
+                    type="email"
+                    placeholder="your@email.com"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    className="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-cyan-500"
+                  />
+                </div>
+                <button
+                  type="submit"
+                  disabled={isLoading}
+                  className="w-full bg-cyan-500 hover:bg-cyan-600 disabled:bg-gray-400 text-white font-medium py-2 rounded transition"
+                >
+                  {isLoading ? '發送中...' : '發送重置連結'}
+                </button>
+                {/* Mode Toggle Button - Inside Main Content for Forgot Password */}
+                <div className="text-xs pt-4 border-t">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setMode('login');
+                      setError('');
+                      setEmail('');
+                    }}
+                    className="w-full text-cyan-500 hover:text-cyan-600 font-medium py-2 hover:bg-cyan-50 rounded text-left"
+                  >
+                    <span className="font-semibold">返回登入</span>
+                  </button>
+                </div>
+              </>
+            )}
+          </form>
         </div>
-      </DialogContent>
-    </Dialog>
-  );
-}
-
-// Hook to manage customer authentication state
-export function useCustomerAuth(personaId: number) {
-  const [user, setUser] = useState<CustomerUser | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
-
-  const getSessionQuery = trpc.customerAuth.getSession.useQuery(
-    { token: typeof window !== "undefined" ? localStorage.getItem(CUSTOMER_TOKEN_KEY) || "" : "" },
-    { enabled: typeof window !== "undefined" && !!localStorage.getItem(CUSTOMER_TOKEN_KEY) }
-  );
-
-  useEffect(() => {
-    if (getSessionQuery.data) {
-      if (getSessionQuery.data.user && getSessionQuery.data.user.personaId === personaId) {
-        setUser(getSessionQuery.data.user as CustomerUser);
-      } else {
-        // Token is invalid or for different persona
-        localStorage.removeItem(CUSTOMER_TOKEN_KEY);
-        setUser(null);
-      }
-    }
-    setIsLoading(getSessionQuery.isLoading);
-  }, [getSessionQuery.data, getSessionQuery.isLoading, personaId]);
-
-  const logout = () => {
-    localStorage.removeItem(CUSTOMER_TOKEN_KEY);
-    setUser(null);
-  };
-
-  const login = (newUser: CustomerUser) => {
-    setUser(newUser);
-  };
-
-  return { user, isLoading, logout, login };
-}
-
-// Customer info display component
-interface CustomerInfoProps {
-  user: CustomerUser;
-  onLogout: () => void;
-  primaryColor?: string;
-}
-
-export function CustomerInfo({ user, onLogout, primaryColor = "#3B82F6" }: CustomerInfoProps) {
-  return (
-    <div className="flex items-center gap-2 px-3 py-2 bg-muted/50 rounded-lg">
-      {user.avatarUrl ? (
-        <img 
-          src={user.avatarUrl} 
-          alt={user.name || user.email} 
-          className="w-8 h-8 rounded-full"
-        />
-      ) : (
-        <div 
-          className="w-8 h-8 rounded-full flex items-center justify-center text-white text-sm font-medium" 
-          style={{ backgroundColor: primaryColor }}
-        >
-          {user.name ? user.name[0].toUpperCase() : user.email[0].toUpperCase()}
+        {/* Footer */}
+        <div className="text-xs text-gray-500 text-center px-6 py-4 border-t flex-shrink-0">
+          {mode === 'login' && (
+            <p>首次登入將自動創建帳戶</p>
+          )}
         </div>
-      )}
-      <div className="flex-1 min-w-0">
-        <p className="text-sm font-medium truncate">{user.name || user.email}</p>
-        {user.name && <p className="text-xs text-muted-foreground truncate">{user.email}</p>}
       </div>
-      <Button variant="ghost" size="icon" onClick={onLogout} title="登出">
-        <LogOut className="h-4 w-4" />
-      </Button>
     </div>
-  );
-}
-
-// Login button component
-interface CustomerLoginButtonProps {
-  onClick: () => void;
-  primaryColor?: string;
-  className?: string;
-}
-
-export function CustomerLoginButton({ onClick, primaryColor = "#3B82F6", className = "" }: CustomerLoginButtonProps) {
-  return (
-    <Button
-      variant="ghost"
-      size="sm"
-      onClick={onClick}
-      className={`gap-2 ${className}`}
-      style={{ color: primaryColor }}
-    >
-      <User className="h-4 w-4" />
-      登入
-    </Button>
   );
 }

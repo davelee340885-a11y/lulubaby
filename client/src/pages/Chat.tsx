@@ -5,8 +5,8 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { Send, Loader2, Bot, User, Search, Calendar, Link as LinkIcon, MessageSquare, ExternalLink, Sparkles, FileText, Building2, Phone, HelpCircle, ShoppingBag, UserCircle, LogIn } from "lucide-react";
-import { CustomerLoginDialog, CustomerLoginButton, CustomerInfo, useCustomerAuth, type CustomerUser } from "@/components/CustomerLoginDialog";
-import { useState, useEffect, useRef } from "react";
+import { CustomerLoginDialog } from "@/components/CustomerLoginDialog";
+import React, { useState, useEffect, useRef } from "react";
 import { useParams } from "wouter";
 import { nanoid } from "nanoid";
 import { Streamdown } from "streamdown";
@@ -62,7 +62,9 @@ export default function Chat() {
   const inputRef = useRef<HTMLInputElement>(null);
   
   // Customer login state
-  const { user: customer, login: handleCustomerLogin, logout: handleCustomerLogout } = useCustomerAuth(personaId);
+  const [customer, setCustomer] = useState<any | null>(null);
+  const handleCustomerLogin = (user: any) => setCustomer(user);
+  const handleCustomerLogout = () => setCustomer(null);
   const [showLoginDialog, setShowLoginDialog] = useState(false);
 
   const { data: persona, isLoading: personaLoading } = trpc.persona.getPublic.useQuery(
@@ -406,10 +408,10 @@ type LayoutProps = {
   handleQuickButton: (button: NonNullable<LayoutProps["persona"]>["quickButtons"][0]) => void;
   handleSuggestedQuestion: (question: string) => void;
   // Customer login props
-  customer: CustomerUser | null;
+  customer: any | null;
   showLoginDialog: boolean;
   setShowLoginDialog: (show: boolean) => void;
-  onLogin: (user: CustomerUser) => void;
+  onLogin: (user: any) => void;
   onLogout: () => void;
 };
 
@@ -614,9 +616,24 @@ function MinimalLayout({
             {/* Customer Login Button - Fixed Bottom Left */}
             <div className="fixed bottom-4 left-4">
               {customer ? (
-                <CustomerInfo user={customer} onLogout={onLogout} />
+                <div className="flex items-center gap-2 text-sm">
+                  <UserCircle className="w-4 h-4" />
+                  <span>{customer.email}</span>
+                  <button
+                    onClick={onLogout}
+                    className="text-xs text-gray-500 hover:text-gray-700"
+                  >
+                    登出
+                  </button>
+                </div>
               ) : (
-                <CustomerLoginButton onClick={() => setShowLoginDialog(true)} />
+                <button
+                  onClick={() => setShowLoginDialog(true)}
+                  className="flex items-center gap-2 text-sm text-cyan-500 hover:text-cyan-600"
+                >
+                  <LogIn className="w-4 h-4" />
+                  登入
+                </button>
               )}
             </div>
           </div>
@@ -704,9 +721,24 @@ function MinimalLayout({
             <div className="flex gap-1.5 items-center">
               {/* Customer Login Button */}
               {customer ? (
-                <CustomerInfo user={customer} onLogout={onLogout} />
+                <div className="flex items-center gap-2 text-sm">
+                  <UserCircle className="w-4 h-4" />
+                  <span>{customer.email}</span>
+                  <button
+                    onClick={onLogout}
+                    className="text-xs text-gray-500 hover:text-gray-700"
+                  >
+                    登出
+                  </button>
+                </div>
               ) : (
-                <CustomerLoginButton onClick={() => setShowLoginDialog(true)} />
+                <button
+                  onClick={() => setShowLoginDialog(true)}
+                  className="flex items-center gap-2 text-sm text-cyan-500 hover:text-cyan-600"
+                >
+                  <LogIn className="w-4 h-4" />
+                  登入
+                </button>
               )}
               <Input
                 ref={inputRef}
@@ -733,10 +765,9 @@ function MinimalLayout({
       
       {/* Customer Login Dialog */}
       <CustomerLoginDialog
-        open={showLoginDialog}
-        onOpenChange={setShowLoginDialog}
-        personaId={persona.id}
-        primaryColor={primaryColor}
+        isOpen={showLoginDialog}
+        onClose={() => setShowLoginDialog(false)}
+        personaId={String(persona.id)}
         onLoginSuccess={onLogin}
       />
     </div>
@@ -844,9 +875,24 @@ function ProfessionalLayout({
             {/* Customer Login Button - Fixed Bottom Left */}
             <div className="fixed bottom-4 left-4">
               {customer ? (
-                <CustomerInfo user={customer} onLogout={onLogout} />
+                <div className="flex items-center gap-2 text-sm">
+                  <UserCircle className="w-4 h-4" />
+                  <span>{customer.email}</span>
+                  <button
+                    onClick={onLogout}
+                    className="text-xs text-gray-500 hover:text-gray-700"
+                  >
+                    登出
+                  </button>
+                </div>
               ) : (
-                <CustomerLoginButton onClick={() => setShowLoginDialog(true)} />
+                <button
+                  onClick={() => setShowLoginDialog(true)}
+                  className="flex items-center gap-2 text-sm text-cyan-500 hover:text-cyan-600"
+                >
+                  <LogIn className="w-4 h-4" />
+                  登入
+                </button>
               )}
             </div>
           </div>
@@ -945,9 +991,24 @@ function ProfessionalLayout({
           <div className="flex gap-2 items-center">
             {/* Customer Login Button */}
             {customer ? (
-              <CustomerInfo user={customer} onLogout={onLogout} />
+              <div className="flex items-center gap-2 text-sm">
+                <UserCircle className="w-4 h-4" />
+                <span>{customer.email}</span>
+                <button
+                  onClick={onLogout}
+                  className="text-xs text-gray-500 hover:text-gray-700"
+                >
+                  登出
+                </button>
+              </div>
             ) : (
-              <CustomerLoginButton onClick={() => setShowLoginDialog(true)} />
+              <button
+                onClick={() => setShowLoginDialog(true)}
+                className="flex items-center gap-2 text-sm text-cyan-500 hover:text-cyan-600"
+              >
+                <LogIn className="w-4 h-4" />
+                登入
+              </button>
             )}
             <Input
               ref={inputRef}
@@ -974,10 +1035,9 @@ function ProfessionalLayout({
       
       {/* Customer Login Dialog */}
       <CustomerLoginDialog
-        open={showLoginDialog}
-        onOpenChange={setShowLoginDialog}
-        personaId={persona.id}
-        primaryColor={primaryColor}
+        isOpen={showLoginDialog}
+        onClose={() => setShowLoginDialog(false)}
+        personaId={String(persona.id)}
         onLoginSuccess={onLogin}
       />
     </div>
@@ -1136,9 +1196,24 @@ function CustomLayout({
             {/* Customer Login Button - Fixed Bottom Left */}
             <div className="fixed bottom-4 left-4 z-50">
               {customer ? (
-                <CustomerInfo user={customer} onLogout={onLogout} />
+                <div className="flex items-center gap-2 text-sm">
+                  <UserCircle className="w-4 h-4" />
+                  <span>{customer.email}</span>
+                  <button
+                    onClick={onLogout}
+                    className="text-xs text-gray-500 hover:text-gray-700"
+                  >
+                    登出
+                  </button>
+                </div>
               ) : (
-                <CustomerLoginButton onClick={() => setShowLoginDialog(true)} />
+                <button
+                  onClick={() => setShowLoginDialog(true)}
+                  className="flex items-center gap-2 text-sm text-cyan-500 hover:text-cyan-600"
+                >
+                  <LogIn className="w-4 h-4" />
+                  登入
+                </button>
               )}
             </div>
           </div>
@@ -1238,9 +1313,24 @@ function CustomLayout({
             <div className="flex gap-2 items-center">
               {/* Customer Login Button */}
               {customer ? (
-                <CustomerInfo user={customer} onLogout={onLogout} />
+                <div className="flex items-center gap-2 text-sm">
+                  <UserCircle className="w-4 h-4" />
+                  <span>{customer.email}</span>
+                  <button
+                    onClick={onLogout}
+                    className="text-xs text-gray-500 hover:text-gray-700"
+                  >
+                    登出
+                  </button>
+                </div>
               ) : (
-                <CustomerLoginButton onClick={() => setShowLoginDialog(true)} />
+                <button
+                  onClick={() => setShowLoginDialog(true)}
+                  className="flex items-center gap-2 text-sm text-cyan-500 hover:text-cyan-600"
+                >
+                  <LogIn className="w-4 h-4" />
+                  登入
+                </button>
               )}
               <Input
                 ref={inputRef}
@@ -1267,10 +1357,9 @@ function CustomLayout({
       
       {/* Customer Login Dialog */}
       <CustomerLoginDialog
-        open={showLoginDialog}
-        onOpenChange={setShowLoginDialog}
-        personaId={persona.id}
-        primaryColor={primaryColor}
+        isOpen={showLoginDialog}
+        onClose={() => setShowLoginDialog(false)}
+        personaId={String(persona.id)}
         onLoginSuccess={onLogin}
       />
     </div>
