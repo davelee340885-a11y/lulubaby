@@ -35,6 +35,7 @@ import {
 } from "./db";
 import Stripe from "stripe";
 import { invokeLLM } from "./_core/llm";
+import { generateStylePrompt } from "./styleToPrompt";
 import { storagePut } from "./storage";
 import { nanoid } from "nanoid";
 import { 
@@ -503,6 +504,11 @@ export const appRouter = router({
           recentConversationContext = await getRecentConversationContext(customer.id, 3);
         }
         
+        // Get training and superpowers settings for style customization
+        const training = await getTrainingByUserId(persona.userId);
+        const superpowersSettings = await getSuperpowersByUserId(persona.userId);
+        const stylePrompt = generateStylePrompt(training || null, superpowersSettings || null);
+        
         // Build system prompt with customer memory
         let systemPrompt = `你是${persona.agentName}，一個專業的AI助手。
 ${persona.systemPrompt || "請用友善、專業的方式回答用戶的問題。"}
@@ -542,9 +548,14 @@ ${knowledgeContent.substring(0, 10000)}
 ---`;
         }
 
+        // Add style and superpowers instructions
+        if (stylePrompt) {
+          systemPrompt += stylePrompt;
+        }
+
         systemPrompt += `
 
-請用繁體中文回答，保持專業但親切的語氣。`;
+請用繁體中文回答。`;
 
         // Build messages for LLM
         const messages: Array<{ role: "system" | "user" | "assistant"; content: string }> = [

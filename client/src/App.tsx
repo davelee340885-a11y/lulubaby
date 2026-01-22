@@ -24,7 +24,6 @@ import Widget from "./pages/Widget";
 import CustomDomainChat from "./pages/CustomDomainChat";
 import ApiDocs from "./pages/ApiDocs";
 import GoogleAuthCallback from "./pages/GoogleAuthCallback";
-import CustomerDashboard from "./pages/CustomerDashboard";
 
 function DashboardRoutes() {
   return (
@@ -70,9 +69,6 @@ function Router() {
       
       {/* Public chat page - no auth required */}
       <Route path="/chat/:personaId" component={Chat} />
-      
-      {/* Customer dashboard - requires customer auth */}
-      <Route path="/customer-dashboard" component={CustomerDashboard} />
       
       {/* Dashboard routes - auth required */}
       <Route path="/" component={DashboardRoutes} />
