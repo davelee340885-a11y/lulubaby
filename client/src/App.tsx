@@ -23,6 +23,7 @@ import Customers from "./pages/Customers";
 import Widget from "./pages/Widget";
 import CustomDomainChat from "./pages/CustomDomainChat";
 import ApiDocs from "./pages/ApiDocs";
+import Brain from "./pages/Brain";
 import GoogleAuthCallback from "./pages/GoogleAuthCallback";
 
 function DashboardRoutes() {
@@ -37,6 +38,7 @@ function DashboardRoutes() {
         <Route path="/domain" component={Domain} />
         <Route path="/training" component={Training} />
         <Route path="/superpowers" component={Superpowers} />
+        <Route path="/brain" component={Brain} />
         {/* Extensions removed - features integrated elsewhere */}
         <Route path="/account" component={Account} />
         <Route path="/pricing" component={Pricing} />
@@ -79,6 +81,7 @@ function Router() {
       <Route path="/domain" component={DashboardRoutes} />
       <Route path="/training" component={DashboardRoutes} />
       <Route path="/superpowers" component={DashboardRoutes} />
+      <Route path="/brain" component={DashboardRoutes} />
       {/* Extensions removed - features integrated elsewhere */}
       <Route path="/account" component={DashboardRoutes} />
       <Route path="/pricing" component={DashboardRoutes} />

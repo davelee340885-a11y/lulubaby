@@ -55,6 +55,7 @@ const navCategories = [
     color: "bg-violet-500/10 text-violet-600 dark:text-violet-400",
     borderColor: "border-l-violet-500",
     items: [
+      { icon: Sparkles, label: "🧠 我的大腦", path: "/brain" },
       { icon: Brain, label: "訓練智能體", path: "/training" },
       { icon: Zap, label: "開發超能力", path: "/superpowers" },
       { icon: FileText, label: "知識庫", path: "/knowledge" },

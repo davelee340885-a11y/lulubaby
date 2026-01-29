@@ -890,3 +890,80 @@ export const stripePayments = mysqlTable("stripe_payments", {
 });
 export type StripePayment = typeof stripePayments.$inferSelect;
 export type InsertStripePayment = typeof stripePayments.$inferInsert;
+
+
+/**
+ * Learning Diaries - 學習日記/銷售大腦記憶
+ * 用於存儲銷售經驗、客戶洞察、成功案例等
+ */
+export const learningDiaries = mysqlTable("learning_diaries", {
+  id: int("id").autoincrement().primaryKey(),
+  userId: int("userId").notNull(),
+  
+  // 基本信息
+  title: varchar("title", { length: 255 }).notNull(),
+  content: text("content").notNull(),
+  
+  // 記憶類型
+  memoryType: mysqlEnum("memoryType", [
+    "sales_experience",    // 銷售經驗
+    "customer_insight",    // 客戶洞察
+    "product_knowledge",   // 產品知識
+    "objection_handling",  // 異議處理
+    "success_case",        // 成功案例
+    "market_trend",        // 市場趨勢
+    "personal_note"        // 個人筆記
+  ]).default("sales_experience").notNull(),
+  
+  // 重要性等級
+  importance: mysqlEnum("importance", ["low", "medium", "high", "critical"]).default("medium").notNull(),
+  
+  // 標籤和關聯
+  tags: text("tags"), // JSON array of tags
+  relatedCustomer: varchar("relatedCustomer", { length: 255 }),
+  relatedProduct: varchar("relatedProduct", { length: 255 }),
+  actionItems: text("actionItems"), // JSON array of action items
+  
+  // 來源信息
+  sourceType: mysqlEnum("sourceType", ["manual", "auto_extracted", "imported"]).default("manual").notNull(),
+  sourceConversationId: int("sourceConversationId"), // 如果是從對話中提取的
+  
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+
+export type LearningDiary = typeof learningDiaries.$inferSelect;
+export type InsertLearningDiary = typeof learningDiaries.$inferInsert;
+
+/**
+ * Memory Embeddings - 記憶嵌入向量
+ * 用於語義搜索（MVP 階段存儲關鍵詞，預留向量字段）
+ */
+export const memoryEmbeddings = mysqlTable("memory_embeddings", {
+  id: int("id").autoincrement().primaryKey(),
+  diaryId: int("diaryId").notNull().unique(),
+  
+  // MVP 階段使用關鍵詞
+  keywords: text("keywords"), // JSON array of keywords
+  
+  // 記憶類型（冗餘存儲，便於搜索）
+  memoryType: mysqlEnum("memoryType", [
+    "sales_experience",
+    "customer_insight",
+    "product_knowledge",
+    "objection_handling",
+    "success_case",
+    "market_trend",
+    "personal_note"
+  ]).default("sales_experience").notNull(),
+  
+  // 預留向量字段（Qdrant 整合時使用）
+  // embedding: text("embedding"), // JSON array of floats
+  // embeddingModel: varchar("embeddingModel", { length: 100 }),
+  
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+
+export type MemoryEmbedding = typeof memoryEmbeddings.$inferSelect;
+export type InsertMemoryEmbedding = typeof memoryEmbeddings.$inferInsert;

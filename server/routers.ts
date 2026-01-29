@@ -1,6 +1,8 @@
 import { TRPCError } from "@trpc/server";
 import { getSessionCookieOptions } from "./_core/cookies";
 import { customerAuthRouter } from "./customerAuthRouter";
+import { learningDiaryRouter } from "./learningDiaryRouter";
+import { createMemoryService } from "./services/memoryService";
 import { COOKIE_NAME } from "../shared/const";
 import { systemRouter } from "./_core/systemRouter";
 import { publicProcedure, protectedProcedure, router } from "./_core/trpc";
@@ -546,6 +548,17 @@ ${recentConversationContext}
 ---
 ${knowledgeContent.substring(0, 10000)}
 ---`;
+        }
+
+        // Add contextual memories from learning diary (Brain Memory System)
+        try {
+          const memoryService = createMemoryService(persona.userId);
+          const contextualMemories = await memoryService.getContextualMemories(input.message, 3);
+          if (contextualMemories) {
+            systemPrompt += contextualMemories;
+          }
+        } catch (error) {
+          console.error("[chat.send] Failed to get contextual memories:", error);
         }
 
         // Add style and superpowers instructions
@@ -2350,5 +2363,8 @@ ${knowledgeContent.substring(0, 10000)}
 
   // Customer authentication (for chat widget)
   customerAuth: customerAuthRouter,
+
+  // Learning Diary / Brain Memory System
+  learningDiary: learningDiaryRouter,
 });
 export type AppRouter = typeof appRouter;
