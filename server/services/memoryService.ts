@@ -135,11 +135,16 @@ export class MemoryService {
    * 搜索相關記憶（基於關鍵詞匹配，MVP 階段）
    */
   async searchMemories(query: string, limit: number = 5): Promise<MemorySearchResult[]> {
+    console.log("[MemoryService] searchMemories called with query:", query, "userId:", this.userId);
     const db = await getDb();
-    if (!db) return [];
+    if (!db) {
+      console.log("[MemoryService] Database connection failed");
+      return [];
+    }
 
     // 提取關鍵詞
     const keywords = await this.extractKeywords(query);
+    console.log("[MemoryService] Extracted keywords:", keywords);
     
     // 基於關鍵詞搜索
     const results: MemorySearchResult[] = [];
@@ -170,6 +175,10 @@ export class MemoryService {
     }
 
     // 按相關性排序
+    console.log("[MemoryService] Search results count:", results.length);
+    if (results.length > 0) {
+      console.log("[MemoryService] Found memories:", results.map(r => ({ id: r.entry.id, title: r.entry.title, score: r.relevanceScore })));
+    }
     return results
       .sort((a, b) => b.relevanceScore - a.relevanceScore)
       .slice(0, limit);
@@ -179,27 +188,67 @@ export class MemoryService {
    * 獲取對話上下文相關的記憶
    * 用於在 AI 對話中自動注入相關記憶
    */
-  async getContextualMemories(conversationContext: string, limit: number = 3): Promise<string> {
+  async getContextualMemories(conversationContext: string, limit: number = 5): Promise<string> {
+    // 首先嘗試語義搜索
     const memories = await this.searchMemories(conversationContext, limit);
     
+    // 如果語義搜索沒有結果，嘗試獲取最近的高重要性記憶
+    let relevantMemories = memories;
     if (memories.length === 0) {
-      return "";
+      const recentImportant = await this.getRecentImportantMemories(limit);
+      if (recentImportant.length === 0) {
+        return "";
+      }
+      relevantMemories = recentImportant.map(entry => ({
+        entry,
+        relevanceScore: 0.5,
+        matchedKeywords: []
+      }));
     }
 
-    let contextPrompt = "\n【相關銷售經驗和知識】\n";
+    let contextPrompt = `\n【重要：你已知的客戶資訊】
+以下是你已經掌握的客戶資訊和專業知識，請直接引用這些資訊來回答問題，不要說「我不知道」或「請查閱您的記錄」：\n`;
     
-    for (const memory of memories) {
+    for (const memory of relevantMemories) {
       const entry = memory.entry;
-      contextPrompt += `\n📝 ${entry.title}\n`;
-      contextPrompt += `類型：${this.getMemoryTypeLabel(entry.memoryType)}\n`;
-      contextPrompt += `內容：${entry.content.substring(0, 500)}${entry.content.length > 500 ? '...' : ''}\n`;
+      const typeLabel = this.getMemoryTypeLabel(entry.memoryType);
+      contextPrompt += `\n- [${typeLabel}] ${entry.title}\n`;
+      contextPrompt += `  ${entry.content.substring(0, 800)}${entry.content.length > 800 ? '...' : ''}\n`;
       
+      if (entry.relatedCustomer) {
+        contextPrompt += `  相關客戶：${entry.relatedCustomer}\n`;
+      }
+      if (entry.relatedProduct) {
+        contextPrompt += `  相關產品：${entry.relatedProduct}\n`;
+      }
       if (entry.actionItems && entry.actionItems.length > 0) {
-        contextPrompt += `行動要點：${entry.actionItems.join('、')}\n`;
+        contextPrompt += `  行動要點：${entry.actionItems.join('、')}\n`;
       }
     }
 
+    contextPrompt += `\n【指令】請直接使用以上客戶資訊回答問題。例如，如果用戶問「張先生對什麼保險有興趣」，你應該直接回答「根據我的記錄，張先生對醫療保險很感興趣...」，而不是說「我沒有這個記錄」。\n`;
+
     return contextPrompt;
+  }
+
+  /**
+   * 獲取最近的高重要性記憶（作為備用）
+   */
+  private async getRecentImportantMemories(limit: number = 3): Promise<LearningDiaryEntry[]> {
+    const db = await getDb();
+    if (!db) return [];
+
+    const entries = await db
+      .select()
+      .from(learningDiaries)
+      .where(and(
+        eq(learningDiaries.userId, this.userId),
+        sql`${learningDiaries.importance} IN ('high', 'critical')`
+      ))
+      .orderBy(desc(learningDiaries.createdAt))
+      .limit(limit);
+
+    return entries.map(this.mapDbEntryToLearningDiary);
   }
 
   /**
@@ -419,6 +468,15 @@ export class MemoryService {
    * 提取關鍵詞（MVP 階段使用 LLM）
    */
   private async extractKeywords(text: string): Promise<string[]> {
+    // 首先嘗試簡單分詞提取關鍵詞（更可靠）
+    const simpleKeywords = this.extractSimpleKeywords(text);
+    console.log("[MemoryService] Simple keywords extracted:", simpleKeywords);
+    
+    if (simpleKeywords.length >= 2) {
+      return simpleKeywords;
+    }
+    
+    // 如果簡單分詞不夠，嘗試使用 LLM
     try {
       const response = await invokeLLM({
         messages: [
@@ -436,14 +494,35 @@ export class MemoryService {
         .map((k: string) => k.trim())
         .filter((k: string) => k.length > 0);
 
+      console.log("[MemoryService] LLM keywords extracted:", keywords);
       return keywords.slice(0, 5);
     } catch (error) {
+      console.error("[MemoryService] LLM keyword extraction failed:", error);
       // 降級到簡單分詞
       return text
         .split(/[\s,，、。！？]/)
         .filter(w => w.length >= 2)
         .slice(0, 5);
     }
+  }
+
+  /**
+   * 簡單分詞提取關鍵詞（不依賴 LLM）
+   */
+  private extractSimpleKeywords(text: string): string[] {
+    // 移除常見停用詞和標點符號
+    const stopWords = ["的", "了", "是", "在", "我", "有", "和", "就", "不", "人", "都", "一", "一個", "上", "也", "很", "到", "說", "要", "去", "你", "會", "著", "沒有", "看", "好", "自己", "這", "那", "什麼", "怎麼", "為什麼", "如何", "哪個", "哪些", "請問", "對", "跟", "讓", "被", "從", "給", "可以", "能", "想", "知道", "之前", "以前"];
+    
+    // 分割文本
+    const words = text
+      .replace(/[\s,，、。！？；："'「」『』【】\(\)\[\]\{\}]/g, ' ')
+      .split(' ')
+      .map(w => w.trim())
+      .filter(w => w.length >= 2 && !stopWords.includes(w));
+    
+    // 去重並返回
+    const uniqueWords = Array.from(new Set(words));
+    return uniqueWords.slice(0, 8);
   }
 
   /**

@@ -1195,3 +1195,18 @@
 - [x] 整合記憶系統到對話流程
 - [x] 推送代碼到 GitHub feature/mvp-brain 分支
 - [x] 生成完成報告
+
+
+## 增強學習日記對話整合（2026-01-29）
+- [ ] 修改 chat.send 路由整合學習日記
+- [ ] 調用 memoryService.searchMemories() 檢索相關記憶
+- [ ] 將記憶內容注入 System Prompt
+- [ ] 測試對話整合功能
+
+
+## 增強學習日記對話整合（2026-01-29）
+- [x] 修改 chat.send 路由整合學習日記
+- [x] 調用 memoryService.searchMemories() 檢索相關記憶
+- [x] 將記憶內容注入 System Prompt
+- [x] 改進提示詞格式，明確告訴 AI 這是已知資訊
+- [x] 測試對話整合功能

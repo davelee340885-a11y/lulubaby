@@ -551,14 +551,26 @@ ${knowledgeContent.substring(0, 10000)}
         }
 
         // Add contextual memories from learning diary (Brain Memory System)
+        let memoryContext = '';
         try {
+          console.log("[chat.send] ========== MEMORY RETRIEVAL START ==========");
+          console.log("[chat.send] Searching for contextual memories for user:", persona.userId);
+          console.log("[chat.send] User message:", input.message);
           const memoryService = createMemoryService(persona.userId);
-          const contextualMemories = await memoryService.getContextualMemories(input.message, 3);
-          if (contextualMemories) {
+          const contextualMemories = await memoryService.getContextualMemories(input.message, 5);
+          console.log("[chat.send] Contextual memories found:", contextualMemories ? contextualMemories.length : 0, "chars");
+          if (contextualMemories && contextualMemories.trim()) {
+            memoryContext = contextualMemories;
             systemPrompt += contextualMemories;
+            console.log("[chat.send] Added contextual memories to system prompt");
+            console.log("[chat.send] Memory content preview:", contextualMemories.substring(0, 200));
+          } else {
+            console.log("[chat.send] No contextual memories found or empty result");
           }
+          console.log("[chat.send] ========== MEMORY RETRIEVAL END ==========");
         } catch (error) {
           console.error("[chat.send] Failed to get contextual memories:", error);
+          console.error("[chat.send] Error stack:", error instanceof Error ? error.stack : 'Unknown error');
         }
 
         // Add style and superpowers instructions
