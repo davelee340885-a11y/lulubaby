@@ -134,6 +134,13 @@
       "when": 1769699694885,
       "tag": "0018_silky_the_initiative",
       "breakpoints": true
+    },
+    {
+      "idx": 19,
+      "version": "5",
+      "when": 1769774892939,
+      "tag": "0019_thick_skin",
+      "breakpoints": true
     }
   ]
 }

@@ -511,8 +511,38 @@ export const appRouter = router({
         const superpowersSettings = await getSuperpowersByUserId(persona.userId);
         const stylePrompt = generateStylePrompt(training || null, superpowersSettings || null);
         
-        // Build system prompt with customer memory
-        let systemPrompt = `你是${persona.agentName}，一個專業的AI助手。
+        // Get contextual memories from learning diary (Brain Memory System) FIRST
+        let memoryContext = '';
+        try {
+          console.log("[chat.send] ========== MEMORY RETRIEVAL START ==========");
+          console.log("[chat.send] Searching for contextual memories for user:", persona.userId);
+          console.log("[chat.send] User message:", input.message);
+          const memoryService = createMemoryService(persona.userId);
+          const contextualMemories = await memoryService.getContextualMemories(input.message, 5);
+          console.log("[chat.send] Contextual memories found:", contextualMemories ? contextualMemories.length : 0, "chars");
+          if (contextualMemories && contextualMemories.trim()) {
+            memoryContext = contextualMemories;
+            console.log("[chat.send] Memory content preview:", contextualMemories.substring(0, 200));
+          } else {
+            console.log("[chat.send] No contextual memories found or empty result");
+          }
+          console.log("[chat.send] ========== MEMORY RETRIEVAL END ==========");
+        } catch (error) {
+          console.error("[chat.send] Failed to get contextual memories:", error);
+          console.error("[chat.send] Error stack:", error instanceof Error ? error.stack : 'Unknown error');
+        }
+
+        // Build system prompt - MEMORY FIRST for highest priority
+        let systemPrompt = `你是${persona.agentName}，用戶的專屬 AI 銷售助手。
+`;
+
+        // Add memory context FIRST (highest priority)
+        if (memoryContext) {
+          systemPrompt += memoryContext;
+        }
+
+        // Then add basic instructions
+        systemPrompt += `
 ${persona.systemPrompt || "請用友善、專業的方式回答用戶的問題。"}
 `;
 
@@ -550,28 +580,7 @@ ${knowledgeContent.substring(0, 10000)}
 ---`;
         }
 
-        // Add contextual memories from learning diary (Brain Memory System)
-        let memoryContext = '';
-        try {
-          console.log("[chat.send] ========== MEMORY RETRIEVAL START ==========");
-          console.log("[chat.send] Searching for contextual memories for user:", persona.userId);
-          console.log("[chat.send] User message:", input.message);
-          const memoryService = createMemoryService(persona.userId);
-          const contextualMemories = await memoryService.getContextualMemories(input.message, 5);
-          console.log("[chat.send] Contextual memories found:", contextualMemories ? contextualMemories.length : 0, "chars");
-          if (contextualMemories && contextualMemories.trim()) {
-            memoryContext = contextualMemories;
-            systemPrompt += contextualMemories;
-            console.log("[chat.send] Added contextual memories to system prompt");
-            console.log("[chat.send] Memory content preview:", contextualMemories.substring(0, 200));
-          } else {
-            console.log("[chat.send] No contextual memories found or empty result");
-          }
-          console.log("[chat.send] ========== MEMORY RETRIEVAL END ==========");
-        } catch (error) {
-          console.error("[chat.send] Failed to get contextual memories:", error);
-          console.error("[chat.send] Error stack:", error instanceof Error ? error.stack : 'Unknown error');
-        }
+        // Memory context already added at the beginning of system prompt
 
         // Add style and superpowers instructions
         if (stylePrompt) {
