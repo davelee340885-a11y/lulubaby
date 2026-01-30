@@ -60,8 +60,13 @@ function Router() {
     !window.location.hostname.includes('manus.computer');
   
   // If custom domain, show custom domain chat page for root path
-  if (isCustomDomain && window.location.pathname === '/') {
-    return <CustomDomainChat />;
+  if (isCustomDomain) {
+    if (window.location.pathname === '/') {
+      return <CustomDomainChat />;
+    }
+    if (window.location.pathname === '/dashboard') {
+      return <CustomerDashboard />;
+    }
   }
   
   return (
