@@ -1,0 +1,8 @@
+{
+  "query": "SELECT p.id, p.name, p.welcome_message, p.input_placeholder, \n       d.domain_name, d.is_published, d.persona_id as bound_persona_id\nFROM persona p\nLEFT JOIN domain_order d ON d.persona_id = p.id AND d.is_published = 1\nORDER BY p.id",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user VqBKoEwKfw4feq4.6cd8cd1ff95f --database aavW9BLbZ6sZHaPEemayyD --execute SELECT p.id, p.name, p.welcome_message, p.input_placeholder, \n       d.domain_name, d.is_published, d.persona_id as bound_persona_id\nFROM persona p\nLEFT JOIN domain_order d ON d.persona_id = p.id AND d.is_published = 1\nORDER BY p.id",
+  "returncode": 1,
+  "logs": [
+    "ERROR 1146 (42S02) at line 1: Table 'aavw9blbz6szhapeemayyd.persona' doesn't exist"
+  ]
+}

@@ -1,0 +1,1 @@
+ALTER TABLE `ai_personas` ADD `immersiveMode` boolean DEFAULT false NOT NULL;

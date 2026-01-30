@@ -4,8 +4,9 @@ import { Input } from "@/components/ui/input";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
-import { Send, Loader2, Bot, User, Search, Calendar, Link as LinkIcon, MessageSquare, ExternalLink, Sparkles, FileText, Building2, Phone, HelpCircle, ShoppingBag, UserCircle } from "lucide-react";
-import { useState, useEffect, useRef } from "react";
+import { Send, Loader2, Bot, User, Search, Calendar, Link as LinkIcon, MessageSquare, ExternalLink, Sparkles, FileText, Building2, Phone, HelpCircle, ShoppingBag, UserCircle, LogIn } from "lucide-react";
+import { CustomerLoginDialog } from "@/components/CustomerLoginDialog";
+import React, { useState, useEffect, useRef } from "react";
 import { useParams } from "wouter";
 import { nanoid } from "nanoid";
 import { Streamdown } from "streamdown";
@@ -59,6 +60,12 @@ export default function Chat() {
   const [isTyping, setIsTyping] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
+  
+  // Customer login state
+  const [customer, setCustomer] = useState<any | null>(null);
+  const handleCustomerLogin = (user: any) => setCustomer(user);
+  const handleCustomerLogout = () => setCustomer(null);
+  const [showLoginDialog, setShowLoginDialog] = useState(false);
 
   const { data: persona, isLoading: personaLoading } = trpc.persona.getPublic.useQuery(
     { personaId },
@@ -279,9 +286,15 @@ export default function Chat() {
       handleKeyDown={handleKeyDown}
       handleQuickButton={handleQuickButton}
       handleSuggestedQuestion={handleSuggestedQuestion}
+      customer={customer}
+      showLoginDialog={showLoginDialog}
+      setShowLoginDialog={setShowLoginDialog}
+      onLogin={handleCustomerLogin}
+      onLogout={handleCustomerLogout}
     />;
   }
 
+  // Custom layout for custom background (image or color)
   if (layoutStyle === "custom") {
     return <CustomLayout 
       persona={persona} 
@@ -300,6 +313,11 @@ export default function Chat() {
       handleKeyDown={handleKeyDown}
       handleQuickButton={handleQuickButton}
       handleSuggestedQuestion={handleSuggestedQuestion}
+      customer={customer}
+      showLoginDialog={showLoginDialog}
+      setShowLoginDialog={setShowLoginDialog}
+      onLogin={handleCustomerLogin}
+      onLogout={handleCustomerLogout}
     />;
   }
 
@@ -321,8 +339,29 @@ export default function Chat() {
     handleKeyDown={handleKeyDown}
     handleQuickButton={handleQuickButton}
     handleSuggestedQuestion={handleSuggestedQuestion}
+    customer={customer}
+    showLoginDialog={showLoginDialog}
+    setShowLoginDialog={setShowLoginDialog}
+    onLogin={handleCustomerLogin}
+    onLogout={handleCustomerLogout}
   />;
 }
+
+// Helper function to get welcome message font size
+const getWelcomeMessageFontSize = (size: string | null) => {
+  switch (size) {
+    case "xsmall": return "12px";
+    case "small": return "14px";
+    case "medium": return "16px";
+    case "large": return "18px";
+    case "xlarge": return "20px";
+    case "xxlarge": return "24px";
+    case "xxxlarge": return "28px";
+    case "huge": return "32px";
+    case "massive": return "36px";
+    default: return "16px";
+  }
+};
 
 // Persona type from API
 type PersonaData = {
@@ -330,6 +369,8 @@ type PersonaData = {
   agentName: string;
   avatarUrl: string | null;
   welcomeMessage: string;
+  welcomeMessageColor: string | null;
+  welcomeMessageSize: string | null;
   primaryColor: string | null;
   layoutStyle: string | null;
   backgroundImageUrl: string | null;
@@ -366,6 +407,12 @@ type LayoutProps = {
   handleKeyDown: (e: React.KeyboardEvent) => void;
   handleQuickButton: (button: NonNullable<LayoutProps["persona"]>["quickButtons"][0]) => void;
   handleSuggestedQuestion: (question: string) => void;
+  // Customer login props
+  customer: any | null;
+  showLoginDialog: boolean;
+  setShowLoginDialog: (show: boolean) => void;
+  onLogin: (user: any) => void;
+  onLogout: () => void;
 };
 
 // Quick Button Component with different display modes
@@ -373,12 +420,14 @@ function QuickButtonGroup({
   buttons, 
   displayMode, 
   primaryColor,
-  onButtonClick 
+  onButtonClick,
+  hasBackground = false
 }: { 
   buttons: PersonaData["quickButtons"];
   displayMode: string;
   primaryColor: string;
   onButtonClick: (button: PersonaData["quickButtons"][0]) => void;
+  hasBackground?: boolean;
 }) {
   if (buttons.length === 0) return null;
 
@@ -394,7 +443,11 @@ function QuickButtonGroup({
                 <TooltipTrigger asChild>
                   <button
                     onClick={() => onButtonClick(button)}
-                    className="p-2 rounded-lg hover:bg-muted/80 transition-colors group"
+                    className={`p-2 rounded-lg transition-colors group ${
+                      hasBackground 
+                        ? "bg-white/90 hover:bg-white shadow-sm" 
+                        : "hover:bg-muted/80"
+                    }`}
                     style={{ color: primaryColor }}
                   >
                     <IconComponent className="h-4 w-4" />
@@ -421,7 +474,11 @@ function QuickButtonGroup({
             <button
               key={button.id}
               onClick={() => onButtonClick(button)}
-              className="inline-flex items-center gap-1 px-2 py-1 text-xs rounded-md border hover:bg-muted/50 transition-colors"
+              className={`inline-flex items-center gap-1 px-2 py-1 text-xs rounded-md border transition-colors ${
+                hasBackground 
+                  ? "bg-white/90 hover:bg-white shadow-sm" 
+                  : "hover:bg-muted/50"
+              }`}
             >
               <IconComponent className="h-3 w-3" />
               <span className="max-w-[60px] truncate">{button.label}</span>
@@ -443,7 +500,9 @@ function QuickButtonGroup({
             key={button.id}
             variant="outline"
             size="sm"
-            className="h-6 px-2 text-[11px] rounded-md font-normal"
+            className={`h-6 px-2 text-[11px] rounded-md font-normal ${
+              hasBackground ? "bg-white/90 hover:bg-white shadow-sm" : ""
+            }`}
             onClick={() => onButtonClick(button)}
           >
             <IconComponent className="h-3 w-3 mr-1" />
@@ -474,46 +533,36 @@ function MinimalLayout({
   handleKeyDown,
   handleQuickButton,
   handleSuggestedQuestion,
+  customer,
+  showLoginDialog,
+  setShowLoginDialog,
+  onLogin,
+  onLogout,
 }: LayoutProps) {
   const hasMessages = messages.length > 0;
 
   return (
     <div className="min-h-screen flex flex-col bg-background">
-      {/* Minimal Header */}
-      <header className="sticky top-0 z-10 border-b border-border/40 bg-background/95 backdrop-blur">
-        <div className="container max-w-sm mx-auto py-1.5 px-4">
-          <div className="flex items-center gap-1.5">
-            <Avatar className="h-5 w-5">
-              <AvatarImage src={persona.avatarUrl || undefined} />
-              <AvatarFallback style={{ backgroundColor: `${primaryColor}15`, color: primaryColor }}>
-                <Bot className="h-2.5 w-2.5" />
-              </AvatarFallback>
-            </Avatar>
-            <div className="flex-1 min-w-0">
-              <h1 className="font-medium text-xs truncate">{persona.agentName}</h1>
-            </div>
-            <span className="flex items-center gap-0.5 text-[10px] text-green-600">
-              <span className="w-1 h-1 rounded-full bg-green-500" />
-              在線
-            </span>
-          </div>
-        </div>
-      </header>
-
       {/* Main Content Area */}
       <div className="flex-1 flex flex-col">
-        {/* Welcome State - Manus Style Layout */}
+        {/* Welcome State - Compact & Centered Layout */}
         {!hasMessages && (
-          <div className="flex-1 flex flex-col items-center justify-center px-4">
-            <div className="w-full max-w-2xl text-center">
-              {/* Welcome Message - Large Title */}
-              <h1 className="text-2xl md:text-3xl font-semibold mb-8 text-foreground">
-                {persona.welcomeMessage}
-              </h1>
+          <div className="flex-1 flex flex-col items-center justify-center px-4 py-6">
+            <div className="w-full max-w-xl text-center space-y-5">
+              {/* Welcome Message - Hero Title */}
+              <h2 
+                className="font-semibold text-foreground"
+                style={{
+                  color: persona.welcomeMessageColor || undefined,
+                  fontSize: getWelcomeMessageFontSize(persona.welcomeMessageSize),
+                }}
+              >
+                {persona.welcomeMessage || "您好！我是AI助手"}
+              </h2>
               
               {/* Input Area - Centered, Prominent */}
-              <div className="relative w-full max-w-xl mx-auto mb-6">
-                <div className="flex items-center bg-background border border-border/60 rounded-2xl shadow-sm hover:shadow-md transition-shadow px-4 py-3">
+              <div className="relative w-full">
+                <div className="flex items-center bg-background border border-border/60 rounded-xl shadow-sm px-3 py-2">
                   <Input
                     ref={inputRef}
                     placeholder={chatPlaceholder}
@@ -521,40 +570,39 @@ function MinimalLayout({
                     onChange={(e) => setInput(e.target.value)}
                     onKeyDown={handleKeyDown}
                     disabled={isTyping}
-                    className="border-0 shadow-none focus-visible:ring-0 h-auto text-sm px-0 bg-transparent"
+                    className="border-0 shadow-none focus-visible:ring-0 h-auto text-xs px-0 bg-transparent"
                   />
                   <Button
                     onClick={() => handleSend()}
                     disabled={!input.trim() || isTyping}
                     size="icon"
-                    className="rounded-full h-9 w-9 shrink-0 ml-2"
-                    style={{ backgroundColor: input.trim() ? primaryColor : undefined }}
-                    variant={input.trim() ? "default" : "ghost"}
+                    className="rounded-full h-7 w-7 shrink-0 ml-2"
+                    style={{ backgroundColor: primaryColor }}
                   >
-                    {isTyping ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
+                    {isTyping ? <Loader2 className="h-3 w-3 animate-spin" /> : <Send className="h-3 w-3" />}
                   </Button>
                 </div>
               </div>
 
-              {/* Suggested Questions - Small Tags Below Input */}
+              {/* Suggested Questions - Compact Tags */}
               {suggestedQuestions.length > 0 && (
-                <div className="flex flex-wrap justify-center gap-2 mb-4">
-                  {suggestedQuestions.map((question, index) => (
+                <div className="flex flex-wrap justify-center gap-1.5">
+                  {suggestedQuestions.slice(0, 3).map((question, index) => (
                     <button
                       key={index}
                       onClick={() => handleSuggestedQuestion(question)}
-                      className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full border border-border/60 bg-background hover:bg-muted/50 hover:border-primary/30 transition-all text-xs text-muted-foreground hover:text-foreground"
+                      className="inline-flex items-center gap-1 px-2 py-1 rounded-full border border-border/60 bg-background text-[10px] text-muted-foreground"
                     >
-                      <MessageSquare className="h-3 w-3" />
-                      {question}
+                      <MessageSquare className="h-2.5 w-2.5" />
+                      <span className="max-w-[100px] truncate">{question}</span>
                     </button>
                   ))}
                 </div>
               )}
 
-              {/* Quick Buttons - Below Suggested Questions */}
+              {/* Quick Buttons - Prominent Display */}
               {showQuickButtons && persona.quickButtons.length > 0 && (
-                <div className="flex flex-wrap justify-center gap-2">
+                <div className="flex flex-wrap justify-center gap-1.5">
                   <QuickButtonGroup
                     buttons={persona.quickButtons}
                     displayMode={buttonDisplayMode}
@@ -562,6 +610,30 @@ function MinimalLayout({
                     onButtonClick={handleQuickButton}
                   />
                 </div>
+              )}
+            </div>
+            
+            {/* Customer Login Button - Fixed Bottom Left */}
+            <div className="fixed bottom-4 left-4">
+              {customer ? (
+                <div className="flex items-center gap-2 text-sm">
+                  <UserCircle className="w-4 h-4" />
+                  <span>{customer.email}</span>
+                  <button
+                    onClick={onLogout}
+                    className="text-xs text-gray-500 hover:text-gray-700"
+                  >
+                    登出
+                  </button>
+                </div>
+              ) : (
+                <button
+                  onClick={() => setShowLoginDialog(true)}
+                  className="flex items-center gap-2 text-sm text-cyan-500 hover:text-cyan-600"
+                >
+                  <LogIn className="w-4 h-4" />
+                  登入
+                </button>
               )}
             </div>
           </div>
@@ -647,6 +719,27 @@ function MinimalLayout({
             )}
 
             <div className="flex gap-1.5 items-center">
+              {/* Customer Login Button */}
+              {customer ? (
+                <div className="flex items-center gap-2 text-sm">
+                  <UserCircle className="w-4 h-4" />
+                  <span>{customer.email}</span>
+                  <button
+                    onClick={onLogout}
+                    className="text-xs text-gray-500 hover:text-gray-700"
+                  >
+                    登出
+                  </button>
+                </div>
+              ) : (
+                <button
+                  onClick={() => setShowLoginDialog(true)}
+                  className="flex items-center gap-2 text-sm text-cyan-500 hover:text-cyan-600"
+                >
+                  <LogIn className="w-4 h-4" />
+                  登入
+                </button>
+              )}
               <Input
                 ref={inputRef}
                 placeholder={chatPlaceholder}
@@ -654,7 +747,7 @@ function MinimalLayout({
                 onChange={(e) => setInput(e.target.value)}
                 onKeyDown={handleKeyDown}
                 disabled={isTyping}
-                className="rounded-full h-8 text-xs px-3"
+                className="rounded-full h-8 text-xs px-3 flex-1"
               />
               <Button
                 onClick={() => handleSend()}
@@ -669,6 +762,14 @@ function MinimalLayout({
           </div>
         </div>
       )}
+      
+      {/* Customer Login Dialog */}
+      <CustomerLoginDialog
+        isOpen={showLoginDialog}
+        onClose={() => setShowLoginDialog(false)}
+        personaId={String(persona.id)}
+        onLoginSuccess={onLogin}
+      />
     </div>
   );
 }
@@ -691,104 +792,109 @@ function ProfessionalLayout({
   handleKeyDown,
   handleQuickButton,
   handleSuggestedQuestion,
+  customer,
+  showLoginDialog,
+  setShowLoginDialog,
+  onLogin,
+  onLogout,
 }: LayoutProps) {
   const hasStartedChat = messages.length > 0;
 
   return (
-    <div className="min-h-screen flex flex-col" style={{ backgroundColor: `${primaryColor}05` }}>
-      {/* Hero Section - Only show when no messages */}
-      {!hasStartedChat && (
-        <div className="relative py-10 px-4" style={{ backgroundColor: primaryColor }}>
-          <div className="absolute inset-0 bg-gradient-to-b from-black/10 to-black/30" />
-          <div className="relative container max-w-xl text-center text-white">
-            {/* Profile Photo */}
-            <div className="mb-4">
-              {persona.profilePhotoUrl ? (
-                <img
-                  src={persona.profilePhotoUrl}
-                  alt={persona.agentName}
-                  className="w-20 h-20 rounded-full mx-auto object-cover border-3 border-white/30 shadow-lg"
-                />
-              ) : (
-                <Avatar className="w-20 h-20 mx-auto border-3 border-white/30 shadow-lg">
-                  <AvatarImage src={persona.avatarUrl || undefined} />
-                  <AvatarFallback className="text-2xl bg-white/20">
-                    <Bot className="h-10 w-10" />
-                  </AvatarFallback>
-                </Avatar>
+    <div className="min-h-screen flex flex-col bg-background">
+      {/* Main Content Area */}
+      <div className="flex-1 flex flex-col">
+        {/* Welcome State - Compact & Centered Layout */}
+        {!hasStartedChat && (
+          <div className="flex-1 flex flex-col items-center justify-center px-4 py-6">
+            <div className="w-full max-w-xl text-center space-y-5">
+              {/* Welcome Message - Hero Title */}
+              <h2 
+                className="font-semibold text-foreground"
+                style={{
+                  color: persona.welcomeMessageColor || undefined,
+                  fontSize: getWelcomeMessageFontSize(persona.welcomeMessageSize),
+                }}
+              >
+                {persona.welcomeMessage || "您好！我是您的AI助手"}
+              </h2>
+              
+              {/* Input Area - Centered, Prominent */}
+              <div className="relative w-full">
+                <div className="flex items-center bg-background border border-border/60 rounded-xl shadow-sm px-3 py-2">
+                  <Input
+                    ref={inputRef}
+                    placeholder={chatPlaceholder}
+                    value={input}
+                    onChange={(e) => setInput(e.target.value)}
+                    onKeyDown={handleKeyDown}
+                    disabled={isTyping}
+                    className="border-0 shadow-none focus-visible:ring-0 h-auto text-xs px-0 bg-transparent"
+                  />
+                  <Button
+                    onClick={() => handleSend()}
+                    disabled={!input.trim() || isTyping}
+                    size="icon"
+                    className="rounded-full h-7 w-7 shrink-0 ml-2"
+                    style={{ backgroundColor: primaryColor }}
+                  >
+                    {isTyping ? <Loader2 className="h-3 w-3 animate-spin" /> : <Send className="h-3 w-3" />}
+                  </Button>
+                </div>
+              </div>
+
+              {/* Suggested Questions - Compact Tags */}
+              {suggestedQuestions.length > 0 && (
+                <div className="flex flex-wrap justify-center gap-1.5">
+                  {suggestedQuestions.slice(0, 3).map((question, index) => (
+                    <button
+                      key={index}
+                      onClick={() => handleSuggestedQuestion(question)}
+                      className="inline-flex items-center gap-1 px-2 py-1 rounded-full border border-border/60 bg-background text-[10px] text-muted-foreground"
+                    >
+                      <MessageSquare className="h-2.5 w-2.5" />
+                      <span className="max-w-[100px] truncate">{question}</span>
+                    </button>
+                  ))}
+                </div>
+              )}
+
+              {/* Quick Buttons - Prominent Display */}
+              {showQuickButtons && persona.quickButtons.length > 0 && (
+                <div className="flex flex-wrap justify-center gap-1.5">
+                  <QuickButtonGroup
+                    buttons={persona.quickButtons}
+                    displayMode={buttonDisplayMode}
+                    primaryColor={primaryColor}
+                    onButtonClick={handleQuickButton}
+                  />
+                </div>
               )}
             </div>
             
-            <h1 className="text-xl font-bold mb-1">{persona.agentName}</h1>
-            {persona.tagline && (
-              <p className="text-white/90 text-sm mb-3">{persona.tagline}</p>
-            )}
-            <p className="text-white/80 text-sm max-w-md mx-auto">{persona.welcomeMessage}</p>
-          </div>
-        </div>
-      )}
-
-      {/* Compact Header - Only show when chatting */}
-      {hasStartedChat && (
-        <header className="sticky top-0 z-10 border-b bg-background/95 backdrop-blur">
-          <div className="container max-w-2xl py-2">
-            <div className="flex items-center gap-2">
-              {persona.profilePhotoUrl ? (
-                <img
-                  src={persona.profilePhotoUrl}
-                  alt={persona.agentName}
-                  className="w-8 h-8 rounded-full object-cover border-2"
-                  style={{ borderColor: primaryColor }}
-                />
-              ) : (
-                <Avatar className="h-8 w-8 border-2" style={{ borderColor: primaryColor }}>
-                  <AvatarImage src={persona.avatarUrl || undefined} />
-                  <AvatarFallback style={{ backgroundColor: `${primaryColor}15`, color: primaryColor }}>
-                    <Bot className="h-4 w-4" />
-                  </AvatarFallback>
-                </Avatar>
-              )}
-              <div className="flex-1 min-w-0">
-                <h1 className="font-semibold text-sm truncate">{persona.agentName}</h1>
-                {persona.tagline && <p className="text-xs text-muted-foreground truncate">{persona.tagline}</p>}
-              </div>
-            </div>
-          </div>
-        </header>
-      )}
-
-      {/* Chat Area */}
-      <div className="flex-1 flex flex-col">
-        {/* Welcome Content */}
-        {!hasStartedChat && (
-          <div className="container max-w-xl px-4 py-6 space-y-4">
-            {/* Suggested Questions */}
-            {suggestedQuestions.length > 0 && (
-              <div className="space-y-1.5">
-                <p className="text-xs text-muted-foreground text-center mb-2">常見問題</p>
-                {suggestedQuestions.map((question, index) => (
+            {/* Customer Login Button - Fixed Bottom Left */}
+            <div className="fixed bottom-4 left-4">
+              {customer ? (
+                <div className="flex items-center gap-2 text-sm">
+                  <UserCircle className="w-4 h-4" />
+                  <span>{customer.email}</span>
                   <button
-                    key={index}
-                    onClick={() => handleSuggestedQuestion(question)}
-                    className="w-full text-left px-3 py-2 rounded-lg bg-background border hover:bg-muted/50 transition-colors text-sm shadow-sm"
+                    onClick={onLogout}
+                    className="text-xs text-gray-500 hover:text-gray-700"
                   >
-                    {question}
+                    登出
                   </button>
-                ))}
-              </div>
-            )}
-
-            {/* Quick Buttons */}
-            {showQuickButtons && persona.quickButtons.length > 0 && (
-              <div className="pt-2">
-                <QuickButtonGroup
-                  buttons={persona.quickButtons}
-                  displayMode={buttonDisplayMode}
-                  primaryColor={primaryColor}
-                  onButtonClick={handleQuickButton}
-                />
-              </div>
-            )}
+                </div>
+              ) : (
+                <button
+                  onClick={() => setShowLoginDialog(true)}
+                  className="flex items-center gap-2 text-sm text-cyan-500 hover:text-cyan-600"
+                >
+                  <LogIn className="w-4 h-4" />
+                  登入
+                </button>
+              )}
+            </div>
           </div>
         )}
 
@@ -866,7 +972,8 @@ function ProfessionalLayout({
         )}
       </div>
 
-      {/* Input Area */}
+      {/* Input Area - Only show at bottom when chatting */}
+      {hasStartedChat && (
       <div className="sticky bottom-0 border-t bg-background">
         <div className="container max-w-2xl py-3">
           {/* Quick Buttons when chatting */}
@@ -882,6 +989,27 @@ function ProfessionalLayout({
           )}
 
           <div className="flex gap-2 items-center">
+            {/* Customer Login Button */}
+            {customer ? (
+              <div className="flex items-center gap-2 text-sm">
+                <UserCircle className="w-4 h-4" />
+                <span>{customer.email}</span>
+                <button
+                  onClick={onLogout}
+                  className="text-xs text-gray-500 hover:text-gray-700"
+                >
+                  登出
+                </button>
+              </div>
+            ) : (
+              <button
+                onClick={() => setShowLoginDialog(true)}
+                className="flex items-center gap-2 text-sm text-cyan-500 hover:text-cyan-600"
+              >
+                <LogIn className="w-4 h-4" />
+                登入
+              </button>
+            )}
             <Input
               ref={inputRef}
               placeholder={chatPlaceholder}
@@ -889,7 +1017,7 @@ function ProfessionalLayout({
               onChange={(e) => setInput(e.target.value)}
               onKeyDown={handleKeyDown}
               disabled={isTyping}
-              className="rounded-full h-9 text-sm"
+              className="rounded-full h-9 text-sm flex-1"
             />
             <Button
               onClick={() => handleSend()}
@@ -903,6 +1031,15 @@ function ProfessionalLayout({
           </div>
         </div>
       </div>
+      )}
+      
+      {/* Customer Login Dialog */}
+      <CustomerLoginDialog
+        isOpen={showLoginDialog}
+        onClose={() => setShowLoginDialog(false)}
+        personaId={String(persona.id)}
+        onLoginSuccess={onLogin}
+      />
     </div>
   );
 }
@@ -925,98 +1062,158 @@ function CustomLayout({
   handleKeyDown,
   handleQuickButton,
   handleSuggestedQuestion,
+  customer,
+  showLoginDialog,
+  setShowLoginDialog,
+  onLogin,
+  onLogout,
 }: LayoutProps) {
   const hasStartedChat = messages.length > 0;
+  const backgroundType = (persona as any).backgroundType || "none";
+  const backgroundColor = (persona as any).backgroundColor;
   const backgroundImage = persona.backgroundImageUrl;
+  const backgroundSize = (persona as any).backgroundSize || "cover";
+  const backgroundPosition = (persona as any).backgroundPosition || "center";
+  const backgroundRepeat = (persona as any).backgroundRepeat || "no-repeat";
+  const immersiveMode = (persona as any).immersiveMode || false;
+
+  // Determine background style based on type
+  const getBackgroundStyle = () => {
+    if (backgroundType === "image" && backgroundImage) {
+      return {
+        backgroundImage: `url(${backgroundImage})`,
+        backgroundSize: backgroundSize,
+        backgroundPosition: backgroundPosition,
+        backgroundRepeat: backgroundRepeat,
+        backgroundColor: undefined,
+      };
+    } else if (backgroundType === "color" && backgroundColor) {
+      return {
+        backgroundImage: undefined,
+        backgroundColor: backgroundColor,
+      };
+    } else {
+      // Default to white background (none)
+      return {
+        backgroundImage: undefined,
+        backgroundColor: "#ffffff",
+      };
+    }
+  };
+
+  const backgroundStyle = getBackgroundStyle();
+  const hasBackgroundImage = backgroundType === "image" && backgroundImage;
 
   return (
     <div 
-      className="min-h-screen flex flex-col bg-cover bg-center bg-fixed"
-      style={{ 
-        backgroundImage: backgroundImage ? `url(${backgroundImage})` : undefined,
-        backgroundColor: backgroundImage ? undefined : `${primaryColor}10`
-      }}
+      className={`min-h-screen flex flex-col ${immersiveMode ? "" : ""}`}
+      style={immersiveMode ? {} : backgroundStyle}
     >
-      {/* Overlay */}
-      {backgroundImage && <div className="fixed inset-0 bg-black/40 -z-10" />}
-
-      {/* Header */}
-      <header className="sticky top-0 z-10 bg-background/80 backdrop-blur border-b">
-        <div className="container max-w-2xl py-2">
-          <div className="flex items-center gap-2">
-            {persona.profilePhotoUrl ? (
-              <img
-                src={persona.profilePhotoUrl}
-                alt={persona.agentName}
-                className="w-8 h-8 rounded-full object-cover border-2 border-white/50"
-              />
-            ) : (
-              <Avatar className="h-8 w-8">
-                <AvatarImage src={persona.avatarUrl || undefined} />
-                <AvatarFallback style={{ backgroundColor: `${primaryColor}15`, color: primaryColor }}>
-                  <Bot className="h-4 w-4" />
-                </AvatarFallback>
-              </Avatar>
-            )}
-            <div className="flex-1 min-w-0">
-              <h1 className="font-semibold text-sm truncate">{persona.agentName}</h1>
-              {persona.tagline && <p className="text-xs text-muted-foreground truncate">{persona.tagline}</p>}
-            </div>
-          </div>
+      {/* Gradient Overlay for Immersive Mode */}
+      {immersiveMode && (
+        <div className="fixed inset-0 -z-10" style={backgroundStyle}>
+          <div className="absolute inset-0 bg-gradient-to-b from-black/20 via-black/30 to-black/60" />
+          <div className="absolute inset-0 backdrop-blur-[2px]" style={{ maskImage: 'linear-gradient(to bottom, transparent 0%, black 100%)' }} />
         </div>
-      </header>
+      )}
 
       {/* Main Content */}
       <div className="flex-1 flex flex-col">
-        {/* Welcome State */}
+        {/* Welcome State - Compact & Centered Layout */}
         {!hasStartedChat && (
-          <div className="flex-1 flex flex-col items-center justify-center px-4 py-8">
-            <div className="bg-background/90 backdrop-blur rounded-2xl p-6 max-w-md w-full shadow-lg">
-              <div className="text-center mb-4">
-                {persona.profilePhotoUrl ? (
-                  <img
-                    src={persona.profilePhotoUrl}
-                    alt={persona.agentName}
-                    className="w-16 h-16 rounded-full mx-auto object-cover border-3 shadow-md mb-3"
-                    style={{ borderColor: primaryColor }}
-                  />
-                ) : (
-                  <Avatar className="w-16 h-16 mx-auto mb-3">
-                    <AvatarImage src={persona.avatarUrl || undefined} />
-                    <AvatarFallback style={{ backgroundColor: `${primaryColor}15`, color: primaryColor }}>
-                      <Bot className="h-8 w-8" />
-                    </AvatarFallback>
-                  </Avatar>
-                )}
-                <h2 className="text-lg font-semibold">{persona.agentName}</h2>
-                {persona.tagline && <p className="text-sm text-muted-foreground">{persona.tagline}</p>}
-              </div>
+          <div 
+            className={`flex-1 flex flex-col items-center justify-center px-4 py-6 relative ${!immersiveMode && hasBackgroundImage ? "bg-cover bg-center" : ""}`}
+            style={!immersiveMode ? backgroundStyle : {}}
+          >
+            {/* Overlay for non-immersive mode */}
+            {!immersiveMode && backgroundImage && <div className="absolute inset-0 bg-black/40 -z-10" />}
+            <div className="w-full max-w-xl text-center space-y-5 relative z-10">
+              {/* Welcome Message - Hero Title */}
+              <h2 
+                className={`font-semibold ${!immersiveMode && hasBackgroundImage ? "text-white" : "text-foreground"}`}
+                style={{
+                  color: persona.welcomeMessageColor || undefined,
+                  fontSize: getWelcomeMessageFontSize(persona.welcomeMessageSize),
+                }}
+              >
+                {persona.welcomeMessage || "您好！我是您的AI助手"}
+              </h2>
               
-              <p className="text-sm text-center text-muted-foreground mb-4">{persona.welcomeMessage}</p>
+              {/* Input Area - Centered, Prominent */}
+              <div className="relative w-full">
+                <div className="flex items-center bg-background border border-border/60 rounded-xl shadow-sm px-3 py-2">
+                  <Input
+                    ref={inputRef}
+                    placeholder={chatPlaceholder}
+                    value={input}
+                    onChange={(e) => setInput(e.target.value)}
+                    onKeyDown={handleKeyDown}
+                    disabled={isTyping}
+                    className="border-0 shadow-none focus-visible:ring-0 h-auto text-xs px-0 bg-transparent"
+                  />
+                  <Button
+                    onClick={() => handleSend()}
+                    disabled={!input.trim() || isTyping}
+                    size="icon"
+                    className="rounded-full h-7 w-7 shrink-0 ml-2"
+                    style={{ backgroundColor: primaryColor }}
+                  >
+                    {isTyping ? <Loader2 className="h-3 w-3 animate-spin" /> : <Send className="h-3 w-3" />}
+                  </Button>
+                </div>
+              </div>
 
-              {/* Suggested Questions */}
+              {/* Suggested Questions - Compact Tags */}
               {suggestedQuestions.length > 0 && (
-                <div className="space-y-1.5 mb-4">
-                  {suggestedQuestions.map((question, index) => (
+                <div className="flex flex-wrap justify-center gap-1.5">
+                  {suggestedQuestions.slice(0, 3).map((question, index) => (
                     <button
                       key={index}
                       onClick={() => handleSuggestedQuestion(question)}
-                      className="w-full text-left px-3 py-2 rounded-lg border hover:bg-muted/50 transition-colors text-sm"
+                      className="inline-flex items-center gap-1 px-2 py-1 rounded-full border border-border/60 bg-background text-[10px] text-muted-foreground"
                     >
-                      {question}
+                      <MessageSquare className="h-2.5 w-2.5" />
+                      <span className="max-w-[100px] truncate">{question}</span>
                     </button>
                   ))}
                 </div>
               )}
 
-              {/* Quick Buttons */}
+              {/* Quick Buttons - Prominent Display */}
               {showQuickButtons && persona.quickButtons.length > 0 && (
-                <QuickButtonGroup
-                  buttons={persona.quickButtons}
-                  displayMode={buttonDisplayMode}
-                  primaryColor={primaryColor}
-                  onButtonClick={handleQuickButton}
-                />
+                <div className="flex flex-wrap justify-center gap-1.5">
+                  <QuickButtonGroup
+                    buttons={persona.quickButtons}
+                    displayMode={buttonDisplayMode}
+                    primaryColor={primaryColor}
+                    onButtonClick={handleQuickButton}
+                    hasBackground={!!backgroundImage || !!backgroundColor}
+                  />
+                </div>
+              )}
+            </div>
+            
+            {/* Customer Login Button - Fixed Bottom Left */}
+            <div className="fixed bottom-4 left-4 z-50">
+              {customer ? (
+                <div className="flex items-center gap-2 text-sm">
+                  <UserCircle className="w-4 h-4" />
+                  <span>{customer.email}</span>
+                  <button
+                    onClick={onLogout}
+                    className="text-xs text-gray-500 hover:text-gray-700"
+                  >
+                    登出
+                  </button>
+                </div>
+              ) : (
+                <button
+                  onClick={() => setShowLoginDialog(true)}
+                  className="flex items-center gap-2 text-sm text-cyan-500 hover:text-cyan-600"
+                >
+                  <LogIn className="w-4 h-4" />
+                  登入
+                </button>
               )}
             </div>
           </div>
@@ -1096,43 +1293,75 @@ function CustomLayout({
         )}
       </div>
 
-      {/* Input Area */}
-      <div className="sticky bottom-0 bg-background/80 backdrop-blur border-t">
-        <div className="container max-w-2xl py-3">
-          {/* Quick Buttons when chatting */}
-          {hasStartedChat && showQuickButtons && persona.quickButtons.length > 0 && (
-            <div className="mb-2">
-              <QuickButtonGroup
-                buttons={persona.quickButtons}
-                displayMode={buttonDisplayMode}
-                primaryColor={primaryColor}
-                onButtonClick={handleQuickButton}
-              />
-            </div>
-          )}
+      {/* Input Area - Only show at bottom when chatting */}
+      {hasStartedChat && (
+        <div className="sticky bottom-0 bg-background/80 backdrop-blur border-t">
+          <div className="container max-w-2xl py-3">
+            {/* Quick Buttons when chatting */}
+            {showQuickButtons && persona.quickButtons.length > 0 && (
+              <div className="mb-2">
+                <QuickButtonGroup
+                  buttons={persona.quickButtons}
+                  displayMode={buttonDisplayMode}
+                  primaryColor={primaryColor}
+                  onButtonClick={handleQuickButton}
+                  hasBackground={!!backgroundImage || !!backgroundColor}
+                />
+              </div>
+            )}
 
-          <div className="flex gap-2 items-center">
-            <Input
-              ref={inputRef}
-              placeholder={chatPlaceholder}
-              value={input}
-              onChange={(e) => setInput(e.target.value)}
-              onKeyDown={handleKeyDown}
-              disabled={isTyping}
-              className="rounded-full h-9 text-sm bg-background"
-            />
-            <Button
-              onClick={() => handleSend()}
-              disabled={!input.trim() || isTyping}
-              size="icon"
-              className="rounded-full h-9 w-9 shrink-0"
-              style={{ backgroundColor: primaryColor }}
-            >
-              {isTyping ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
-            </Button>
+            <div className="flex gap-2 items-center">
+              {/* Customer Login Button */}
+              {customer ? (
+                <div className="flex items-center gap-2 text-sm">
+                  <UserCircle className="w-4 h-4" />
+                  <span>{customer.email}</span>
+                  <button
+                    onClick={onLogout}
+                    className="text-xs text-gray-500 hover:text-gray-700"
+                  >
+                    登出
+                  </button>
+                </div>
+              ) : (
+                <button
+                  onClick={() => setShowLoginDialog(true)}
+                  className="flex items-center gap-2 text-sm text-cyan-500 hover:text-cyan-600"
+                >
+                  <LogIn className="w-4 h-4" />
+                  登入
+                </button>
+              )}
+              <Input
+                ref={inputRef}
+                placeholder={chatPlaceholder}
+                value={input}
+                onChange={(e) => setInput(e.target.value)}
+                onKeyDown={handleKeyDown}
+                disabled={isTyping}
+                className="rounded-full h-9 text-sm bg-background flex-1"
+              />
+              <Button
+                onClick={() => handleSend()}
+                disabled={!input.trim() || isTyping}
+                size="icon"
+                className="rounded-full h-9 w-9 shrink-0"
+                style={{ backgroundColor: primaryColor }}
+              >
+                {isTyping ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
+              </Button>
+            </div>
           </div>
         </div>
-      </div>
+      )}
+      
+      {/* Customer Login Dialog */}
+      <CustomerLoginDialog
+        isOpen={showLoginDialog}
+        onClose={() => setShowLoginDialog(false)}
+        personaId={String(persona.id)}
+        onLoginSuccess={onLogin}
+      />
     </div>
   );
 }

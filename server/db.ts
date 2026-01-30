@@ -1,20 +1,24 @@
 import { eq, and, asc, desc, sql, count, gte } from "drizzle-orm";
-import { drizzle } from "drizzle-orm/mysql2";
+import { drizzle } from "drizzle-orm/mysql2"; 
 import { 
   InsertUser, users, 
   aiPersonas, InsertAiPersona, AiPersona,
   knowledgeBases, InsertKnowledgeBase, KnowledgeBase,
   quickButtons, InsertQuickButton, QuickButton,
-  conversations, InsertConversation, Conversation
+  conversations, InsertConversation, Conversation,
+  customerUsers, InsertCustomerUser, CustomerUser
 } from "../drizzle/schema";
 import { ENV } from './_core/env';
+import bcrypt from "bcryptjs";
 
 let _db: ReturnType<typeof drizzle> | null = null;
 
 export async function getDb() {
   if (!_db && process.env.DATABASE_URL) {
     try {
+      // Force fresh connection with schema
       _db = drizzle(process.env.DATABASE_URL);
+      console.log("[Database] Connected successfully");
     } catch (error) {
       console.warn("[Database] Failed to connect:", error);
       _db = null;
@@ -113,6 +117,7 @@ export async function getPersonaById(id: number): Promise<AiPersona | undefined>
   const db = await getDb();
   if (!db) return undefined;
   const result = await db.select().from(aiPersonas).where(eq(aiPersonas.id, id)).limit(1);
+  console.log('[getPersonaById] id:', id, 'result:', result[0] ? { welcomeMessageColor: result[0].welcomeMessageColor, welcomeMessageSize: result[0].welcomeMessageSize } : 'not found');
   return result.length > 0 ? result[0] : undefined;
 }
 
@@ -125,14 +130,23 @@ export async function upsertPersona(data: InsertAiPersona): Promise<AiPersona | 
       agentName: data.agentName,
       avatarUrl: data.avatarUrl,
       welcomeMessage: data.welcomeMessage,
+      welcomeMessageColor: data.welcomeMessageColor,
+      welcomeMessageSize: data.welcomeMessageSize,
       systemPrompt: data.systemPrompt,
       primaryColor: data.primaryColor,
       layoutStyle: data.layoutStyle,
+      backgroundType: data.backgroundType,
+      backgroundColor: data.backgroundColor,
       backgroundImageUrl: data.backgroundImageUrl,
+      backgroundSize: data.backgroundSize,
+      backgroundPosition: data.backgroundPosition,
+      backgroundRepeat: data.backgroundRepeat,
+      immersiveMode: data.immersiveMode,
       profilePhotoUrl: data.profilePhotoUrl,
       tagline: data.tagline,
       suggestedQuestions: data.suggestedQuestions,
       showQuickButtons: data.showQuickButtons,
+      buttonDisplayMode: data.buttonDisplayMode,
       chatPlaceholder: data.chatPlaceholder,
     },
   });
@@ -2132,230 +2146,119 @@ export async function getPublishedDomainByName(domain: string): Promise<DomainOr
 }
 
 
-// ==================== Customer Authentication Operations ====================
-import * as bcrypt from 'bcryptjs';
-import { nanoid } from 'nanoid';
+// ==================== Customer User Operations ====================
 
 /**
- * Register a new customer with email and password
+ * Create a new customer user with email and password
  */
-export async function registerCustomer(
-  personaId: number,
+export async function createCustomerUser(
   email: string,
+  name: string,
   password: string,
-  name?: string
-): Promise<{ success: boolean; customer?: Customer; error?: string }> {
+  personaId: number,
+  provider: "email" | "google" | "apple" | "microsoft" = "email"
+): Promise<CustomerUser> {
   const db = await getDb();
-  if (!db) return { success: false, error: 'Database not available' };
-
-  // Check if email already exists for this persona
-  const existing = await db.select()
-    .from(customers)
-    .where(and(
-      eq(customers.personaId, personaId),
-      eq(customers.email, email)
-    ))
-    .limit(1);
-
-  if (existing.length > 0 && existing[0].passwordHash) {
-    return { success: false, error: '此電郵已被註冊' };
+  if (!db) {
+    throw new Error("Database not available");
   }
 
   // Hash password
   const passwordHash = await bcrypt.hash(password, 10);
-  const sessionId = nanoid();
 
-  if (existing.length > 0) {
-    // Update existing customer with password
-    await db.update(customers)
-      .set({
-        passwordHash,
-        name: name || existing[0].name,
-        isEmailVerified: false,
-        lastLoginAt: new Date(),
-      })
-      .where(eq(customers.id, existing[0].id));
-    
-    const updated = await db.select().from(customers).where(eq(customers.id, existing[0].id)).limit(1);
-    return { success: true, customer: updated[0] };
-  }
-
-  // Create new customer
-  const result = await db.insert(customers).values({
-    personaId,
-    sessionId,
+  const result = await db.insert(customerUsers).values({
     email,
     name,
     passwordHash,
-    isEmailVerified: false,
-    firstVisitAt: new Date(),
-    lastVisitAt: new Date(),
-    lastLoginAt: new Date(),
-    totalConversations: 0,
+    personaId,
+    provider,
+    isActive: true,
   });
 
-  const insertId = result[0].insertId;
-  const created = await db.select().from(customers).where(eq(customers.id, insertId)).limit(1);
-  return { success: true, customer: created[0] };
-}
-
-/**
- * Login customer with email and password
- */
-export async function loginCustomer(
-  personaId: number,
-  email: string,
-  password: string
-): Promise<{ success: boolean; customer?: Customer; error?: string }> {
-  const db = await getDb();
-  if (!db) return { success: false, error: 'Database not available' };
-
-  const result = await db.select()
-    .from(customers)
-    .where(and(
-      eq(customers.personaId, personaId),
-      eq(customers.email, email)
-    ))
+  // Fetch and return the created user
+  const user = await db
+    .select()
+    .from(customerUsers)
+    .where(eq(customerUsers.email, email))
     .limit(1);
 
-  if (result.length === 0) {
-    return { success: false, error: '電郵或密碼錯誤' };
+  if (!user.length) {
+    throw new Error("Failed to create customer user");
   }
 
-  const customer = result[0];
-  
-  if (!customer.passwordHash) {
-    return { success: false, error: '此帳戶尚未設定密碼，請先註冊' };
-  }
-
-  const isValid = await bcrypt.compare(password, customer.passwordHash);
-  if (!isValid) {
-    return { success: false, error: '電郵或密碼錯誤' };
-  }
-
-  // Update last login time
-  await db.update(customers)
-    .set({ lastLoginAt: new Date() })
-    .where(eq(customers.id, customer.id));
-
-  return { success: true, customer: { ...customer, lastLoginAt: new Date() } };
+  return user[0];
 }
 
 /**
- * Get customer by email for a specific persona
+ * Get customer user by email
  */
-export async function getCustomerByEmail(personaId: number, email: string): Promise<Customer | undefined> {
+export async function getCustomerUserByEmail(
+  email: string
+): Promise<CustomerUser | undefined> {
   const db = await getDb();
   if (!db) return undefined;
 
-  const result = await db.select()
-    .from(customers)
-    .where(and(
-      eq(customers.personaId, personaId),
-      eq(customers.email, email)
-    ))
+  const result = await db
+    .select()
+    .from(customerUsers)
+    .where(eq(customerUsers.email, email))
     .limit(1);
 
   return result.length > 0 ? result[0] : undefined;
 }
 
 /**
- * Generate password reset token
+ * Get customer user by ID
  */
-export async function generatePasswordResetToken(
-  personaId: number,
-  email: string
-): Promise<{ success: boolean; token?: string; error?: string }> {
+export async function getCustomerUserById(
+  id: number
+): Promise<CustomerUser | undefined> {
   const db = await getDb();
-  if (!db) return { success: false, error: 'Database not available' };
+  if (!db) return undefined;
 
-  const customer = await getCustomerByEmail(personaId, email);
-  if (!customer) {
-    // Don't reveal if email exists or not for security
-    return { success: true };
-  }
-
-  const token = nanoid(32);
-  const expiry = new Date(Date.now() + 60 * 60 * 1000); // 1 hour
-
-  await db.update(customers)
-    .set({
-      passwordResetToken: token,
-      passwordResetExpiry: expiry,
-    })
-    .where(eq(customers.id, customer.id));
-
-  return { success: true, token };
-}
-
-/**
- * Reset password using token
- */
-export async function resetPasswordWithToken(
-  token: string,
-  newPassword: string
-): Promise<{ success: boolean; error?: string }> {
-  const db = await getDb();
-  if (!db) return { success: false, error: 'Database not available' };
-
-  const result = await db.select()
-    .from(customers)
-    .where(eq(customers.passwordResetToken, token))
+  const result = await db
+    .select()
+    .from(customerUsers)
+    .where(eq(customerUsers.id, id))
     .limit(1);
 
-  if (result.length === 0) {
-    return { success: false, error: '無效的重設連結' };
-  }
-
-  const customer = result[0];
-  
-  if (!customer.passwordResetExpiry || customer.passwordResetExpiry < new Date()) {
-    return { success: false, error: '重設連結已過期' };
-  }
-
-  const passwordHash = await bcrypt.hash(newPassword, 10);
-
-  await db.update(customers)
-    .set({
-      passwordHash,
-      passwordResetToken: null,
-      passwordResetExpiry: null,
-    })
-    .where(eq(customers.id, customer.id));
-
-  return { success: true };
+  return result.length > 0 ? result[0] : undefined;
 }
 
 /**
- * Update customer password (when logged in)
+ * Verify customer user password
  */
-export async function updateCustomerPassword(
-  customerId: number,
-  currentPassword: string,
-  newPassword: string
-): Promise<{ success: boolean; error?: string }> {
+export async function verifyCustomerPassword(
+  email: string,
+  password: string
+): Promise<boolean> {
+  const user = await getCustomerUserByEmail(email);
+  if (!user) return false;
+
+  try {
+    return await bcrypt.compare(password, user.passwordHash);
+  } catch {
+    return false;
+  }
+}
+
+/**
+ * Update customer user last login time
+ */
+export async function updateCustomerLastLogin(id: number): Promise<void> {
   const db = await getDb();
-  if (!db) return { success: false, error: 'Database not available' };
+  if (!db) return;
 
-  const customer = await getCustomerById(customerId);
-  if (!customer) {
-    return { success: false, error: 'Customer not found' };
-  }
+  await db
+    .update(customerUsers)
+    .set({ lastLoginAt: new Date() })
+    .where(eq(customerUsers.id, id));
+}
 
-  if (!customer.passwordHash) {
-    return { success: false, error: '此帳戶尚未設定密碼' };
-  }
-
-  const isValid = await bcrypt.compare(currentPassword, customer.passwordHash);
-  if (!isValid) {
-    return { success: false, error: '目前密碼錯誤' };
-  }
-
-  const passwordHash = await bcrypt.hash(newPassword, 10);
-
-  await db.update(customers)
-    .set({ passwordHash })
-    .where(eq(customers.id, customerId));
-
-  return { success: true };
+/**
+ * Check if customer email already exists
+ */
+export async function customerEmailExists(email: string): Promise<boolean> {
+  const user = await getCustomerUserByEmail(email);
+  return user !== undefined;
 }

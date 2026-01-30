@@ -4,31 +4,18 @@ import { Input } from "@/components/ui/input";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
-import { Send, Loader2, Bot, User, Search, Calendar, Link as LinkIcon, MessageSquare, ExternalLink, Sparkles, FileText, Building2, Phone, HelpCircle, ShoppingBag, UserCircle, AlertCircle, LogIn, LogOut, LayoutDashboard } from "lucide-react";
+import { Send, Loader2, Bot, User, Search, Calendar, Link as LinkIcon, MessageSquare, ExternalLink, Sparkles, FileText, Building2, Phone, HelpCircle, ShoppingBag, UserCircle, AlertCircle, LogIn } from "lucide-react";
+import { CustomerLoginDialog } from "@/components/CustomerLoginDialog";
 import { useState, useEffect, useRef } from "react";
 import { nanoid } from "nanoid";
 import { Streamdown } from "streamdown";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { CustomerAuthDialog } from "@/components/CustomerAuthDialog";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
 
 type Message = {
   id: string;
   role: "user" | "assistant";
   content: string;
   timestamp: Date;
-};
-
-type CustomerInfo = {
-  id: number;
-  email: string | null;
-  name: string | null;
 };
 
 // Extended icon map with more options
@@ -44,7 +31,6 @@ const iconMap: Record<string, React.ComponentType<{ className?: string }>> = {
   help: HelpCircle,
   shopping: ShoppingBag,
   user: UserCircle,
-  // Action type to icon mapping
   query: MessageSquare,
   booking: Calendar,
   product: ShoppingBag,
@@ -56,11 +42,118 @@ const iconMap: Record<string, React.ComponentType<{ className?: string }>> = {
   custom: Sparkles,
 };
 
+// Persona type from API
+type PersonaData = {
+  id: number;
+  agentName: string;
+  avatarUrl: string | null;
+  welcomeMessage: string;
+  primaryColor: string | null;
+  layoutStyle: string | null;
+  backgroundImageUrl: string | null;
+  profilePhotoUrl: string | null;
+  tagline: string | null;
+  suggestedQuestions: string[];
+  showQuickButtons: boolean | null;
+  buttonDisplayMode: string | null;
+  chatPlaceholder: string | null;
+  quickButtons: Array<{
+    id: number;
+    label: string;
+    icon: string | null;
+    actionType: string;
+    actionValue: string | null;
+  }>;
+};
+
+// Quick Button Component
+function QuickButtonGroup({ 
+  buttons, 
+  displayMode, 
+  primaryColor,
+  onButtonClick 
+}: { 
+  buttons: PersonaData["quickButtons"];
+  displayMode: string;
+  primaryColor: string;
+  onButtonClick: (button: PersonaData["quickButtons"][0]) => void;
+}) {
+  if (buttons.length === 0) return null;
+
+  if (displayMode === "icon") {
+    return (
+      <TooltipProvider delayDuration={200}>
+        <div className="flex items-center justify-center gap-1">
+          {buttons.map((button) => {
+            const IconComponent = iconMap[button.icon || button.actionType] || MessageSquare;
+            return (
+              <Tooltip key={button.id}>
+                <TooltipTrigger asChild>
+                  <button
+                    onClick={() => onButtonClick(button)}
+                    className="p-2 rounded-lg hover:bg-muted/80 transition-colors group"
+                    style={{ color: primaryColor }}
+                  >
+                    <IconComponent className="h-4 w-4" />
+                  </button>
+                </TooltipTrigger>
+                <TooltipContent side="top" className="text-xs">
+                  {button.label}
+                </TooltipContent>
+              </Tooltip>
+            );
+          })}
+        </div>
+      </TooltipProvider>
+    );
+  }
+
+  if (displayMode === "compact") {
+    return (
+      <div className="flex flex-wrap items-center justify-center gap-1.5">
+        {buttons.map((button) => {
+          const IconComponent = iconMap[button.icon || button.actionType] || MessageSquare;
+          return (
+            <button
+              key={button.id}
+              onClick={() => onButtonClick(button)}
+              className="inline-flex items-center gap-1 px-2 py-1 text-xs rounded-md border hover:bg-muted/50 transition-colors"
+            >
+              <IconComponent className="h-3 w-3" />
+              <span className="max-w-[60px] truncate">{button.label}</span>
+              {button.actionType === "link" && <ExternalLink className="h-2.5 w-2.5 opacity-50" />}
+            </button>
+          );
+        })}
+      </div>
+    );
+  }
+
+  return (
+    <div className="flex flex-wrap items-center justify-center gap-1.5">
+      {buttons.map((button) => {
+        const IconComponent = iconMap[button.icon || button.actionType] || MessageSquare;
+        return (
+          <Button
+            key={button.id}
+            variant="outline"
+            size="sm"
+            className="h-6 px-2 text-[11px] rounded-md font-normal"
+            onClick={() => onButtonClick(button)}
+          >
+            <IconComponent className="h-3 w-3 mr-1" />
+            {button.label}
+            {button.actionType === "link" && <ExternalLink className="h-2 w-2 ml-0.5 opacity-50" />}
+          </Button>
+        );
+      })}
+    </div>
+  );
+}
+
 export default function CustomDomainChat() {
-  // Get current domain
   const currentDomain = window.location.hostname;
   
-  // Query persona by domain
   const { data: domainInfo, isLoading: domainLoading, error: domainError } = trpc.domains.getPublishedDomain.useQuery(
     { domain: currentDomain }
   );
@@ -80,37 +173,12 @@ export default function CustomDomainChat() {
   const [isTyping, setIsTyping] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
-
-  // Customer authentication state
-  const [showAuthDialog, setShowAuthDialog] = useState(false);
-  const [customer, setCustomer] = useState<CustomerInfo | null>(() => {
-    // Try to restore customer from localStorage
-    if (personaId) {
-      const stored = localStorage.getItem(`customer-${personaId}`);
-      if (stored) {
-        try {
-          return JSON.parse(stored);
-        } catch {
-          return null;
-        }
-      }
-    }
-    return null;
-  });
-
-  // Update customer state when personaId changes
-  useEffect(() => {
-    if (personaId) {
-      const stored = localStorage.getItem(`customer-${personaId}`);
-      if (stored) {
-        try {
-          setCustomer(JSON.parse(stored));
-        } catch {
-          setCustomer(null);
-        }
-      }
-    }
-  }, [personaId]);
+  
+  // Customer login state
+  const [customer, setCustomer] = useState<any | null>(null);
+  const handleCustomerLogin = (user: any) => setCustomer(user);
+  const handleCustomerLogout = () => setCustomer(null);
+  const [showLoginDialog, setShowLoginDialog] = useState(false);
 
   const { data: persona, isLoading: personaLoading } = trpc.persona.getPublic.useQuery(
     { personaId },
@@ -149,7 +217,6 @@ export default function CustomDomainChat() {
     },
   });
 
-  // Load conversation history
   useEffect(() => {
     if (history) {
       const formattedHistory: Message[] = history.map((msg: any) => ({
@@ -162,20 +229,20 @@ export default function CustomDomainChat() {
     }
   }, [history]);
 
-  // Auto-scroll to bottom
   useEffect(() => {
     if (scrollRef.current) {
       scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
     }
   }, [messages]);
 
-  const handleSend = async () => {
-    if (!input.trim() || !personaId) return;
+  const handleSend = async (messageText?: string) => {
+    const text = messageText || input.trim();
+    if (!text || !personaId) return;
 
     const userMessage: Message = {
       id: nanoid(),
       role: "user",
-      content: input.trim(),
+      content: text,
       timestamp: new Date(),
     };
 
@@ -190,33 +257,37 @@ export default function CustomDomainChat() {
     });
   };
 
-  const handleGuidedQuestion = (question: string) => {
-    setInput(question);
-    inputRef.current?.focus();
-  };
-
-  const handleQuickButton = (button: any) => {
-    if (button.actionType === "link" && button.actionValue) {
-      window.open(button.actionValue, "_blank");
-    } else if (button.actionType === "query" && button.actionValue) {
-      handleGuidedQuestion(button.actionValue);
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === "Enter" && !e.shiftKey) {
+      e.preventDefault();
+      handleSend();
     }
   };
 
-  const handleLoginSuccess = (customerInfo: CustomerInfo) => {
-    setCustomer(customerInfo);
-  };
-
-  const handleLogout = () => {
-    if (personaId) {
-      localStorage.removeItem(`customer-${personaId}`);
+  const handleQuickButton = (button: PersonaData["quickButtons"][0]) => {
+    switch (button.actionType) {
+      case "query":
+        if (button.actionValue) {
+          handleSend(button.actionValue);
+        }
+        break;
+      case "link":
+        if (button.actionValue) {
+          window.open(button.actionValue, "_blank");
+        }
+        break;
+      case "booking":
+        handleSend("我想預約諮詢");
+        break;
+      default:
+        if (button.actionValue) {
+          handleSend(button.actionValue);
+        }
     }
-    setCustomer(null);
   };
 
-  const handleOpenDashboard = () => {
-    // Navigate to customer dashboard
-    window.location.href = `/dashboard`;
+  const handleSuggestedQuestion = (question: string) => {
+    handleSend(question);
   };
 
   // Loading state
@@ -231,7 +302,7 @@ export default function CustomDomainChat() {
     );
   }
 
-  // Error state - domain not found or not published
+  // Error state
   if (domainError || !domainInfo || !personaId) {
     return (
       <div className="flex items-center justify-center min-h-screen bg-background p-4">
@@ -240,8 +311,7 @@ export default function CustomDomainChat() {
           <AlertTitle>域名未配置</AlertTitle>
           <AlertDescription>
             此域名（{currentDomain}）尚未配置或未發布。
-            <br />
-            <br />
+            <br /><br />
             如果您是網站擁有者，請前往管理後台完成以下步驟：
             <ol className="list-decimal list-inside mt-2 space-y-1">
               <li>確認域名已成功註冊</li>
@@ -255,7 +325,6 @@ export default function CustomDomainChat() {
     );
   }
 
-  // Persona not found
   if (!persona) {
     return (
       <div className="flex items-center justify-center min-h-screen bg-background p-4">
@@ -270,208 +339,512 @@ export default function CustomDomainChat() {
     );
   }
 
-  const IconComponent = persona.quickButtons?.[0]?.icon
-    ? iconMap[persona.quickButtons[0].icon]
-    : MessageSquare;
+  const primaryColor = persona.primaryColor || "#3B82F6";
+  const layoutStyle = persona.layoutStyle || "minimal";
+  const chatPlaceholder = persona.chatPlaceholder || "輸入您的問題...";
+  const suggestedQuestions = persona.suggestedQuestions || [];
+  const showQuickButtons = persona.showQuickButtons ?? true;
+  const buttonDisplayMode = persona.buttonDisplayMode || "full";
+  const backgroundImage = persona.backgroundImageUrl;
+  const profilePhoto = persona.profilePhotoUrl;
+  const backgroundType = (persona as any).backgroundType || "none";
+  const backgroundColor = (persona as any).backgroundColor;
+  const immersiveMode = (persona as any).immersiveMode || false;
 
-  return (
-    <div className="flex flex-col h-screen bg-background">
-      {/* Customer Auth Button - Fixed Position */}
-      <div className="fixed bottom-4 left-4 z-50">
-        {customer ? (
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="outline" size="sm" className="gap-2 shadow-lg bg-background">
-                <Avatar className="h-6 w-6">
-                  <AvatarFallback className="text-xs">
-                    {customer.name?.[0] || customer.email?.[0]?.toUpperCase() || "U"}
-                  </AvatarFallback>
-                </Avatar>
-                <span className="max-w-[120px] truncate text-sm">
-                  {customer.name || customer.email || "用戶"}
-                </span>
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="start">
-              <DropdownMenuItem onClick={handleOpenDashboard}>
-                <LayoutDashboard className="mr-2 h-4 w-4" />
-                我的帳戶
-              </DropdownMenuItem>
-              <DropdownMenuSeparator />
-              <DropdownMenuItem onClick={handleLogout} className="text-red-600">
-                <LogOut className="mr-2 h-4 w-4" />
-                登出
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
-        ) : (
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => setShowAuthDialog(true)}
-            className="gap-2 shadow-lg bg-background"
-          >
-            <LogIn className="h-4 w-4" />
-            登入 / 註冊
-          </Button>
+  // Determine background style for custom layout
+  const getBackgroundStyle = () => {
+    if (backgroundType === "image" && backgroundImage) {
+      return {
+        backgroundImage: `url(${backgroundImage})`,
+        backgroundColor: undefined,
+      };
+    } else if (backgroundType === "color" && backgroundColor) {
+      return {
+        backgroundImage: undefined,
+        backgroundColor: backgroundColor,
+      };
+    } else {
+      return {
+        backgroundImage: undefined,
+        backgroundColor: "#ffffff",
+      };
+    }
+  };
+
+  // Custom Layout with Background (Image or Color)
+  if (layoutStyle === "custom") {
+    const backgroundStyle = getBackgroundStyle();
+    const hasBackgroundImage = backgroundType === "image" && backgroundImage;
+    
+    return (
+      <div 
+        className={`min-h-screen flex flex-col ${immersiveMode ? "" : ""}`}
+        style={immersiveMode ? {} : backgroundStyle}
+      >
+        {/* Gradient Overlay for Immersive Mode */}
+        {immersiveMode && (
+          <div className="fixed inset-0 -z-10" style={backgroundStyle}>
+            <div className="absolute inset-0 bg-gradient-to-b from-black/20 via-black/30 to-black/60" />
+            <div className="absolute inset-0 backdrop-blur-[2px]" style={{ maskImage: 'linear-gradient(to bottom, transparent 0%, black 100%)' }} />
+          </div>
         )}
-      </div>
 
-      {/* Customer Auth Dialog */}
-      <CustomerAuthDialog
-        open={showAuthDialog}
-        onOpenChange={setShowAuthDialog}
-        personaId={personaId}
-        onLoginSuccess={handleLoginSuccess}
-      />
+        <div className="flex-1 flex flex-col">
+          {messages.length === 0 && (
+            <div 
+              className={`flex-1 flex flex-col items-center justify-center px-4 py-6 relative ${!immersiveMode && hasBackgroundImage ? "bg-cover bg-center" : ""}`}
+              style={!immersiveMode ? backgroundStyle : {}}
+            >
+              {!immersiveMode && backgroundImage && <div className="absolute inset-0 bg-black/40 -z-10" />}
+              <div className="w-full max-w-xl text-center space-y-5 relative z-10">
+                <h2 className={`text-lg font-semibold ${hasBackgroundImage ? 'text-white drop-shadow-lg' : 'text-foreground'}`}>
+                  {persona.welcomeMessage || "您好！我是您的AI助手"}
+                </h2>
+                
+                <div className="relative w-full">
+                  <div className="flex items-center bg-background border border-border/60 rounded-xl shadow-sm px-3 py-2">
+                    <Input
+                      ref={inputRef}
+                      placeholder={chatPlaceholder}
+                      value={input}
+                      onChange={(e) => setInput(e.target.value)}
+                      onKeyDown={handleKeyDown}
+                      disabled={isTyping}
+                      className="border-0 shadow-none focus-visible:ring-0 h-auto text-xs px-0 bg-transparent"
+                    />
+                    <Button
+                      onClick={() => handleSend()}
+                      disabled={!input.trim() || isTyping}
+                      size="icon"
+                      className="rounded-full h-7 w-7 shrink-0 ml-2"
+                      style={{ backgroundColor: primaryColor }}
+                    >
+                      {isTyping ? <Loader2 className="h-3 w-3 animate-spin" /> : <Send className="h-3 w-3" />}
+                    </Button>
+                  </div>
+                </div>
 
-      {/* Chat Messages Area */}
-      <ScrollArea ref={scrollRef} className="flex-1 p-4">
-        <div className="max-w-3xl mx-auto space-y-4">
-          {messages.length === 0 ? (
-            // Welcome Screen
-            <div className="flex flex-col items-center justify-center min-h-[60vh] space-y-6">
-              {/* AI Avatar and Name */}
-              {persona.avatarUrl && (
-                <Avatar className="h-16 w-16">
-                  <AvatarImage src={persona.avatarUrl} alt={persona.agentName} />
-                  <AvatarFallback>
-                    <Bot className="h-8 w-8" />
-                  </AvatarFallback>
-                </Avatar>
+                {suggestedQuestions.length > 0 && (
+                  <div className="flex flex-wrap justify-center gap-1.5">
+                    {suggestedQuestions.slice(0, 3).map((question, index) => (
+                      <button
+                        key={index}
+                        onClick={() => handleSuggestedQuestion(question)}
+                        className="inline-flex items-center gap-1 px-2 py-1 rounded-full border border-border/60 bg-background text-[10px] text-muted-foreground"
+                      >
+                        <MessageSquare className="h-2.5 w-2.5" />
+                        <span className="max-w-[100px] truncate">{question}</span>
+                      </button>
+                    ))}
+                  </div>
+                )}
+
+                {showQuickButtons && persona.quickButtons.length > 0 && (
+                  <div className="flex flex-wrap justify-center gap-1.5">
+                    <QuickButtonGroup
+                      buttons={persona.quickButtons}
+                      displayMode={buttonDisplayMode}
+                      primaryColor={primaryColor}
+                      onButtonClick={handleQuickButton}
+                    />
+                  </div>
+                )}
+              </div>
+              
+              {/* Customer Login Button - Fixed Bottom Left */}
+              <div className="fixed bottom-4 left-4 z-50">
+                {customer ? (
+                  <div className="flex items-center gap-2 text-sm">
+                    <UserCircle className="w-4 h-4" />
+                    <span>{customer.email}</span>
+                    <button
+                      onClick={handleCustomerLogout}
+                      className="text-xs text-gray-500 hover:text-gray-700"
+                    >
+                      登出
+                    </button>
+                  </div>
+                ) : (
+                  <button
+                    onClick={() => setShowLoginDialog(true)}
+                    className="flex items-center gap-2 text-sm text-cyan-500 hover:text-cyan-600"
+                  >
+                    <LogIn className="w-4 h-4" />
+                    登入
+                  </button>
+                )}
+              </div>
+            </div>
+          )}
+
+          {messages.length > 0 && (
+            <ScrollArea className="flex-1 px-4" ref={scrollRef}>
+              <div className="container max-w-2xl py-4 space-y-4">
+                {messages.map((message) => (
+                  <div key={message.id} className={`flex gap-2.5 ${message.role === "user" ? "flex-row-reverse" : ""}`}>
+                    <Avatar className="h-6 w-6 shrink-0 mt-0.5">
+                      {message.role === "assistant" ? (
+                        profilePhoto ? (
+                          <AvatarImage src={profilePhoto} />
+                        ) : (
+                          <>
+                            <AvatarImage src={persona.avatarUrl || undefined} />
+                            <AvatarFallback style={{ backgroundColor: `${primaryColor}15`, color: primaryColor }}>
+                              <Bot className="h-3 w-3" />
+                            </AvatarFallback>
+                          </>
+                        )
+                      ) : (
+                        <AvatarFallback className="bg-muted">
+                          <User className="h-3 w-3" />
+                        </AvatarFallback>
+                      )}
+                    </Avatar>
+                    <div className={`flex-1 ${message.role === "user" ? "flex justify-end" : ""}`}>
+                      <div
+                        className={`inline-block rounded-2xl px-3 py-2 max-w-[85%] shadow-sm ${
+                          message.role === "user"
+                            ? "text-white"
+                            : "bg-background/95 backdrop-blur"
+                        }`}
+                        style={message.role === "user" ? { backgroundColor: primaryColor } : {}}
+                      >
+                        {message.role === "assistant" ? (
+                          <div className="text-sm prose prose-sm max-w-none dark:prose-invert">
+                            <Streamdown>{message.content}</Streamdown>
+                          </div>
+                        ) : (
+                          <p className="text-sm">{message.content}</p>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                ))}
+
+                {isTyping && (
+                  <div className="flex gap-2.5">
+                    <Avatar className="h-6 w-6 shrink-0">
+                      {profilePhoto ? (
+                        <AvatarImage src={profilePhoto} />
+                      ) : (
+                        <>
+                          <AvatarImage src={persona.avatarUrl || undefined} />
+                          <AvatarFallback style={{ backgroundColor: `${primaryColor}15`, color: primaryColor }}>
+                            <Bot className="h-3 w-3" />
+                          </AvatarFallback>
+                        </>
+                      )}
+                    </Avatar>
+                    <div className="bg-background/95 backdrop-blur rounded-2xl px-3 py-2 shadow-sm">
+                      <div className="flex gap-1">
+                        <span className="w-1.5 h-1.5 rounded-full bg-muted-foreground/40 animate-bounce" style={{ animationDelay: "0ms" }} />
+                        <span className="w-1.5 h-1.5 rounded-full bg-muted-foreground/40 animate-bounce" style={{ animationDelay: "150ms" }} />
+                        <span className="w-1.5 h-1.5 rounded-full bg-muted-foreground/40 animate-bounce" style={{ animationDelay: "300ms" }} />
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </div>
+            </ScrollArea>
+          )}
+        </div>
+
+        {messages.length > 0 && (
+          <div className="sticky bottom-0 bg-background/80 backdrop-blur border-t">
+            <div className="container max-w-2xl py-3">
+              {showQuickButtons && persona.quickButtons.length > 0 && (
+                <div className="mb-2">
+                  <QuickButtonGroup
+                    buttons={persona.quickButtons}
+                    displayMode={buttonDisplayMode}
+                    primaryColor={primaryColor}
+                    onButtonClick={handleQuickButton}
+                  />
+                </div>
               )}
 
-              {/* Welcome Message */}
-              <div className="text-center space-y-2 max-w-2xl">
-                <h1 className="text-3xl font-bold">{persona.welcomeMessage || `您好！我是 ${persona.agentName}`}</h1>
+              <div className="flex gap-2 items-center">
+                {/* Customer Login Button */}
+                {customer ? (
+                  <div className="flex items-center gap-2 text-sm">
+                    <UserCircle className="w-4 h-4" />
+                    <span>{customer.email}</span>
+                    <button
+                      onClick={handleCustomerLogout}
+                      className="text-xs text-gray-500 hover:text-gray-700"
+                    >
+                      登出
+                    </button>
+                  </div>
+                ) : (
+                  <button
+                    onClick={() => setShowLoginDialog(true)}
+                    className="flex items-center gap-2 text-sm text-cyan-500 hover:text-cyan-600"
+                  >
+                    <LogIn className="w-4 h-4" />
+                    登入
+                  </button>
+                )}
+                <Input
+                  ref={inputRef}
+                  placeholder={chatPlaceholder}
+                  value={input}
+                  onChange={(e) => setInput(e.target.value)}
+                  onKeyDown={handleKeyDown}
+                  disabled={isTyping}
+                  className="rounded-full h-9 text-sm bg-background flex-1"
+                />
+                <Button
+                  onClick={() => handleSend()}
+                  disabled={!input.trim() || isTyping}
+                  size="icon"
+                  className="rounded-full h-9 w-9 shrink-0"
+                  style={{ backgroundColor: primaryColor }}
+                >
+                  {isTyping ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
+                </Button>
+              </div>
+            </div>
+          </div>
+        )}
+        
+        {/* Customer Login Dialog for custom layout */}
+        <CustomerLoginDialog
+          isOpen={showLoginDialog}
+          onClose={() => setShowLoginDialog(false)}
+          personaId={String(persona.id)}
+          onLoginSuccess={handleCustomerLogin}
+        />
+      </div>
+    );
+  }
+
+  // Professional Layout (same as minimal but with profile photo in messages)
+  // and Minimal Layout (default)
+  return (
+    <div className="min-h-screen flex flex-col bg-background">
+      <div className="flex-1 flex flex-col">
+        {messages.length === 0 && (
+          <div className="flex-1 flex flex-col items-center justify-center px-4 py-6">
+            <div className="w-full max-w-xl text-center space-y-5">
+              <h2 className="text-lg font-semibold text-foreground">
+                {persona.welcomeMessage || "您好！我是您的AI助手"}
+              </h2>
+              
+              <div className="relative w-full">
+                <div className="flex items-center bg-background border border-border/60 rounded-xl shadow-sm px-3 py-2">
+                  <Input
+                    ref={inputRef}
+                    placeholder={chatPlaceholder}
+                    value={input}
+                    onChange={(e) => setInput(e.target.value)}
+                    onKeyDown={handleKeyDown}
+                    disabled={isTyping}
+                    className="border-0 shadow-none focus-visible:ring-0 h-auto text-xs px-0 bg-transparent"
+                  />
+                  <Button
+                    onClick={() => handleSend()}
+                    disabled={!input.trim() || isTyping}
+                    size="icon"
+                    className="rounded-full h-7 w-7 shrink-0 ml-2"
+                    style={{ backgroundColor: primaryColor }}
+                  >
+                    {isTyping ? <Loader2 className="h-3 w-3 animate-spin" /> : <Send className="h-3 w-3" />}
+                  </Button>
+                </div>
               </div>
 
-              {/* Guided Questions */}
-              {persona.suggestedQuestions && persona.suggestedQuestions.length > 0 && (
-                <div className="flex flex-wrap gap-2 justify-center max-w-2xl">
-                  {persona.suggestedQuestions.map((question: string, index: number) => (
-                    <Button
+              {suggestedQuestions.length > 0 && (
+                <div className="flex flex-wrap justify-center gap-1.5">
+                  {suggestedQuestions.slice(0, 3).map((question, index) => (
+                    <button
                       key={index}
-                      variant="outline"
-                      size="sm"
-                      onClick={() => handleGuidedQuestion(question)}
-                      className="text-xs"
+                      onClick={() => handleSuggestedQuestion(question)}
+                      className="inline-flex items-center gap-1 px-2 py-1 rounded-full border border-border/60 bg-background text-[10px] text-muted-foreground"
                     >
-                      {question}
-                    </Button>
+                      <MessageSquare className="h-2.5 w-2.5" />
+                      <span className="max-w-[100px] truncate">{question}</span>
+                    </button>
                   ))}
                 </div>
               )}
 
-              {/* Quick Buttons */}
-              {persona.quickButtons && persona.quickButtons.length > 0 && (
-                <div className="flex flex-wrap gap-2 justify-center max-w-2xl">
-                  <TooltipProvider>
-                    {persona.quickButtons.map((button: any) => {
-                      const ButtonIcon = iconMap[button.icon] || MessageSquare;
-                      return (
-                        <Tooltip key={button.id}>
-                          <TooltipTrigger asChild>
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              onClick={() => handleQuickButton(button)}
-                              className="h-8 w-8 p-0"
-                            >
-                              <ButtonIcon className="h-4 w-4" />
-                            </Button>
-                          </TooltipTrigger>
-                          <TooltipContent>
-                            <p className="text-xs">{button.label}</p>
-                          </TooltipContent>
-                        </Tooltip>
-                      );
-                    })}
-                  </TooltipProvider>
+              {showQuickButtons && persona.quickButtons.length > 0 && (
+                <div className="flex flex-wrap justify-center gap-1.5">
+                  <QuickButtonGroup
+                    buttons={persona.quickButtons}
+                    displayMode={buttonDisplayMode}
+                    primaryColor={primaryColor}
+                    onButtonClick={handleQuickButton}
+                  />
                 </div>
               )}
             </div>
-          ) : (
-            // Conversation Messages
-            messages.map((message) => (
-              <div
-                key={message.id}
-                className={`flex gap-3 ${message.role === "user" ? "justify-end" : "justify-start"}`}
-              >
-                {message.role === "assistant" && (
-                  <Avatar className="h-8 w-8 mt-1">
-                    <AvatarImage src={persona.avatarUrl || undefined} alt={persona.agentName} />
-                    <AvatarFallback>
-                      <Bot className="h-4 w-4" />
-                    </AvatarFallback>
-                  </Avatar>
-                )}
-                <div
-                  className={`rounded-lg px-4 py-2 max-w-[70%] ${
-                    message.role === "user"
-                      ? "bg-primary text-primary-foreground"
-                      : "bg-muted"
-                  }`}
-                >
-                  {message.role === "assistant" ? (
-                    <Streamdown>{message.content}</Streamdown>
-                  ) : (
-                    <p className="text-sm whitespace-pre-wrap">{message.content}</p>
-                  )}
+            
+            {/* Customer Login Button - Fixed Bottom Left */}
+            <div className="fixed bottom-4 left-4 z-50">
+              {customer ? (
+                <div className="flex items-center gap-2 text-sm">
+                  <UserCircle className="w-4 h-4" />
+                  <span>{customer.email}</span>
+                  <button
+                    onClick={handleCustomerLogout}
+                    className="text-xs text-gray-500 hover:text-gray-700"
+                  >
+                    登出
+                  </button>
                 </div>
-                {message.role === "user" && (
-                  <Avatar className="h-8 w-8 mt-1">
-                    <AvatarFallback>
-                      {customer ? (
-                        customer.name?.[0] || customer.email?.[0]?.toUpperCase() || "U"
-                      ) : (
-                        <User className="h-4 w-4" />
-                      )}
-                    </AvatarFallback>
-                  </Avatar>
-                )}
-              </div>
-            ))
-          )}
-
-          {isTyping && (
-            <div className="flex gap-3 justify-start">
-              <Avatar className="h-8 w-8 mt-1">
-                <AvatarImage src={persona.avatarUrl || undefined} alt={persona.agentName} />
-                <AvatarFallback>
-                  <Bot className="h-4 w-4" />
-                </AvatarFallback>
-              </Avatar>
-              <div className="rounded-lg px-4 py-2 bg-muted">
-                <Loader2 className="h-4 w-4 animate-spin" />
-              </div>
+              ) : (
+                <button
+                  onClick={() => setShowLoginDialog(true)}
+                  className="flex items-center gap-2 text-sm text-cyan-500 hover:text-cyan-600"
+                >
+                  <LogIn className="w-4 h-4" />
+                  登入
+                </button>
+              )}
             </div>
-          )}
-        </div>
-      </ScrollArea>
+          </div>
+        )}
 
-      {/* Input Area */}
-      <div className="border-t bg-background p-4">
-        <div className="max-w-3xl mx-auto flex gap-2">
-          <Input
-            ref={inputRef}
-            value={input}
-            onChange={(e) => setInput(e.target.value)}
-            onKeyDown={(e) => {
-              if (e.key === "Enter" && !e.shiftKey) {
-                e.preventDefault();
-                handleSend();
-              }
-            }}
-            placeholder={persona.chatPlaceholder || "輸入您的問題..."}
-            className="flex-1"
-            disabled={isTyping || !personaId}
-          />
-          <Button onClick={handleSend} disabled={!input.trim() || isTyping || !personaId}>
-            <Send className="h-4 w-4" />
-          </Button>
-        </div>
+        {messages.length > 0 && (
+          <ScrollArea className="flex-1 px-4" ref={scrollRef}>
+            <div className="container max-w-2xl py-4 space-y-4">
+              {messages.map((message) => (
+                <div key={message.id} className={`flex gap-2.5 ${message.role === "user" ? "flex-row-reverse" : ""}`}>
+                  <Avatar className="h-6 w-6 shrink-0 mt-0.5">
+                    {message.role === "assistant" ? (
+                      (layoutStyle === "professional" && profilePhoto) ? (
+                        <AvatarImage src={profilePhoto} />
+                      ) : (
+                        <>
+                          <AvatarImage src={persona.avatarUrl || undefined} />
+                          <AvatarFallback style={{ backgroundColor: `${primaryColor}15`, color: primaryColor }}>
+                            <Bot className="h-3 w-3" />
+                          </AvatarFallback>
+                        </>
+                      )
+                    ) : (
+                      <AvatarFallback className="bg-muted">
+                        <User className="h-3 w-3" />
+                      </AvatarFallback>
+                    )}
+                  </Avatar>
+                  <div className={`flex-1 ${message.role === "user" ? "flex justify-end" : ""}`}>
+                    <div
+                      className={`inline-block rounded-2xl px-3 py-2 max-w-[85%] ${
+                        message.role === "user"
+                          ? "text-white"
+                          : "bg-background border shadow-sm"
+                      }`}
+                      style={message.role === "user" ? { backgroundColor: primaryColor } : {}}
+                    >
+                      {message.role === "assistant" ? (
+                        <div className="text-sm prose prose-sm max-w-none dark:prose-invert">
+                          <Streamdown>{message.content}</Streamdown>
+                        </div>
+                      ) : (
+                        <p className="text-sm">{message.content}</p>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              ))}
+
+              {isTyping && (
+                <div className="flex gap-2.5">
+                  <Avatar className="h-6 w-6 shrink-0">
+                    {(layoutStyle === "professional" && profilePhoto) ? (
+                      <AvatarImage src={profilePhoto} />
+                    ) : (
+                      <>
+                        <AvatarImage src={persona.avatarUrl || undefined} />
+                        <AvatarFallback style={{ backgroundColor: `${primaryColor}15`, color: primaryColor }}>
+                          <Bot className="h-3 w-3" />
+                        </AvatarFallback>
+                      </>
+                    )}
+                  </Avatar>
+                  <div className="bg-background border shadow-sm rounded-2xl px-3 py-2">
+                    <div className="flex gap-1">
+                      <span className="w-1.5 h-1.5 rounded-full bg-muted-foreground/40 animate-bounce" style={{ animationDelay: "0ms" }} />
+                      <span className="w-1.5 h-1.5 rounded-full bg-muted-foreground/40 animate-bounce" style={{ animationDelay: "150ms" }} />
+                      <span className="w-1.5 h-1.5 rounded-full bg-muted-foreground/40 animate-bounce" style={{ animationDelay: "300ms" }} />
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
+          </ScrollArea>
+        )}
       </div>
+
+      {messages.length > 0 && (
+        <div className="sticky bottom-0 border-t bg-background">
+          <div className="container max-w-2xl py-3">
+            {showQuickButtons && persona.quickButtons.length > 0 && (
+              <div className="mb-2">
+                <QuickButtonGroup
+                  buttons={persona.quickButtons}
+                  displayMode={buttonDisplayMode}
+                  primaryColor={primaryColor}
+                  onButtonClick={handleQuickButton}
+                />
+              </div>
+            )}
+
+            <div className="flex gap-2 items-center">
+              {/* Customer Login Button */}
+              {customer ? (
+                <div className="flex items-center gap-2 text-sm">
+                  <UserCircle className="w-4 h-4" />
+                  <span>{customer.email}</span>
+                  <button
+                    onClick={handleCustomerLogout}
+                    className="text-xs text-gray-500 hover:text-gray-700"
+                  >
+                    登出
+                  </button>
+                </div>
+              ) : (
+                <button
+                  onClick={() => setShowLoginDialog(true)}
+                  className="flex items-center gap-2 text-sm text-cyan-500 hover:text-cyan-600"
+                >
+                  <LogIn className="w-4 h-4" />
+                  登入
+                </button>
+              )}
+              <Input
+                ref={inputRef}
+                placeholder={chatPlaceholder}
+                value={input}
+                onChange={(e) => setInput(e.target.value)}
+                onKeyDown={handleKeyDown}
+                disabled={isTyping}
+                className="rounded-full h-9 text-sm flex-1"
+              />
+              <Button
+                onClick={() => handleSend()}
+                disabled={!input.trim() || isTyping}
+                size="icon"
+                className="rounded-full h-9 w-9 shrink-0"
+                style={{ backgroundColor: primaryColor }}
+              >
+                {isTyping ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
+      
+      {/* Customer Login Dialog */}
+      <CustomerLoginDialog
+        isOpen={showLoginDialog}
+        onClose={() => setShowLoginDialog(false)}
+        personaId={String(persona.id)}
+        onLoginSuccess={handleCustomerLogin}
+      />
     </div>
   );
 }

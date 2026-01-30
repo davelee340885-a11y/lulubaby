@@ -1,0 +1,19 @@
+{
+  "query": "SELECT id, domain, isPublished, personaId, dnsStatus, sslStatus, status FROM domain_orders WHERE domain = 'lulubaby.xyz' LIMIT 1;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user VqBKoEwKfw4feq4.6cd8cd1ff95f --database aavW9BLbZ6sZHaPEemayyD --execute SELECT id, domain, isPublished, personaId, dnsStatus, sslStatus, status FROM domain_orders WHERE domain = 'lulubaby.xyz' LIMIT 1;",
+  "rows": [
+    {
+      "id": "210003",
+      "domain": "lulubaby.xyz",
+      "isPublished": "1",
+      "personaId": "1",
+      "dnsStatus": "active",
+      "sslStatus": "active",
+      "status": "registered"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\tdomain\tisPublished\tpersonaId\tdnsStatus\tsslStatus\tstatus\n210003\tlulubaby.xyz\t1\t1\tactive\tactive\tregistered\n",
+  "stderr": "",
+  "execution_time_ms": 1519
+}

@@ -218,6 +218,7 @@ function PurchasedDomains() {
               </div>
             </div>
             
+            {/* Only show registration success and DNS/SSL status for truly registered domains */}
             {order.status === 'registered' && order.registrationDate && (
               <div className="pt-3 border-t space-y-3">
                 <div className="flex items-center gap-2 text-green-600 text-sm">
@@ -421,11 +422,37 @@ function PurchasedDomains() {
               </div>
             )}
             
+            {/* Failed registration */}
             {order.status === 'failed' && (
               <div className="pt-2 border-t text-sm">
                 <div className="flex items-center gap-2 text-destructive">
                   <AlertCircle className="h-4 w-4" />
                   <span>註冊失敗，請聯繫客服處理</span>
+                </div>
+                {order.failureReason && (
+                  <div className="mt-2 text-xs text-muted-foreground">
+                    失敗原因：{order.failureReason}
+                  </div>
+                )}
+              </div>
+            )}
+            
+            {/* Payment failed */}
+            {order.status === 'payment_failed' && (
+              <div className="pt-2 border-t text-sm">
+                <div className="flex items-center gap-2 text-destructive">
+                  <AlertCircle className="h-4 w-4" />
+                  <span>支付失敗，請重試</span>
+                </div>
+              </div>
+            )}
+            
+            {/* Cancelled */}
+            {order.status === 'cancelled' && (
+              <div className="pt-2 border-t text-sm">
+                <div className="flex items-center gap-2 text-muted-foreground">
+                  <AlertCircle className="h-4 w-4" />
+                  <span>訂單已取消</span>
                 </div>
               </div>
             )}
@@ -557,7 +584,11 @@ export default function Domain() {
     },
   });
   
-  const chatUrl = persona ? `${window.location.origin}/chat/${persona.id}` : null;
+  const { data: publishedDomain } = trpc.domains.getPublished.useQuery();
+  
+  const chatUrl = persona 
+    ? `${publishedDomain?.url || window.location.origin}/chat/${persona.id}` 
+    : null;
 
   const copyUrl = () => {
     if (chatUrl) {

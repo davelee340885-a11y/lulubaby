@@ -4,6 +4,7 @@ import NotFound from "@/pages/NotFound";
 import { Route, Switch } from "wouter";
 import ErrorBoundary from "./components/ErrorBoundary";
 import { ThemeProvider } from "./contexts/ThemeContext";
+import { useNetworkStatus } from "./hooks/useNetworkStatus";
 import DashboardLayout from "./components/DashboardLayout";
 import Dashboard from "./pages/Dashboard";
 // Settings page content has been merged into Appearance page
@@ -21,7 +22,9 @@ import Team from "./pages/Team";
 import Customers from "./pages/Customers";
 import Widget from "./pages/Widget";
 import CustomDomainChat from "./pages/CustomDomainChat";
-import CustomerDashboard from "./pages/CustomerDashboard";
+import ApiDocs from "./pages/ApiDocs";
+import Brain from "./pages/Brain";
+import GoogleAuthCallback from "./pages/GoogleAuthCallback";
 
 function DashboardRoutes() {
   return (
@@ -35,13 +38,14 @@ function DashboardRoutes() {
         <Route path="/domain" component={Domain} />
         <Route path="/training" component={Training} />
         <Route path="/superpowers" component={Superpowers} />
+        <Route path="/brain" component={Brain} />
         {/* Extensions removed - features integrated elsewhere */}
         <Route path="/account" component={Account} />
         <Route path="/pricing" component={Pricing} />
         <Route path="/team" component={Team} />
         <Route path="/customers" component={Customers} />
         <Route path="/widget" component={Widget} />
-        <Route path="/api-docs" component={Widget} />
+        <Route path="/api-docs" component={ApiDocs} />
         <Route component={NotFound} />
       </Switch>
     </DashboardLayout>
@@ -67,6 +71,9 @@ function Router() {
   
   return (
     <Switch>
+      {/* Google OAuth callback */}
+      <Route path="/auth/google/callback" component={GoogleAuthCallback} />
+      
       {/* Public chat page - no auth required */}
       <Route path="/chat/:personaId" component={Chat} />
       
@@ -79,6 +86,7 @@ function Router() {
       <Route path="/domain" component={DashboardRoutes} />
       <Route path="/training" component={DashboardRoutes} />
       <Route path="/superpowers" component={DashboardRoutes} />
+      <Route path="/brain" component={DashboardRoutes} />
       {/* Extensions removed - features integrated elsewhere */}
       <Route path="/account" component={DashboardRoutes} />
       <Route path="/pricing" component={DashboardRoutes} />
@@ -93,12 +101,19 @@ function Router() {
   );
 }
 
+// Network status monitor component
+function NetworkStatusMonitor() {
+  useNetworkStatus();
+  return null;
+}
+
 function App() {
   return (
     <ErrorBoundary>
       <ThemeProvider defaultTheme="light">
         <TooltipProvider>
           <Toaster />
+          <NetworkStatusMonitor />
           <Router />
         </TooltipProvider>
       </ThemeProvider>

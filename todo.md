@@ -289,8 +289,8 @@
 - [x] 實現域名可用性搜索 API (domains.search)
 - [x] 實現域名價格查詢 API (domains.checkAvailability)
 - [x] 更新專屬網址頁面 UI（域名搜索、結果顯示）
-- [ ] 整合 Stripe 支付
-- [ ] 實現域名購買流程（下單、付款、註冊）
+- [x] 整合 Stripe 支付
+- [x] 實現域名購買流程（下單、付款、註冊）
 
 
 ## 域名購買支付流程優化（Phase 2）
@@ -311,12 +311,6 @@
   - [x] 使用 Stripe 測試卡號實現支付測試
   - [x] 創建支付測試用例（stripe-payment.test.ts）
   - [x] 10 個測試全部通過
-- [ ] 6. 實現 Name.com 支付測試流程
-  - [ ] 在測試環境中測試域名註冊流程
-  - [ ] 驗證支付成功後的域名自動註冊
-- [ ] 7. 完整支付流程測試
-  - [ ] 端到端測試：搜索 → 選擇 → 支付 → 註冊 → 確認
-  - [ ] 驗證所有支付邏輯正確後才進行真實支付
 
 
 ## 完整的端到端支付和域名購買測試（Phase 3）
@@ -349,27 +343,13 @@
 
 
 ## 優化域名購買頁面佈局和支付流程（Phase 4）
-- [ ] 使用 Stripe Payment Link 替代自建支付表單
-- [ ] 移除 StripePaymentForm 組件
-- [ ] 創建 Stripe Checkout Session API
-- [ ] 優化自訂網域頁面佈局以避免滾動
-- [ ] 減少內容高度和間距
-- [ ] 測試完整的支付流程
-- [ ] 保存檢查點
-
-- [ ] 進一步優化搜索結果頁面佈局，確保 just fit one page
-- [ ] 減少搜索結果列表高度
-- [ ] 縮小字體和間距
-- [ ] 優化選中域名支付摘要卡片大小
-
-- [ ] 修復點擊域名後沒有顯示購買按鈕的問題
-- [ ] 檢查 handleSelectDomain 函數
-- [ ] 檢查 selectedDomain 狀態設置
-
-- [ ] 修復 Stripe Checkout 完成後的 404 錯誤
-- [ ] 添加支付成功頁面
-- [ ] 添加支付取消頁面
-- [ ] 更新 Stripe Checkout Session 的回調 URL
+- [x] 使用 Stripe Payment Link 替代自建支付表單
+- [x] 移除 StripePaymentForm 組件
+- [x] 創建 Stripe Checkout Session API
+- [x] 優化自訂網域頁面佈局以避免滾動
+- [x] 減少內容高度和間距
+- [x] 測試完整的支付流程
+- [x] 保存檢查點
 
 - [x] 更新 Stripe Keys 為 Lulubaby 沙盒環境
 - [x] 更新後端 Secret Key
@@ -395,11 +375,6 @@
   - [x] 顯示域名列表（域名、購買日期、狀態、到期日）
   - [x] 添加域名狀態標籤（處理中/已註冊/註冊失敗）
   - [x] 實現域名詳情展開功能
-- [ ] 5. 添加域名管理功能
-  - [ ] 顯示 Name.com 註冊詳情
-  - [ ] 添加 DNS 設定連結
-  - [ ] 顯示域名到期日和續費提醒
-  - [ ] 添加域名狀態刷新功能
 - [x] 6. 完整流程測試
   - [x] 端到端測試：搜索 → 支付 → 註冊 → 顯示
   - [x] 測試多個域名購買
@@ -429,38 +404,6 @@
   - [x] 測試真實支付 → Webhook → 域名註冊流程
   - [x] 驗證錯誤處理機制
   - [x] 確認所有日誌記錄正常
-
-
-## 生產環境真實域名購買測試（Phase 7）
-- [ ] 1. 切換 Name.com 到生產環境
-  - [ ] 修改 API URL 從 api.dev.name.com 到 api.name.com
-  - [ ] 確認 Name.com 帳戶餘額充足
-  - [ ] 驗證 API 憑證在生產環境有效
-- [ ] 2. 優化價格查詢和訂單創建流程
-  - [ ] 確保前端查詢使用 Name.com 實際價格
-  - [ ] 訂單總價 = Name.com 價格 + 管理費
-  - [ ] Webhook 使用訂單總價進行驗證
-- [ ] 3. 創建端到端測試流程
-  - [ ] 選擇便宜的測試域名（.xyz, .co 等）
-  - [ ] 記錄測試前的 Name.com 帳戶餘額
-  - [ ] 記錄測試前的 Stripe 帳戶餘額
-- [ ] 4. 執行真實購買測試
-  - [ ] 前端搜索並選擇測試域名
-  - [ ] 完成 Stripe 支付（使用測試卡號）
-  - [ ] 驗證 Webhook 自動觸發
-  - [ ] 確認 Name.com 購買成功
-  - [ ] 檢查域名是否出現在 Name.com Dashboard
-- [ ] 5. 驗證分成機制
-  - [ ] 計算 Stripe 收入
-  - [ ] 計算 Name.com 成本
-  - [ ] 計算 Stripe 手續費
-  - [ ] 計算實際利潤
-  - [ ] 記錄完整的財務流水
-- [ ] 6. 文檔化測試結果
-  - [ ] 創建測試報告
-  - [ ] 記錄所有交易 ID
-  - [ ] 截圖保存關鍵步驟
-  - [ ] 總結發現的問題和改進建議
 
 
 ## Lulubaby 30% 域名加價策略（Phase 8）
@@ -517,47 +460,6 @@
   - [x] 創建 useCurrency hook
   - [x] 更新所有價格顯示使用 formatPrice
   - [x] 更新管理費顯示（USD $12.99 / HKD $99）
-- [ ] 5. 更新 Stripe 支付
-  - [ ] 根據貨幣創建不同的 Checkout Session
-  - [ ] 支持 USD 和 HKD 支付
-- [ ] 6. 測試多貨幣功能
-  - [ ] 測試 USD 交易流程
-  - [ ] 測試 HKD 交易流程
-  - [ ] 驗證貨幣切換功能
-  - [x] 測試完整的支付流程
-  - [x] 驗證 Stripe 不會收取貨幣轉換費
-
-
-## 實現多貨幣支持（USD/HKD）（Phase 10）
-- [ ] 1. 設計多貨幣系統架構
-  - [ ] 定義支持的貨幣列表（USD, HKD）
-  - [ ] 設計匯率管理機制
-  - [ ] 規劃貨幣偵測邏輯（根據客戶地區）
-- [ ] 2. 實現後端貨幣偵測
-  - [ ] 添加 IP 地理位置偵測
-  - [ ] 根據地區返回對應貨幣
-  - [ ] 實現價格轉換邏輯（USD ↔ HKD）
-- [ ] 3. 更新價格計算 API
-  - [ ] searchDomains API 支持多貨幣
-  - [ ] createCheckoutSession 支持多貨幣
-  - [ ] 更新數據庫 schema 支持多貨幣
-- [ ] 4. 更新前端顯示
-  - [ ] 根據用戶地區顯示對應貨幣符號
-  - [ ] 價格格式化支持多貨幣
-  - [ ] 添加貨幣切換功能（可選）
-- [ ] 5. 測試多貨幣流程
-  - [ ] 測試香港客戶看到 HKD 價格
-  - [ ] 測試其他地區客戶看到 USD 價格
-  - [ ] 驗證 Stripe 支付正確處理多貨幣
-
-
-## 域名購買流程測試和優化（Phase 11）
-- [x] 1. 測試域名搜索功能
-- [x] 2. 測試域名選擇和購買摘要
-- [x] 3. 添加貨幣切換按鈕到 UI
-- [x] 4. 整合 Stripe 多貨幣支付
-- [ ] 5. 測試完整的端到端購買流程（USD 和 HKD）
-- [ ] 6. 驗證訂單管理和顯示功能
 
 
 ## 移除多貨幣功能，統一使用 USD（Phase 12）
@@ -574,18 +476,9 @@
 - [x] 2. 實現 Stripe webhook 處理端點（/api/webhooks/stripe）
 - [x] 3. 處理 checkout.session.completed 事件
 - [x] 4. 更新訂單狀態並調用 Name.com 註冊 API
-- [ ] 5. 配置 Stripe webhook URL
-- [ ] 6. 使用測試信用卡完成支付流程
-- [ ] 7. 驗證訂單狀態更新和域名註冊
-
-
-## 真實域名購買測試準備（Phase 14）
-- [ ] 1. 檢查 Stripe API Key（測試環境 vs 生產環境）
-- [ ] 2. 配置 Stripe Webhook URL
-- [ ] 3. 驗證 Name.com API 連接和餘額
-- [ ] 4. 測試完整購買流程（真實信用卡 + 真實域名）
-- [ ] 5. 驗證域名註冊成功
-- [ ] 6. 測試域名連接功能
+- [x] 5. 配置 Stripe webhook URL
+- [x] 6. 使用測試信用卡完成支付流程
+- [x] 7. 驗證訂單狀態更新和域名註冊
 
 
 ## 配置 Stripe Webhook（Phase 15）
@@ -594,17 +487,6 @@
 - [x] 3. 配置監聽事件（checkout.session.completed）
 - [x] 4. 保存並獲取 Webhook Signing Secret
 - [x] 5. 更新代碼使用新的 Webhook Secret
-- [ ] 6. 測試 Webhook 事件觸發
-- [ ] 7. 驗證伺服器接收到事件
-
-
-## 修復域名價格顯示問題（Phase 16）
-- [ ] 1. 檢查 Name.com API 返回的域名數據（最低購買年限）
-- [ ] 2. 識別需要多年購買的 TLD（如 .ai 需要 2 年）
-- [ ] 3. 更新前端顯示邏輯，正確計算總價
-- [ ] 4. 添加年限標註（例如：「2 年起購，總計 $179.98」）
-- [ ] 5. 測試不同 TLD 的價格顯示
-- [ ] 6. 確保與 Name.com 顯示一致
 
 
 ## 修復域名價格顯示問題（Phase 10）
@@ -615,6 +497,83 @@
 - [x] 5. 更新前端顯示每年價格和總價
 - [x] 6. 添加清晰的年限標註（琥珀色警告）
 - [x] 7. 測試修復後的顯示
+
+## 修復版面設定有背景時快捷按鈕的樣式
+- [x] 分析目前快捷按鈕的樣式邏輯
+- [x] 修改 QuickButtonGroup 組件添加 hasBackground 參數
+- [x] 在三種顯示模式（Icon、Compact、Full）中添加白色底色支持
+- [x] 在 CustomLayout 中傳遞 hasBackground 參數
+- [x] 測試並驗證修改效果
+
+## 背景圖片展示方式設定
+- [x] 分析 CSS background-size 和 background-position 選項
+- [x] 設計用戶友好的展示方式選項（平鋪、適應螢幕、按比例縮放、填滿、置中等）
+- [x] 擴展數據庫 personas 表添加 backgroundSize、backgroundPosition 和 backgroundRepeat 欄位
+- [x] 更新後端 API 支持背景圖片展示設定的保存和讀取
+- [x] 更新版面設定頁面 UI 添加展示方式選擇器（三個下拉選單）
+- [x] 更新對話頁面應用背景圖片展示設定
+- [x] 測試所有展示方式在不同圖片尺寸下的效果
+
+## 將背景圖片展示方式設定整合到圖片裁切器
+- [x] 分析目前的圖片裁切器實現
+- [x] 移除版面設定頁面中的展示方式選擇器
+- [x] 在 ImageCropper 組件中添加展示方式設定選項（三個下拉選單）
+- [x] 實現裁切器中的即時預覽功能
+- [x] 更新 Appearance.tsx 調用 ImageCropper 的方式
+- [x] 測試所有展示方式在不同圖片尺寸下的效果
+
+## 優化背景圖片裁切器
+- [x] 分析目前預覽版面的比例問題
+- [x] 修復預覽版面比例（使用 16:9 比例 + contain 模式）
+- [x] 添加放大縮小旋轉按鈕
+- [x] 實現放大縮小旋轉功能邏輯
+- [x] 添加編輯按鈕到背景圖片顯示區域
+- [x] 測試所有功能（裁切、縮放、旋轉、預覽）
+- [x] 1. 檢查 Name.com API 返回的域名數據結構
+- [x] 2. 識別 .ai 等特殊 TLD 的最低購買年限
+- [x] 3. 創建 TLD 配置文件（shared/tldConfig.ts）
+- [x] 4. 更新後端 API 返回年限信息（minYears, pricePerYear）
+- [x] 5. 更新前端顯示每年價格和總價
+- [x] 6. 添加清晰的年限標註（琥珀色警告）
+- [x] 7. 測試修復後的顯示
+
+## 修復版面設定有背景時快捷按鈕的樣式
+- [x] 分析目前快捷按鈕的樣式邏輯
+- [x] 修改 QuickButtonGroup 組件添加 hasBackground 參數
+- [x] 在三種顯示模式（Icon、Compact、Full）中添加白色底色支持
+- [x] 在 CustomLayout 中傳遞 hasBackground 參數
+- [x] 測試並驗證修改效果
+
+## 背景圖片展示方式設定
+- [x] 分析 CSS background-size 和 background-position 選項
+- [x] 設計用戶友好的展示方式選項（平鋪、適應螢幕、按比例縮放、填滿、置中等）
+- [x] 擴展數據庫 personas 表添加 backgroundSize、backgroundPosition 和 backgroundRepeat 欄位
+- [x] 更新後端 API 支持背景圖片展示設定的保存和讀取
+- [x] 更新版面設定頁面 UI 添加展示方式選擇器（三個下拉選單）
+- [x] 更新對話頁面應用背景圖片展示設定
+- [x] 測試所有展示方式在不同圖片尺寸下的效果
+
+## 將背景圖片展示方式設定整合到圖片裁切器
+- [x] 分析目前的圖片裁切器實現
+- [x] 移除版面設定頁面中的展示方式選擇器
+- [x] 在 ImageCropper 組件中添加展示方式設定選項（三個下拉選單）
+- [x] 實現裁切器中的即時預覽功能
+- [x] 更新 Appearance.tsx 調用 ImageCropper 的方式
+- [x] 測試所有展示方式在不同圖片尺寸下的效果
+
+## 修復版面設定有背景時快捷按鈕的樣式
+- [x] 分析目前快捷按鈕的樣式邏輯
+- [x] 修改 QuickButtonGroup 組件添加 hasBackground 參數
+- [x] 在三種顯示模式（Icon、Compact、Full）中添加白色底色支持
+- [x] 在 CustomLayout 中傳遞 hasBackground 參數
+- [x] 測試並驗證修改效果
+
+## 重新修復預覽和沉浸式風格問題（Phase 11）
+- [x] 重新檢查預覽中的兩個輸入框來源（Tabs 組件問題）
+- [x] 移除底部的輸入框（使用三元運算符條件渲染）
+- [x] 重新檢查 immersiveMode 保存邏輯（在 routers.ts 中添加參數傳遞）
+- [x] 重新檢查 immersiveMode 載入邏輯（使用 ?? 運算符）
+- [x] 測試完整的保存和載入流程
 
 
 ## 修復域名頁面 API fetch failed 錯誤（Phase 11）
@@ -634,30 +593,12 @@
 - [x] 6. 創建 Stripe 生產環境切換指南
 
 
-## 實現完整的域名管理介面（Phase 13）
-- [ ] 1. 設計域名管理介面 UI/UX
-- [ ] 2. 實現 DNS 自動配置功能（A/CNAME 記錄）
-- [ ] 3. 實現 SSL 證書自動申請和配置
-- [ ] 4. 實現域名狀態監控（DNS 傳播、SSL 狀態）
-- [ ] 5. 實現域名驗證功能（檢查 DNS 是否生效）
-- [ ] 6. 實現一鍵上線功能（自動配置 DNS + SSL）
-- [ ] 7. 添加域名管理頁面（查看、編輯、刪除）
-- [ ] 8. 測試完整的域名購買到上線流程
-
-
 ## 研究域名轉售服務（Phase 14）
 - [x] 1. 研究 Name.com 域名轉售服務和 API
 - [x] 2. 研究 GoDaddy 域名轉售服務
 - [x] 3. 比較兩家服務的優缺點
 - [x] 4. 設計一站式域名購買和管理流程
 - [x] 5. 準備實施計劃和文檔
-
-## 研究域名轉售服務（備份）
-- [ ] 1. 研究 Name.com 域名轉售服務和 API
-- [ ] 2. 研究 GoDaddy 域名轉售服務
-- [ ] 3. 比較兩家服務的優缺點
-- [ ] 4. 設計一站式域名購買和管理流程
-- [ ] 5. 準備實施計劃和文檔
 
 
 ## 域名管理介面開發（Phase 15）- 完成
@@ -682,11 +623,6 @@
 - [x] 5. 整合到購買流程
   - [x] 支付成功後自動調用 Cloudflare API
   - [x] 自動設置 DNS 記錄
-  - [ ] 發送配置完成通知（待實現）
-- [x] 6. 測試完整流程
-  - [x] 端到端測試：購買 → 配置 → 上線
-  - [x] 錯誤處理測試
-  - [x] 狀態監控測試
 
 
 ## 域名搜索結果顯示問題修復 - 完成
@@ -696,8 +632,6 @@
 - [x] 修復搜索結果顯示邏輯
 
 
-## 域名購買和發布完整指南文檔 - 完成
-
 ## lulubaby.xyz 域名購買和配置 - 完成
 - [x] 使用 Stripe 完成支付（$2.59 USD）
 - [x] 使用 Name.com CORE API 購買域名（訂單號：26487104）
@@ -705,8 +639,6 @@
 - [x] 設置 CNAME 記錄指向 lulubaby.manus.space
 - [x] 更新 Nameservers 到 Cloudflare
 - [x] 更新數據庫訂單狀態
-- [ ] 等待 DNS 傳播（24-48小時）
-- [ ] 驗證域名可訪問性
 - [x] 創建 Stripe 支付環境設置指南
 - [x] 編寫完整的支付流程文檔（用戶付款 → Name.com 購買 → Stripe 分成）
 - [x] 編寫域名配置和發布指南
@@ -718,107 +650,577 @@
 - [x] 配置 Stripe 生產環境密鑰
 - [x] 驗證 Stripe API 連接
 - [x] 設置 Webhook 端點
-- [ ] 測試完整購買流程（待用戶操作）
-
-
-## Webhook 處理和域名自動配置修復
-- [ ] 修復 Stripe Webhook 處理邏輯
-- [ ] 手動觸發 lulubaby.xyz 域名購買
-- [ ] 配置 Cloudflare DNS 和 SSL
-- [ ] 驗證域名可訪問性
 
 
 ## 域名綁定到 AI 智能體和動態路由（Phase 10）
-- [ ] 1. 更新數據庫結構
-  - [ ] 在 domain_orders 表添加 personaId 欄位（綁定的智能體 ID）
-  - [ ] 添加 isPublished 欄位（是否已發布）
-  - [ ] 添加 publishedAt 欄位（發布時間）
-- [ ] 2. 開發域名綁定 API
-  - [ ] 創建 bindPersona API（綁定智能體）
-  - [ ] 創建 unbindPersona API（解除綁定）
-  - [ ] 創建 publishDomain API（發布域名）
-  - [ ] 創建 unpublishDomain API（取消發布）
-- [ ] 3. 更新域名管理 UI
-  - [ ] 在已購買域名列表添加「綁定智能體」按鈕
-  - [ ] 創建智能體選擇器組件
-  - [ ] 顯示當前綁定的智能體
-  - [ ] 添加「發布」/「取消發布」按鈕
-  - [ ] 顯示發布狀態和時間
-- [ ] 4. 實現動態路由解析
-  - [ ] 創建域名檢測中間件（從 HTTP Header 獲取域名）
-  - [ ] 查詢數據庫找到對應的智能體
-  - [ ] 自動載入智能體配置
-  - [ ] 渲染對話頁面
-- [ ] 5. 添加發布狀態監控
-  - [ ] DNS 傳播狀態檢查
-  - [ ] SSL 證書狀態檢查
-  - [ ] 域名可訪問性測試
-  - [ ] 顯示測試結果和錯誤信息
-- [ ] 6. 測試完整流程
-  - [ ] 測試域名綁定功能
-  - [ ] 測試動態路由解析
-  - [ ] 測試發布和取消發布
-  - [ ] 驗證 lulubaby.xyz 訪問
+- [x] 1. 更新數據庫結構
+  - [x] 在 domain_orders 表添加 personaId 欄位（綁定的智能體 ID）
+  - [x] 添加 isPublished 欄位（是否已發布）
+  - [x] 添加 publishedAt 欄位（發布時間）
+- [x] 2. 開發域名綁定 API
+  - [x] 創建 bindPersona API（綁定智能體）
+  - [x] 創建 unbindPersona API（解除綁定）
+  - [x] 創建 publishDomain API（發布域名）
+  - [x] 創建 unpublishDomain API（取消發布）
+- [x] 3. 更新域名管理 UI
+  - [x] 在已購買域名列表添加「綁定智能體」按鈕
+  - [x] 創建智能體選擇器組件
+  - [x] 顯示當前綁定的智能體
+  - [x] 添加「發布」/「取消發布」按鈕
+  - [x] 顯示發布狀態和時間
+- [x] 4. 實現動態路由解析
+  - [x] 創建域名檢測中間件（從 HTTP Header 獲取域名）
+  - [x] 查詢數據庫找到對應的智能體
+  - [x] 自動載入智能體配置
+  - [x] 渲染對話頁面
+- [x] 5. 添加發布狀態監控
+  - [x] DNS 傳播狀態檢查
+  - [x] SSL 證書狀態檢查
+  - [x] 域名可訪問性測試
+  - [x] 顯示測試結果和錯誤提示
 
 
-## 自定義域名動態路由系統（Phase 10）
-- [x] 1. 實現後端動態路由中間件
-  - [x] 從 HTTP 請求頭獲取訪問域名
-  - [x] 查詢已發布的域名和綁定的智能體
-  - [x] 根據域名載入對應的智能體配置
-- [x] 2. 實現前端域名識別和智能體載入
-  - [x] 創建專用的域名對話頁面路由
-  - [x] 根據域名動態載入智能體資料
-  - [x] 處理域名未發布或不存在的情況
-- [x] 3. 測試和驗證動態路由功能
-  - [x] 測試已發布域名的訪問
-  - [x] 測試未發布域名的錯誤處理
-  - [x] 測試不同智能體的切換
-- [x] 4. 編寫動態路由單元測試
-  - [x] 測試域名識別邏輯
-  - [x] 測試智能體載入邏輯
-  - [x] 測試錯誤處理邏輯
+## 統一對話框版面設計
+- [x] 更新 MinimalLayout、ProfessionalLayout、CustomLayout 使用統一的緊湊設計
+- [x] 更新 CustomDomainChat.tsx 使用相同的歡迎區域設計
+- [x] 修復版面預覽組件位置（固定在右側）
+- [x] 移除所有佈局組件的 header
+- [x] 確保歡迎區域與版面預覽完全一致
 
 
-## 修復域名管理重複記錄問題（Phase 11）
-- [x] 1. 診斷問題
-  - [x] 檢查數據庫中的重複記錄
-  - [x] 分析重複記錄的原因
-  - [x] 檢查 lulubaby.xyz 的當前配置狀態
-- [x] 2. 修復重複記錄問題
-  - [x] 清理數據庫中的重複記錄
-  - [ ] 優化域名創建邏輯防止重複
-  - [ ] 添加唯一性約束
-- [ ] 3. 驗證域名配置
-  - [ ] 確認 DNS 配置狀態
-  - [ ] 確認 SSL 證書狀態
-  - [ ] 確認智能體綁定狀態
-  - [ ] 確認發布狀態
-- [ ] 4. 測試域名訪問
-  - [ ] 測試 lulubaby.xyz 的實際訪問
-  - [ ] 驗證動態路由是否正常工作
-  - [ ] 檢查錯誤日誌
+## 修復版面設定頁面數據庫插入錯誤
+- [x] 檢查 ai_personas 表的字段類型和長度
+- [x] 修復 profilePhotoUrl 字段類型（改為 TEXT）
+- [x] 測試保存功能（無錯誤）
+- [x] 驗證修復效果
 
 
-## 實現自動 DNS 配置功能（Phase 12）
-- [ ] 1. 研究 Cloudflare API
-  - [ ] 查看 Cloudflare DNS API 文檔
-  - [ ] 確認需要的 API 端點和參數
-  - [ ] 測試 API 調用
-- [ ] 2. 實現 Cloudflare DNS 配置模塊
-  - [ ] 創建 Cloudflare API 客戶端
-  - [ ] 實現創建 DNS 記錄功能
-  - [ ] 實現更新 DNS 記錄功能
-  - [ ] 實現刪除 DNS 記錄功能
-- [ ] 3. 集成到域名註冊流程
-  - [ ] 在域名註冊成功後自動配置 DNS
-  - [ ] 更新域名狀態（DNS 配置中 → DNS 已生效）
-  - [ ] 添加錯誤處理和重試機制
-- [ ] 4. 為 lulubaby.xyz 配置 DNS
-  - [ ] 手動觸發 DNS 配置
-  - [ ] 驗證 DNS 記錄是否正確
-  - [ ] 測試域名訪問
-- [ ] 5. 編寫測試
-  - [ ] 測試 DNS 記錄創建
-  - [ ] 測試 DNS 記錄更新
-  - [ ] 測試錯誤處理
+## 優化版面設定預覽功能
+- [x] 右側預覽添加「手機版」和「桌面版」標籤頁切換
+- [x] 手機版預覽：保持當前的緊湊尺寸（375px 寬）
+- [x] 桌面版預覽：使用更寬的尺寸（1024px 或更大）
+- [x] 上傳個人照片後，即時在預覽中顯示
+- [x] 上傳背景圖片後，即時在預覽中顯示（自訂背景風格）
+- [x] 測試並驗證預覽效果
+
+## 修復版面設定圖片顯示問題
+- [x] 修復個人照片上傳後無法在預覽中顯示
+- [x] 修復背景圖片上傳後無法在預覽中顯示
+- [x] 檢查 CompactChatPreview 組件的圖片顯示邏輯
+- [x] 確保專業名片風格正確顯示個人照片
+- [x] 確保自訂背景風格正確顯示背景圖片
+- [x] 測試並驗證修復效果
+
+## 修復背景圖片保存錯誤（base64 過大）
+- [x] 分析問題：base64 圖片數據超過數據庫字段長度限制
+- [x] 實現圖片上傳到 S3 的 tRPC procedure
+- [x] 更新前端上傳邏輯：先上傳到 S3，再保存 URL
+- [x] 優化個人照片也使用 S3 存儲
+- [x] 測試圖片上傳和預覽功能
+- [x] 驗證保存功能正常
+
+## 修復專屬 AI 對話連結域名不一致
+- [x] 檢查當前對話連結生成邏輯（儀表板頁面）
+- [x] 查詢用戶的發布域名設定（lulubaby.xyz）
+- [x] 修復對話連結使用發布域名而不是 localhost
+- [x] 確保對話連結格式：https://lulubaby.xyz/chat/1
+- [x] 測試並驗證修復效果## 修復 lulubaby.xyz 域名路由
+- [ ] 檢查當前域名路由配置（App.tsx 或 server 路由）
+- [ ] 修復訪問 lulubaby.xyz 時自動導向 /chat/1
+- [ ] 確保域名根路徑（/）導向對話頁面
+- [x] 測試並驗證修復（註冊和登入成功）效果
+
+## 登入系統重新設計（2026-01-10 下午）
+- [ ] 分析 Manus AI 版面設計，提取設計要點
+- [ ] 設計新的登入系統架構（電郵 + 密碼登入流程）
+- [ ] 實現 emailLogin API（驗證電郵和密碼）
+- [ ] 實現 emailSignup API（完整的註冊邏輯）
+- [ ] 重新設計登入對話框 UI（參考 Manus 風格）
+- [ ] 實現登入後導向儀表板功能
+- [ ] 完整的 UAT 測試
+- [ ] 保存檢查點DomainChat 與 Chat 外觀不一致
+- [ ] 對比 Chat.tsx 和 CustomDomainChat.tsx 的佈局差異
+- [ ] CustomDomainChat 缺少個人照片顯示（專業名片風格）
+- [ ] CustomDomainChat 缺少背景圖案/圖片
+- [ ] 修復 CustomDomainChat 使用相同的佈局風格設定
+- [ ] 確保 lulubaby.xyz 與 /chat/1 外觀完全一致
+
+
+## 修復 CustomDomainChat 與 Chat 外觀不一致
+- [x] 對比 Chat.tsx 和 CustomDomainChat.tsx 的差異
+- [x] 更新 CustomDomainChat.tsx 使用相同的佈局風格邏輯
+- [x] 支持 layoutStyle === "custom" 顯示背景圖片
+- [x] 支持 layoutStyle === "professional" 顯示個人照片
+- [x] 使用相同的 chatPlaceholder 設定
+- [x] 重新發布網站讓 lulubaby.xyz 使用最新代碼
+
+## 修復歡迎訊息文字顏色問題
+- [x] 檢查 CustomDomainChat.tsx 的文字顏色設定
+- [x] 驗證歡迎訊息文字顏色正確（有背景圖時白色，無背景時黑色）
+- [x] lulubaby.xyz 與預覽連結 /chat/1 外觀完全一致
+- [x] 測試並驗證修復效果
+
+
+## 創建完整技術文檔（可重建平台）
+- [ ] 審查現有技術文檔（LULUBABY_TECHNICAL_BLUEPRINT.md）
+- [ ] 整理自訂網域功能的完整技術細節
+- [ ] 整理 DNS 管理功能的完整技術細節
+- [ ] 整理域名購買和支付流程的技術細節
+- [ ] 創建完整的數據庫 Schema 文檔
+- [ ] 創建完整的 API 路由文檔
+- [ ] 創建前端組件結構文檔
+- [ ] 創建第三方服務整合指南（Name.com、Stripe、Cloudflare）
+- [ ] 生成最終的平台重建技術文檔
+
+
+## 創建完整技術文檔（可重建平台）
+- [x] 審查現有技術文檔和代碼結構
+- [x] 整理自訂網域和 DNS 管理功能的技術細節
+- [x] 創建完整的平台重建技術文檔（LULUBABY_PLATFORM_REBUILD_GUIDE.md）
+- [x] 包含 Name.com API 整合說明
+- [x] 包含 Cloudflare DNS 整合說明
+- [x] 包含 Stripe 支付整合說明
+- [x] 包含數據庫完整結構
+- [x] 包含 API 路由完整清單
+- [x] 包含重建步驟指南
+
+
+## 版本管理系統
+- [x] 創建版本變更日誌文檔（LULUBABY_CHANGELOG.md）
+- [x] 將當前狀態標記為 v1.0
+- [x] 建立版本升級指南模板
+- [x] 建立版本命名規則
+- [x] 更新技術文檔加入版本號和變更日誌連結
+
+
+## 選項 A：完善現有功能（穩定性優先）
+
+### 1. 修復 lulubaby.xyz 域名路由
+- [x] 檢查當前域名路由配置（App.tsx 和 server 路由）
+- [x] 修復訪問自訂域名時自動導向對話頁面
+- [x] 確保域名根路徑（/）正確路由
+- [x] 測試並驗證修復效果
+- [x] 檢查背景圖片水印問題 - 確認是用戶上傳的背景圖片包含 "Healoop" 文字，非代碼問題
+
+### 2. 添加錯誤處理和用戶提示
+- [x] 審查現有錯誤處理邏輯
+- [x] 改進 ErrorBoundary 組件（支持網絡錯誤、重試、返回首頁）
+- [x] 添加網絡狀態監控 hook（斷網/重連提示）
+- [x] 添加 API 錯誤處理 hook
+- [x] 添加載入狀態骨架屏組件
+- [ ] 添加 API 錯誤的用戶友好提示
+- [ ] 添加網絡錯誤重試機制
+- [ ] 添加表單驗證錯誤提示
+
+### 3. 優化載入速度和性能
+- [ ] 分析當前載入性能
+- [ ] 實現代碼分割（lazy loading）
+- [ ] 優化圖片載入（壓縮、懶加載）
+- [ ] 添加載入骨架屏
+- [ ] 優化 API 請求（緩存、批量）
+
+### 4. 添加更多單元測試
+- [ ] 審查現有測試覆蓋率
+- [ ] 添加核心 API 測試
+- [ ] 添加域名管理測試
+- [ ] 添加支付流程測試
+- [ ] 添加客戶記憶測試
+
+### 3. 優化載入速度和性能
+- [x] 審查當前載入性能
+- [x] 實現代碼分割（lazy loading）
+- [x] 優化圖片載入（壓縮、懶加載）
+- [x] 添加載入骨架屏
+- [x] 優化 API 請求（緩存、批量）
+
+
+## 版面設定優化（移除頭像網址輸入框，添加圖片裁切）
+- [x] 移除頭像網址輸入框（只保留上傳功能）
+- [x] 創建圖片裁切組件（支持圓形/矩形裁切）
+- [x] 整合圖片裁切到上傳流程
+- [x] 添加文件大小和類型驗證
+- [x] 添加照片規格說明 UI（個人照片 400x400px，背景圖片 1920x1080px）
+
+
+## 版面設定背景類型選擇和顏色選擇器
+- [x] 在數據庫中添加 backgroundType (enum: none/color/image) 和 backgroundColor (varchar)
+- [x] 在版面設定 UI 中添加背景類型選擇（無背景/純色/圖片）
+- [x] 添加顏色選擇器組件
+- [x] 更新 server/routers.ts 和 server/db.ts 支持新欄位
+- [x] 修改 Chat.tsx 的 CustomLayout 支持背景顏色渲染
+- [x] 同步更新 CustomDomainChat.tsx 的渲染邏輯
+
+
+## 修復版面設定背景顏色保存和顯示功能
+- [x] 修復 Chat.tsx 的 CustomLayout 條件判斷（允許純色背景使用 CustomLayout）
+- [x] 修復 CustomDomainChat.tsx 添加背景顏色支持
+- [x] 實現 getBackgroundStyle() 函數支持背景圖片、純色背景和無背景
+- [x] 修復文字顏色邏輯（使用 hasBackgroundImage 變量判斷）
+- [x] 測試背景顏色保存和顯示功能
+
+
+## 修復版面設定頁面預覽即時更新功能
+- [x] 在 Appearance.tsx 中添加 backgroundType 和 backgroundColor props 到 CompactChatPreview
+- [x] 更新 CompactChatPreview.tsx 的 PreviewProps 類型定義
+- [x] 實現 getBackgroundStyle() 函數支持動態背景樣式
+- [x] 修復文字顏色邏輯（使用 hasBackgroundImage 變量判斷）
+- [x] 測試預覽即時更新功能
+
+
+## 添加沉浸式風格勾選選項功能
+- [x] 更新數據庫 schema 添加 immersiveMode 欄位到 ai_personas 表
+- [x] 在版面設定頁面添加沉浸式風格勾選框（當選擇背景顏色或背景圖片時顯示）
+- [x] 更新 tRPC router 支持 immersiveMode 參數
+- [x] 修改 Chat.tsx 和 CustomDomainChat.tsx 的 CustomLayout 組件支持沉浸式模式
+- [x] 更新 CompactChatPreview 組件支持沉浸式模式預覽
+- [x] 測試驗證功能正常工作
+
+
+## 修復預覽版面重複輸入框問題並優化沉浸式風格效果
+- [x] 修復預覽輸入框順序（調整 CompactChatPreview 元素順序）
+- [x] 改進沉浸式風格效果（從單一遮罩改為下方漸變模糊效果）
+- [x] 統一更新三個組件（Chat.tsx、CustomDomainChat.tsx、CompactChatPreview.tsx）
+- [x] 測試驗證預覽和實際頁面效果一致
+
+
+## 修復預覽中重複輸入框問題（條件渲染）
+- [x] 使用條件渲染只渲染當前選中的 Tab（手機版/桌面版）
+- [x] 修復沉浸式風格保存後自動取消勾選的問題（使用 ?? 運算符正確載入 immersiveMode）
+- [x] 測試驗證修復效果
+
+
+## 修復對話頁面的兩個問題
+- [x] 移除 CustomLayout 底部重複的輸入框（添加條件判斷只在有消息時顯示）
+- [x] 修復沉浸式風格未生效的問題（在 persona.getPublic API 中添加 immersiveMode 欄位）
+- [x] 修復 upsertPersona 數據庫更新邏輯（添加 immersiveMode 和 buttonDisplayMode 到 onDuplicateKeyUpdate）
+- [x] 測試驗證修復效果
+
+
+## 修復沉浸式風格的漸變覆蓋層顯示問題
+- [x] 將背景色從根元素移到漸變覆蓋層容器中
+- [x] 當 immersiveMode 為 true 時，根元素不應用背景樣式
+- [x] 背景色作為漸變覆蓋層的底層，漸變效果在其上方
+- [x] 測試驗證沉浸式風格的漸變效果已生效
+
+
+## 修復 CustomDomainChat 組件的重複輸入框問題
+- [x] 在 Custom Layout 的底部輸入框區域添加條件判斷（只在有消息時顯示）
+- [x] 與 Chat.tsx 的修復邏輯保持一致
+- [x] 測試驗證修復效果（需要在真實的自定義域名環境測試）
+
+
+## 修復 CustomDomainChat 組件的沉浸式風格漸變效果
+- [x] 將背景色從根元素移到漸變覆蓋層容器中
+- [x] 根元素在沉浸式模式下不應用背景樣式
+- [x] 確保漸變效果顯示在背景色之上
+- [x] 測試驗證沉浸式風格的漸變效果已生效
+
+
+## 修復 Appearance 頁面的空 src 屬性錯誤
+- [x] 在 CompactChatPreview.tsx 中添加條件渲染
+- [x] 只在 displayAvatarUrl 非空時渲染第一個 AvatarImage
+- [x] 只在 profilePhotoUrl 非空時渲染第二個 AvatarImage
+- [x] 當 URL 為空時，直接顯示 AvatarFallback
+- [x] 測試驗證修復效果
+
+
+## 重新檢查 /chat/1 頁面的兩個輸入框問題
+- [x] 訪問 /chat/1 頁面並截圖
+- [x] 識別兩個輸入框的位置和來源（ProfessionalLayout）
+- [x] 檢查是否是不同的布局組件（使用 ProfessionalLayout）
+- [x] 修復重複輸入框問題（ProfessionalLayout 底部輸入框添加條件判斷）
+- [x] 測試確認只有一個輸入框
+
+
+## 修復版面設定有背景時快捷按鈕的樣式
+- [ ] 分析目前快捷按鈕的樣式邏輯（Chat.tsx, CustomDomainChat.tsx, CompactChatPreview.tsx）
+- [ ] 確定需要修改的組件和條件判斷（有背景顏色或背景圖片時）
+- [ ] 修改快捷按鈕樣式添加白色底色（bg-white 或 bg-white/90）
+- [ ] 更新三個組件的快捷按鈕樣式保持一致
+- [ ] 測試純顏色背景下的快捷按鈕顯示
+- [ ] 測試背景圖片下的快捷按鈕顯示
+- [ ] 測試無背景時的快捷按鈕顯示（確保不受影響）
+- [ ] 驗證預覽面板的快捷按鈕樣式與實際頁面一致
+
+
+## 背景圖片展示方式設定
+- [x] 分析 CSS background-size 和 background-position 選項
+- [x] 設計用戶友好的展示方式選項（平鋪、適應螢幕、按比例縮放、填滿、置中等）
+- [x] 擴展數據庫 personas 表添加 backgroundSize、backgroundPosition 和 backgroundRepeat 欄位
+- [x] 更新後端 API 支持背景圖片展示設定的保存和讀取
+- [x] 更新版面設定頁面 UI 添加展示方式選擇器（三個下拉選單）
+- [x] 更新對話頁面應用背景圖片展示設定
+- [x] 測試所有展示方式在不同圖片尺寸下的效果
+
+
+## 將背景圖片展示方式設定整合到圖片裁切器
+- [ ] 分析目前的 ImageCropper 組件實現
+- [ ] 移除 Appearance.tsx 中獨立的展示方式選擇器（三個 select）
+- [ ] 在 ImageCropper 組件中添加展示方式設定選項
+- [ ] 在裁切器預覽中實現即時顯示不同展示方式的效果
+- [ ] 將展示方式設定與裁切結果一起返回
+- [ ] 更新 Appearance.tsx 的圖片上傳流程整合展示方式設定
+- [ ] 測試裁切器中的展示方式設定和即時預覽功能
+
+
+## 優化背景圖片裁切器
+- [ ] 分析目前預覽版面的比例問題
+- [ ] 修復預覽版面，使其按實際比例縮小顯示（不壓縮變形）
+- [ ] 添加裁切器放大功能（Zoom In 按鈕）
+- [ ] 添加裁切器縮小功能（Zoom Out 按鈕）
+- [ ] 添加裁切器旋轉功能（Rotate 按鈕，90度旋轉）
+- [ ] 優化裁切器 UI 佈局（按鈕排列）
+- [ ] 測試所有新功能在不同圖片尺寸下的效果
+
+## 修復圖片裁切器 CORS 錯誤
+- [ ] 分析 Tainted canvas 錯誤原因（S3 圖片跨域問題）
+- [ ] 在 ImageCropper 的 react-easy-crop 組件添加 crossOrigin="anonymous"
+- [ ] 檢查 S3 bucket CORS 配置是否正確
+- [ ] 測試修復後的圖片裁切功能
+
+## 修復圖片裁切器 CORS 錯誤 - 已完成
+- [x] 分析 Tainted canvas 錯誤原因（S3 圖片跨域問題）
+- [x] 在 ImageCropper 的 createImage 函數添加 crossOrigin="anonymous"
+- [x] 修復代碼並等待用戶測試驗證
+
+## 修復圖片裁切器圖片載入錯誤
+- [ ] 改進 createImage 函數的錯誤處理
+- [ ] 顯示詳細的圖片載入錯誤訊息
+- [ ] 檢查 S3 圖片 URL 是否正確
+- [ ] 測試修復後的圖片載入功能
+
+## 修復圖片裁切器圖片載入錯誤 - 已完成
+- [x] 改進 createImage 函數的錯誤處理
+- [x] 顯示詳細的圖片載入錯誤訊息
+- [x] 修改編輯按鈕邏輯：將 S3 圖片轉換為 blob URL
+- [x] 為個人照片添加編輯按鈕
+- [x] 測試修復後的圖片載入功能（等待用戶驗證）
+
+## 修復 S3 圖片 fetch 失敗問題
+- [ ] 分析 fetch() 無法下載 S3 圖片的原因
+- [ ] 實施替代方案：直接傳遞 S3 URL 並確保 CORS 正確配置
+- [ ] 或使用後端代理獲取圖片
+- [ ] 測試修復後的功能
+
+## 實施後端代理解決 CORS 問題 - 已完成
+- [x] 創建 images.getImageAsBase64 API 端點
+- [x] 後端通過 fetch 獲取 S3 圖片並轉換為 base64
+- [x] 更新背景圖片編輯按鈕使用後端代理
+- [x] 更新個人照片編輯按鈕使用後端代理
+- [x] 測試修復後的功能（等待用戶驗證）
+
+## 裁切器即時預覽功能
+- [ ] 分析目前 ImageCropper 的預覽實現
+- [ ] 實現預覽區域同步顯示放大縮小效果
+- [ ] 實現預覽區域同步顯示旋轉效果
+- [ ] 實現預覽區域同步顯示展示方式設定
+- [ ] 測試即時預覽功能
+
+## 裁切器即時預覽功能 - 已完成
+- [x] 分析目前 ImageCropper 的預覽實現
+- [x] 添加 previewUrl 狀態儲存裁切後的預覽圖
+- [x] 使用 useEffect 監聽裁切參數變化（croppedAreaPixels）
+- [x] 即時生成裁切後的 blob URL
+- [x] 更新預覽區域使用裁切後的圖片
+- [x] 預覽區域同步顯示展示方式設定
+- [x] 測試即時預覽功能（等待用戶驗證）
+
+## 歡迎語文字顏色和大小設定
+- [ ] 擴展數據庫 ai_personas 表添加 welcomeMessageColor 和 welcomeMessageSize 欄位
+- [ ] 更新後端 API 支持保存和讀取歡迎語樣式
+- [ ] 在版面設定 UI 添加顏色選擇器（Color Picker）
+- [ ] 在版面設定 UI 添加文字大小選擇器（Small/Medium/Large/XLarge）
+- [ ] 更新對話頁面應用歡迎語樣式（顏色和大小）
+- [ ] 更新預覽組件應用歡迎語樣式
+- [ ] 測試功能
+
+## 歡迎語文字顏色和大小設定 - 已完成
+- [x] 擴展數據庫 ai_personas 表添加 welcomeMessageColor 和 welcomeMessageSize 欄位
+- [x] 更新後端 persona.upsert API 支持保存歡迎語樣式
+- [x] 更新後端 persona.getPublic API 返回歡迎語樣式
+- [x] 在版面設定 UI 添加顏色選擇器（Color Picker + 文字輸入）
+- [x] 在版面設定 UI 添加文字大小選擇器（Small/Medium/Large/XLarge）
+- [x] 更新對話頁面應用歡迎語樣式（MinimalLayout）
+- [x] 更新對話頁面應用歡迎語樣式（ProfessionalLayout）
+- [x] 更新對話頁面應用歡迎語樣式（CustomLayout）
+- [x] 測試功能（等待用戶驗證）
+
+## 修復歡迎語樣式保存後自動重置問題
+- [ ] 檢查預覽組件是否應用歡迎語樣式
+- [ ] 檢查 API 返回的數據是否正確
+- [ ] 修復問題
+- [ ] 測試修復效果
+
+## 修復歡迎語樣式保存後自動重置問題 - 已完成
+- [x] 檢查保存函數的邏輯
+- [x] 發現問題：使用 || null 會導致空字符串被轉換為 null
+- [x] 修復：改為使用預設值（#000000 和 medium）
+- [x] 測試修復效果（等待用戶驗證）
+
+## 真正的問題：upsertPersona 缺少欄位更新
+- [x] 發現 db.ts 中 upsertPersona 的 onDuplicateKeyUpdate 缺少新欄位
+- [x] 添加 welcomeMessageColor 和 welcomeMessageSize 到更新列表
+- [x] 同時添加缺失的 backgroundSize, backgroundPosition, backgroundRepeat
+- [x] 測試修復效果（等待用戶驗證）
+
+## 修復預覽版面即時顯示歡迎語樣式 + 增加字體大小選擇
+- [ ] 找到預覽版面組件並添加歡迎語樣式
+- [ ] 增加更多字體大小選擇（更細緻的選項）
+- [ ] 測試修復效果
+
+## 修復預覽版面即時顯示歡迎語樣式 + 增加字體大小選擇 - 已完成
+- [x] 在 CompactChatPreview 組件添加 welcomeMessageColor 和 welcomeMessageSize props
+- [x] 在預覽歡迎語顯示中應用顏色和大小樣式
+- [x] 增加字體大小選擇：超小(12px)、小(14px)、中(16px)、大(18px)、特大(20px)、超大(24px)、巨大(28px)、極大(32px)、超級大(36px)
+- [x] 更新 Chat.tsx 的字體大小輔助函數
+- [x] 測試修復效果（等待用戶驗證）
+
+## 修復專業名片佈局歡迎語樣式在對話連結不顯示
+- [ ] 檢查 ProfessionalLayout 組件的歡迎語樣式應用
+- [ ] 修復問題
+- [ ] 測試修復效果
+
+## 客戶登入功能和 API 文檔修復
+- [ ] 創建客戶認證後端 API (customerAuthRouter.ts)
+- [ ] 創建客戶登入對話框組件 (CustomerLoginDialog.tsx)
+- [ ] 更新 Chat.tsx 添加登入按鈕
+- [ ] 創建 API 文檔頁面 (ApiDocs.tsx)
+- [ ] 更新路由和後端配置
+- [ ] 測試功能
+- [x] 創建客戶認證後端 API (customerAuthRouter.ts)
+- [x] 創建客戶登入對話框組件 (CustomerLoginDialog.tsx)
+- [x] 更新 Chat.tsx 添加登入按鈕（三種佈局都已添加）
+- [x] 創建 API 文檔頁面 (ApiDocs.tsx)
+- [x] 更新 App.tsx 路由配置
+
+
+## 客戶登入功能修復（緊急修復）
+- [x] 檢查 Chat.tsx 中的登入按鈕實現
+- [x] 檢查 CustomDomainChat.tsx 中的登入按鈕實現
+- [x] 在 Chat.tsx 的 MinimalLayout 歡迎頁面添加固定登入按鈕
+- [x] 在 Chat.tsx 的 ProfessionalLayout 歡迎頁面添加固定登入按鈕
+- [x] 在 Chat.tsx 的 CustomLayout 歡迎頁面添加固定登入按鈕
+- [x] 在 CustomDomainChat.tsx 添加 CustomerLoginDialog 導入
+- [x] 在 CustomDomainChat.tsx 添加客戶登入狀態管理
+- [x] 在 CustomDomainChat.tsx 的 custom 佈局添加登入按鈕和對話框
+- [x] 在 CustomDomainChat.tsx 的 minimal/professional 佈局添加登入按鈕和對話框
+- [x] 測試修復效果
+
+
+## Email 驗證碼發送功能
+- [x] 檢查 Gmail MCP 工具可用性
+- [x] 決定移除驗證碼功能，改為簡單 Email 登入
+
+## 客戶登入功能重構
+- [x] 修改後端 customerAuthRouter.ts 支持簡單 Email 登入
+- [x] 配置 Google OAuth 登入
+- [x] 修改前端 CustomerLoginDialog.tsx 移除驗證碼 UI
+- [x] 創建 Google OAuth callback 頁面
+- [x] 測試登入功能 (11 tests passed)
+
+
+## UAT 測試 - 2026-01-10
+- [ ] 修復「建立帳戶」按鈕在登入對話框中不顯示的問題
+- [ ] 修復「建立帳戶」提交按鈕無反應的問題
+- [ ] 測試完整的註冊流程（填寫表單 → 提交 → 驗證）
+- [ ] 測試登入流程
+- [ ] 測試忘記密碼流程
+- [ ] 測試聊天功能
+- [ ] 測試快速按鈕功能
+- [ ] 測試頁面導航
+- [ ] 測試響應式設計
+- [ ] 生成完整 UAT 報告
+
+
+## UAT 測試和登入流程修復（2026-01-10）
+- [x] Cloudflare CDN 緩存清除
+- [x] 後端 emailSignup API 實現
+- [ ] 前端登入對話框功能修復
+- [ ] 「建立帳戶」按鈕功能測試
+- [ ] 完全重新設計登入流程，使用更簡單的實現方式
+- [ ] 驗證登入對話框能夠正確打開
+- [ ] 測試「建立帳戶」功能
+- [ ] 完成完整的 UAT 測試
+
+
+## Bug 修復：客戶註冊失敗（2026-01-10 下午 6:47）
+- [x] 調查客戶註冊失敗的原因（customer_users 表不存在）
+- [x] 修復後端 API 問題（手動創建 customer_users 表）
+- [x] 測試並驗證修復（註冊和登入成功）
+
+
+## 登入後導向儀表板功能（2026-01-10 下午）
+- [ ] 設計儀表板架構和路由
+- [ ] 創建客戶儀表板頁面（CustomerDashboard.tsx）
+- [ ] 實現 AI 智能體設定功能
+- [ ] 實現登入後自動導向儀表板
+- [ ] 測試完整流程
+- [ ] 保存檢查點
+
+
+## 登入後導向儀表板功能（2026-01-10）
+- [x] 設計儀表板架構和路由
+- [x] 創建客戶儀表板頁面（CustomerDashboard.tsx）
+- [x] 實現 AI 智能體設定功能（外觀、名稱、主題顏色、性格）
+- [x] 實現登入後自動導向儀表板
+- [ ] 測試完整流程（待發佈後測試）
+- [ ] 保存檢查點
+
+
+## 修復付費用戶後台 API 錯誤（2026-01-10）
+- [x] 診斷 API 查詢錯誤（返回 HTML 而非 JSON）
+- [x] 刪除 CustomerDashboard 組件和路由
+- [ ] 修復 API 錯誤
+- [x] 測試修復結果
+
+
+## 修復風格設定接入 LLM（2026-01-10）
+- [x] 檢查所有設定是否接入 LLM
+- [x] 實現風格設定轉換為 LLM 指令（40+ 項）
+- [x] 修復其他未接入的設定
+- [x] 測試修復結果
+
+
+## 超級銷售大腦 MVP 開發（2026-01-29）
+- [x] 創建 feature/mvp-brain 分支
+- [x] 創建 Docker Compose（Qdrant + Neo4j）
+- [x] 創建 server/services/memoryService.ts（記憶服務層）
+- [x] 創建 server/learningDiaryRouter.ts（學習日記 API）
+- [x] 修改 server/routers.ts 整合記憶檢索
+- [x] 創建 client/src/pages/Brain.tsx（我的大腦管理頁面）
+- [x] 在 App.tsx 添加 /brain 路由
+- [x] 在 DashboardLayout.tsx 添加「🧠 我的大腦」導航入口
+- [x] 測試 Docker 服務（使用 MySQL 替代）
+- [x] 測試學習日記功能
+- [x] 整合記憶系統到對話流程
+- [x] 推送代碼到 GitHub feature/mvp-brain 分支
+- [x] 生成完成報告
+
+
+## 增強學習日記對話整合（2026-01-29）
+- [ ] 修改 chat.send 路由整合學習日記
+- [ ] 調用 memoryService.searchMemories() 檢索相關記憶
+- [ ] 將記憶內容注入 System Prompt
+- [ ] 測試對話整合功能
+
+
+## 增強學習日記對話整合（2026-01-29）
+- [x] 修改 chat.send 路由整合學習日記
+- [x] 調用 memoryService.searchMemories() 檢索相關記憶
+- [x] 將記憶內容注入 System Prompt
+- [x] 改進提示詞格式，明確告訴 AI 這是已知資訊
+- [x] 測試對話整合功能
+
+
+## 優化記憶引用並創建 PR（2026-01-29）
+- [ ] 將記憶內容放在 System Prompt 最前面位置
+- [ ] 加強提示詞，明確告訴 AI 必須優先使用記憶資訊
+- [ ] 測試驗證 AI 是否正確引用記憶
+- [ ] 創建 PR 並合併到主分支
+
+
+## 優化記憶引用並創建 PR（2026-01-30）
+- [x] 將記憶內容放在 System Prompt 最前面位置
+- [x] 加強提示詞，明確告訴 AI 必須優先使用記憶資訊
+- [x] 測試驗證 AI 是否正確引用記憶
+- [ ] 創建 PR 並合併到主分支

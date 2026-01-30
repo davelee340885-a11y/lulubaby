@@ -1,5 +1,9 @@
-import { COOKIE_NAME } from "@shared/const";
+import { TRPCError } from "@trpc/server";
 import { getSessionCookieOptions } from "./_core/cookies";
+import { customerAuthRouter } from "./customerAuthRouter";
+import { learningDiaryRouter } from "./learningDiaryRouter";
+import { createMemoryService } from "./services/memoryService";
+import { COOKIE_NAME } from "../shared/const";
 import { systemRouter } from "./_core/systemRouter";
 import { publicProcedure, protectedProcedure, router } from "./_core/trpc";
 import { z } from "zod";
@@ -19,8 +23,6 @@ import {
   getTeamStats,
   // Customer memory operations
   getOrCreateCustomer, getCustomerById, getCustomersByPersonaId, updateCustomer, deleteCustomer, incrementCustomerMessageCount,
-  // Customer authentication operations
-  registerCustomer, loginCustomer, getCustomerByEmail, generatePasswordResetToken, resetPasswordWithToken, updateCustomerPassword,
   addCustomerMemory, getCustomerMemories, getCustomerMemoryContext, deleteCustomerMemory,
   addConversationSummary, getCustomerConversationSummaries, getRecentConversationContext, getCustomerStats,
   // Domain operations
@@ -35,6 +37,7 @@ import {
 } from "./db";
 import Stripe from "stripe";
 import { invokeLLM } from "./_core/llm";
+import { generateStylePrompt } from "./styleToPrompt";
 import { storagePut } from "./storage";
 import { nanoid } from "nanoid";
 import { 
@@ -78,10 +81,18 @@ export const appRouter = router({
         agentName: z.string().min(1).max(100),
         avatarUrl: z.string().optional().nullable(),
         welcomeMessage: z.string().optional().nullable(),
+        welcomeMessageColor: z.string().optional().nullable(),
+        welcomeMessageSize: z.string().optional().nullable(),
         systemPrompt: z.string().optional().nullable(),
         primaryColor: z.string().optional(),
         layoutStyle: z.enum(["minimal", "professional", "custom"]).optional(),
+        backgroundType: z.enum(["none", "color", "image"]).optional(),
+        backgroundColor: z.string().optional().nullable(),
         backgroundImageUrl: z.string().optional().nullable(),
+        backgroundSize: z.string().optional().nullable(),
+        backgroundPosition: z.string().optional().nullable(),
+        backgroundRepeat: z.string().optional().nullable(),
+        immersiveMode: z.boolean().optional(),
         profilePhotoUrl: z.string().optional().nullable(),
         tagline: z.string().optional().nullable(),
         suggestedQuestions: z.string().optional().nullable(),
@@ -90,15 +101,24 @@ export const appRouter = router({
         chatPlaceholder: z.string().optional().nullable(),
       }))
       .mutation(async ({ ctx, input }) => {
+        console.log('[persona.upsert] input:', { welcomeMessageColor: input.welcomeMessageColor, welcomeMessageSize: input.welcomeMessageSize });
         return upsertPersona({
           userId: ctx.user.id,
           agentName: input.agentName,
           avatarUrl: input.avatarUrl ?? undefined,
           welcomeMessage: input.welcomeMessage ?? undefined,
+          welcomeMessageColor: input.welcomeMessageColor ?? undefined,
+          welcomeMessageSize: input.welcomeMessageSize ?? undefined,
           systemPrompt: input.systemPrompt ?? undefined,
           primaryColor: input.primaryColor,
           layoutStyle: input.layoutStyle,
+          backgroundType: input.backgroundType,
+          backgroundColor: input.backgroundColor ?? undefined,
           backgroundImageUrl: input.backgroundImageUrl ?? undefined,
+          backgroundSize: input.backgroundSize ?? undefined,
+          backgroundPosition: input.backgroundPosition ?? undefined,
+          backgroundRepeat: input.backgroundRepeat ?? undefined,
+          immersiveMode: input.immersiveMode,
           profilePhotoUrl: input.profilePhotoUrl ?? undefined,
           tagline: input.tagline ?? undefined,
           suggestedQuestions: input.suggestedQuestions ?? undefined,
@@ -132,11 +152,16 @@ export const appRouter = router({
           agentName: persona.agentName,
           avatarUrl: persona.avatarUrl,
           welcomeMessage: persona.welcomeMessage || "您好！我是您的專屬AI助手，請問有什麼可以幫您？",
+          welcomeMessageColor: persona.welcomeMessageColor,
+          welcomeMessageSize: persona.welcomeMessageSize,
           primaryColor: persona.primaryColor,
           layoutStyle: persona.layoutStyle,
+          backgroundType: persona.backgroundType,
+          backgroundColor: persona.backgroundColor,
           backgroundImageUrl: persona.backgroundImageUrl,
           profilePhotoUrl: persona.profilePhotoUrl,
           tagline: persona.tagline,
+          immersiveMode: persona.immersiveMode || false,
           suggestedQuestions,
           showQuickButtons: persona.showQuickButtons,
           buttonDisplayMode: persona.buttonDisplayMode || 'full',
@@ -149,6 +174,57 @@ export const appRouter = router({
             actionValue: b.actionValue,
           })) : [],
         };
+      }),
+  }),
+
+  // Image upload to S3
+  images: router({
+    uploadImage: protectedProcedure
+      .input(z.object({
+        fileName: z.string(),
+        fileContent: z.string(), // base64 encoded
+        mimeType: z.string(),
+        imageType: z.enum(["profile", "background", "avatar"]),
+      }))
+      .mutation(async ({ ctx, input }) => {
+        const fileBuffer = Buffer.from(input.fileContent, "base64");
+        const fileExt = input.fileName.split(".").pop() || "jpg";
+        const fileKey = `images/${ctx.user.id}/${input.imageType}/${nanoid()}.${fileExt}`;
+        
+        const { url } = await storagePut(fileKey, fileBuffer, input.mimeType);
+        
+        return { url, fileKey };
+      }),
+
+    // Get image as base64 (proxy to avoid CORS issues)
+    getImageAsBase64: protectedProcedure
+      .input(z.object({
+        imageUrl: z.string(),
+      }))
+      .query(async ({ input }) => {
+        try {
+          // Fetch the image from S3/storage
+          const response = await fetch(input.imageUrl);
+          if (!response.ok) {
+            throw new Error(`Failed to fetch image: ${response.statusText}`);
+          }
+          
+          const arrayBuffer = await response.arrayBuffer();
+          const buffer = Buffer.from(arrayBuffer);
+          const base64 = buffer.toString('base64');
+          
+          // Get content type from response headers
+          const contentType = response.headers.get('content-type') || 'image/jpeg';
+          
+          return {
+            base64,
+            contentType,
+            dataUrl: `data:${contentType};base64,${base64}`,
+          };
+        } catch (error) {
+          console.error('Error fetching image:', error);
+          throw new Error(`Failed to fetch image: ${error}`);
+        }
       }),
   }),
 
@@ -430,8 +506,43 @@ export const appRouter = router({
           recentConversationContext = await getRecentConversationContext(customer.id, 3);
         }
         
-        // Build system prompt with customer memory
-        let systemPrompt = `你是${persona.agentName}，一個專業的AI助手。
+        // Get training and superpowers settings for style customization
+        const training = await getTrainingByUserId(persona.userId);
+        const superpowersSettings = await getSuperpowersByUserId(persona.userId);
+        const stylePrompt = generateStylePrompt(training || null, superpowersSettings || null);
+        
+        // Get contextual memories from learning diary (Brain Memory System) FIRST
+        let memoryContext = '';
+        try {
+          console.log("[chat.send] ========== MEMORY RETRIEVAL START ==========");
+          console.log("[chat.send] Searching for contextual memories for user:", persona.userId);
+          console.log("[chat.send] User message:", input.message);
+          const memoryService = createMemoryService(persona.userId);
+          const contextualMemories = await memoryService.getContextualMemories(input.message, 5);
+          console.log("[chat.send] Contextual memories found:", contextualMemories ? contextualMemories.length : 0, "chars");
+          if (contextualMemories && contextualMemories.trim()) {
+            memoryContext = contextualMemories;
+            console.log("[chat.send] Memory content preview:", contextualMemories.substring(0, 200));
+          } else {
+            console.log("[chat.send] No contextual memories found or empty result");
+          }
+          console.log("[chat.send] ========== MEMORY RETRIEVAL END ==========");
+        } catch (error) {
+          console.error("[chat.send] Failed to get contextual memories:", error);
+          console.error("[chat.send] Error stack:", error instanceof Error ? error.stack : 'Unknown error');
+        }
+
+        // Build system prompt - MEMORY FIRST for highest priority
+        let systemPrompt = `你是${persona.agentName}，用戶的專屬 AI 銷售助手。
+`;
+
+        // Add memory context FIRST (highest priority)
+        if (memoryContext) {
+          systemPrompt += memoryContext;
+        }
+
+        // Then add basic instructions
+        systemPrompt += `
 ${persona.systemPrompt || "請用友善、專業的方式回答用戶的問題。"}
 `;
 
@@ -469,9 +580,16 @@ ${knowledgeContent.substring(0, 10000)}
 ---`;
         }
 
+        // Memory context already added at the beginning of system prompt
+
+        // Add style and superpowers instructions
+        if (stylePrompt) {
+          systemPrompt += stylePrompt;
+        }
+
         systemPrompt += `
 
-請用繁體中文回答，保持專業但親切的語氣。`;
+請用繁體中文回答。`;
 
         // Build messages for LLM
         const messages: Array<{ role: "system" | "user" | "assistant"; content: string }> = [
@@ -1469,6 +1587,24 @@ ${knowledgeContent.substring(0, 10000)}
       return getDomainsByUserId(ctx.user.id);
     }),
 
+    // Get published domain for current user
+    getPublished: protectedProcedure.query(async ({ ctx }) => {
+      const persona = await getPersonaByUserId(ctx.user.id);
+      if (!persona) return null;
+      
+      const orders = await getRegisteredDomainOrders(ctx.user.id);
+      const publishedOrder = orders.find(order => 
+        order.isPublished && 
+        order.personaId === persona.id &&
+        order.dnsStatus === 'active'
+      );
+      
+      return publishedOrder ? {
+        domain: publishedOrder.domain,
+        url: `https://${publishedOrder.domain}`
+      } : null;
+    }),
+
     // Get a specific domain by ID
     get: protectedProcedure
       .input(z.object({ id: z.number() }))
@@ -2246,105 +2382,10 @@ ${knowledgeContent.substring(0, 10000)}
     }),
   }),
 
-  // Customer Authentication (for end-users of the AI chat)
-  customerAuth: router({
-    // Register a new customer account
-    register: publicProcedure
-      .input(z.object({
-        personaId: z.number(),
-        email: z.string().email(),
-        password: z.string().min(6, '密碼至少需要6個字符'),
-        name: z.string().optional(),
-      }))
-      .mutation(async ({ input }) => {
-        return registerCustomer(input.personaId, input.email, input.password, input.name);
-      }),
+  // Customer authentication (for chat widget)
+  customerAuth: customerAuthRouter,
 
-    // Login with email and password
-    login: publicProcedure
-      .input(z.object({
-        personaId: z.number(),
-        email: z.string().email(),
-        password: z.string(),
-      }))
-      .mutation(async ({ input }) => {
-        return loginCustomer(input.personaId, input.email, input.password);
-      }),
-
-    // Request password reset
-    requestPasswordReset: publicProcedure
-      .input(z.object({
-        personaId: z.number(),
-        email: z.string().email(),
-      }))
-      .mutation(async ({ input }) => {
-        const result = await generatePasswordResetToken(input.personaId, input.email);
-        // In production, send email with reset link here
-        // For now, just return success (don't reveal if email exists)
-        return { success: true, message: '如果此電郵已註冊，您將收到重設密碼的連結' };
-      }),
-
-    // Reset password with token
-    resetPassword: publicProcedure
-      .input(z.object({
-        token: z.string(),
-        newPassword: z.string().min(6, '密碼至少需要6個字符'),
-      }))
-      .mutation(async ({ input }) => {
-        return resetPasswordWithToken(input.token, input.newPassword);
-      }),
-
-    // Get customer profile (for logged-in customers)
-    getProfile: publicProcedure
-      .input(z.object({
-        customerId: z.number(),
-      }))
-      .query(async ({ input }) => {
-        const customer = await getCustomerById(input.customerId);
-        if (!customer) return null;
-        // Return safe customer data (exclude password hash)
-        return {
-          id: customer.id,
-          personaId: customer.personaId,
-          name: customer.name,
-          email: customer.email,
-          phone: customer.phone,
-          company: customer.company,
-          title: customer.title,
-          preferredLanguage: customer.preferredLanguage,
-          totalConversations: customer.totalConversations,
-          totalMessages: customer.totalMessages,
-          lastVisitAt: customer.lastVisitAt,
-          firstVisitAt: customer.firstVisitAt,
-          createdAt: customer.createdAt,
-        };
-      }),
-
-    // Update customer profile
-    updateProfile: publicProcedure
-      .input(z.object({
-        customerId: z.number(),
-        name: z.string().optional(),
-        phone: z.string().optional(),
-        company: z.string().optional(),
-        title: z.string().optional(),
-        preferredLanguage: z.string().optional(),
-      }))
-      .mutation(async ({ input }) => {
-        const { customerId, ...data } = input;
-        return updateCustomer(customerId, data);
-      }),
-
-    // Change password (when logged in)
-    changePassword: publicProcedure
-      .input(z.object({
-        customerId: z.number(),
-        currentPassword: z.string(),
-        newPassword: z.string().min(6, '密碼至少需要6個字符'),
-      }))
-      .mutation(async ({ input }) => {
-        return updateCustomerPassword(input.customerId, input.currentPassword, input.newPassword);
-      }),
-  }),
+  // Learning Diary / Brain Memory System
+  learningDiary: learningDiaryRouter,
 });
 export type AppRouter = typeof appRouter;

@@ -85,6 +85,55 @@
       "when": 1767604396727,
       "tag": "0011_wealthy_triathlon",
       "breakpoints": true
+    },
+    {
+      "idx": 12,
+      "version": "5",
+      "when": 1767666023975,
+      "tag": "0012_amazing_prima",
+      "breakpoints": true
+    },
+    {
+      "idx": 13,
+      "version": "5",
+      "when": 1767682598488,
+      "tag": "0013_wild_trauma",
+      "breakpoints": true
+    },
+    {
+      "idx": 14,
+      "version": "5",
+      "when": 1767686735772,
+      "tag": "0014_overconfident_legion",
+      "breakpoints": true
+    },
+    {
+      "idx": 15,
+      "version": "5",
+      "when": 1767775473146,
+      "tag": "0015_military_risque",
+      "breakpoints": true
+    },
+    {
+      "idx": 16,
+      "version": "5",
+      "when": 1767853608166,
+      "tag": "0016_last_shadowcat",
+      "breakpoints": true
+    },
+    {
+      "idx": 17,
+      "version": "5",
+      "when": 1768040744492,
+      "tag": "0017_wealthy_morg",
+      "breakpoints": true
+    },
+    {
+      "idx": 18,
+      "version": "5",
+      "when": 1769699694885,
+      "tag": "0018_silky_the_initiative",
+      "breakpoints": true
     }
   ]
 }

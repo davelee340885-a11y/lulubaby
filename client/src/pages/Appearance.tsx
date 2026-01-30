@@ -4,11 +4,14 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Textarea } from "@/components/ui/textarea";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Loader2, Upload, X, Plus, Trash2, Image as ImageIcon, Bot, Send, MessageSquare, User, Package, Calendar, Phone, HelpCircle, Search, Link, Building2, FileText, Mail, ExternalLink, ShoppingBag, Star, Info, Palette, Zap, MessageCircle, Settings2, Save } from "lucide-react";
+import CompactChatPreview from "@/components/CompactChatPreview";
+import ImageCropper from "@/components/ImageCropper";
 import { toast } from "sonner";
 import { useState, useRef, useEffect } from "react";
 import {
@@ -101,6 +104,8 @@ export default function Appearance() {
   const [agentName, setAgentName] = useState("");
   const [avatarUrl, setAvatarUrl] = useState("");
   const [welcomeMessage, setWelcomeMessage] = useState("");
+  const [welcomeMessageColor, setWelcomeMessageColor] = useState("#000000");
+  const [welcomeMessageSize, setWelcomeMessageSize] = useState("medium");
   const [systemPrompt, setSystemPrompt] = useState("");
   const [primaryColor, setPrimaryColor] = useState("#3B82F6");
 
@@ -116,6 +121,17 @@ export default function Appearance() {
   const [chatPlaceholder, setChatPlaceholder] = useState("輸入您的問題...");
   const [uploadingProfile, setUploadingProfile] = useState(false);
   const [uploadingBackground, setUploadingBackground] = useState(false);
+  const [backgroundType, setBackgroundType] = useState<"none" | "color" | "image">("none");
+  const [backgroundColor, setBackgroundColor] = useState("#FFFFFF");
+  const [immersiveMode, setImmersiveMode] = useState(false);
+  const [backgroundSize, setBackgroundSize] = useState("cover");
+  const [backgroundPosition, setBackgroundPosition] = useState("center");
+  const [backgroundRepeat, setBackgroundRepeat] = useState("no-repeat");
+  
+  // Image cropper state
+  const [cropperOpen, setCropperOpen] = useState(false);
+  const [cropperImage, setCropperImage] = useState("");
+  const [cropperType, setCropperType] = useState<"profile" | "background">("profile");
 
   // Button state
   const [dialogOpen, setDialogOpen] = useState(false);
@@ -132,6 +148,8 @@ export default function Appearance() {
       setAgentName(persona.agentName || "");
       setAvatarUrl(persona.avatarUrl || "");
       setWelcomeMessage(persona.welcomeMessage || "");
+      setWelcomeMessageColor(persona.welcomeMessageColor || "#000000");
+      setWelcomeMessageSize(persona.welcomeMessageSize || "medium");
       setSystemPrompt(persona.systemPrompt || "");
       setPrimaryColor(persona.primaryColor || "#3B82F6");
       
@@ -143,6 +161,12 @@ export default function Appearance() {
       setShowQuickButtons(persona.showQuickButtons ?? true);
       setButtonDisplayMode((persona.buttonDisplayMode as "full" | "compact" | "icon") || "full");
       setChatPlaceholder(persona.chatPlaceholder || "輸入您的問題...");
+      setBackgroundType((persona.backgroundType as "none" | "color" | "image") || "none");
+      setBackgroundColor(persona.backgroundColor || "#FFFFFF");
+      setImmersiveMode(persona.immersiveMode ?? false);
+      setBackgroundSize((persona as any).backgroundSize || "cover");
+      setBackgroundPosition((persona as any).backgroundPosition || "center");
+      setBackgroundRepeat((persona as any).backgroundRepeat || "no-repeat");
       
       if (persona.suggestedQuestions) {
         try {
@@ -208,25 +232,82 @@ export default function Appearance() {
     },
   });
 
-  const handleImageUpload = async (file: File, type: "profile" | "background") => {
+  const uploadImageMutation = trpc.images.uploadImage.useMutation();
+
+  const handleImageSelect = (file: File, type: "profile" | "background") => {
+    // Validate file size (max 5MB)
+    if (file.size > 5 * 1024 * 1024) {
+      toast.error("圖片大小不能超過 5MB");
+      return;
+    }
+
+    // Validate file type
+    if (!file.type.startsWith("image/")) {
+      toast.error("請選擇圖片文件");
+      return;
+    }
+
+    // Read file and open cropper
+    const reader = new FileReader();
+    reader.onload = () => {
+      setCropperImage(reader.result as string);
+      setCropperType(type);
+      setCropperOpen(true);
+    };
+    reader.readAsDataURL(file);
+  };
+
+  const handleCropComplete = async (
+    croppedBlob: Blob,
+    displaySettings?: {
+      backgroundSize: string;
+      backgroundPosition: string;
+      backgroundRepeat: string;
+    }
+  ) => {
+    const type = cropperType;
     const setUploading = type === "profile" ? setUploadingProfile : setUploadingBackground;
     const setUrl = type === "profile" ? setProfilePhotoUrl : setBackgroundImageUrl;
 
     setUploading(true);
     try {
+      // Convert blob to base64
       const reader = new FileReader();
-      reader.onload = () => {
-        const dataUrl = reader.result as string;
-        setUrl(dataUrl);
-        toast.success("圖片上傳成功");
-        setUploading(false);
-      };
-      reader.onerror = () => {
-        toast.error("圖片上傳失敗");
-        setUploading(false);
-      };
-      reader.readAsDataURL(file);
-    } catch {
+      const base64Promise = new Promise<string>((resolve, reject) => {
+        reader.onload = () => {
+          const dataUrl = reader.result as string;
+          const base64 = dataUrl.split(",")[1];
+          resolve(base64);
+        };
+        reader.onerror = () => reject(new Error("讀取文件失敗"));
+        reader.readAsDataURL(croppedBlob);
+      });
+
+      const base64Content = await base64Promise;
+
+      // Upload to S3 via tRPC
+      const result = await uploadImageMutation.mutateAsync({
+        fileName: `${type}_${Date.now()}.jpg`,
+        fileContent: base64Content,
+        mimeType: "image/jpeg",
+        imageType: type,
+      });
+
+      // Set the S3 URL
+      setUrl(result.url);
+      if (type === "background") {
+        setBackgroundType("image");
+        // Apply display settings if provided
+        if (displaySettings) {
+          setBackgroundSize(displaySettings.backgroundSize);
+          setBackgroundPosition(displaySettings.backgroundPosition);
+          setBackgroundRepeat(displaySettings.backgroundRepeat);
+        }
+      }
+      toast.success("圖片上傳成功");
+      setUploading(false);
+    } catch (error) {
+      console.error("Upload error:", error);
       toast.error("圖片上傳失敗");
       setUploading(false);
     }
@@ -253,10 +334,18 @@ export default function Appearance() {
       agentName,
       avatarUrl: avatarUrl || null,
       welcomeMessage: welcomeMessage || null,
+      welcomeMessageColor: welcomeMessageColor || "#000000",
+      welcomeMessageSize: welcomeMessageSize || "medium",
       systemPrompt: systemPrompt || null,
       primaryColor,
       layoutStyle,
+      backgroundType,
+      backgroundColor: backgroundColor || null,
       backgroundImageUrl: backgroundImageUrl || null,
+      backgroundSize: backgroundSize || null,
+      backgroundPosition: backgroundPosition || null,
+      backgroundRepeat: backgroundRepeat || null,
+      immersiveMode,
       profilePhotoUrl: profilePhotoUrl || null,
       tagline: tagline || null,
       suggestedQuestions: JSON.stringify(suggestedQuestions),
@@ -349,7 +438,7 @@ export default function Appearance() {
         <p className="text-muted-foreground mt-1">自訂您的AI助手外觀、行為和對話頁面設定</p>
       </div>
 
-      <div className="grid lg:grid-cols-[1fr,280px] gap-6">
+      <div className="grid gap-6" style={{ gridTemplateColumns: '1fr 320px' }}>
         {/* Left: Settings with Tabs */}
         <Tabs defaultValue="ai" className="space-y-6">
           <TabsList className="grid w-full grid-cols-4">
@@ -380,25 +469,6 @@ export default function Appearance() {
                 <CardDescription>設定AI助手的名稱和頭像</CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
-                <div className="flex items-center gap-6">
-                  <Avatar className="h-16 w-16">
-                    <AvatarImage src={avatarUrl} />
-                    <AvatarFallback className="text-xl bg-primary text-primary-foreground">
-                      <Bot className="h-8 w-8" />
-                    </AvatarFallback>
-                  </Avatar>
-                  <div className="flex-1 space-y-2">
-                    <Label htmlFor="avatarUrl">頭像網址</Label>
-                    <Input
-                      id="avatarUrl"
-                      placeholder="https://example.com/avatar.jpg"
-                      value={avatarUrl}
-                      onChange={(e) => setAvatarUrl(e.target.value)}
-                    />
-                    <p className="text-xs text-muted-foreground">輸入圖片網址，建議使用正方形圖片</p>
-                  </div>
-                </div>
-
                 <div className="space-y-2">
                   <Label htmlFor="agentName">AI助手名稱 *</Label>
                   <Input
@@ -447,6 +517,49 @@ export default function Appearance() {
                     rows={3}
                   />
                   <p className="text-xs text-muted-foreground">客戶進入對話頁面時看到的第一條訊息</p>
+                  
+                  {/* Welcome Message Styling */}
+                  <div className="grid grid-cols-2 gap-4 mt-3 pt-3 border-t">
+                    <div className="space-y-2">
+                      <Label htmlFor="welcomeMessageColor">文字顏色</Label>
+                      <div className="flex gap-2">
+                        <input
+                          type="color"
+                          id="welcomeMessageColor"
+                          value={welcomeMessageColor}
+                          onChange={(e) => setWelcomeMessageColor(e.target.value)}
+                          className="h-9 w-16 rounded border border-input cursor-pointer"
+                        />
+                        <input
+                          type="text"
+                          value={welcomeMessageColor}
+                          onChange={(e) => setWelcomeMessageColor(e.target.value)}
+                          className="h-9 flex-1 rounded-md border border-input bg-background px-3 py-1 text-sm"
+                          placeholder="#000000"
+                        />
+                      </div>
+                    </div>
+                    
+                    <div className="space-y-2">
+                      <Label htmlFor="welcomeMessageSize">文字大小</Label>
+                      <select
+                        id="welcomeMessageSize"
+                        value={welcomeMessageSize}
+                        onChange={(e) => setWelcomeMessageSize(e.target.value)}
+                        className="h-9 w-full rounded-md border border-input bg-background px-3 py-1 text-sm"
+                      >
+                        <option value="xsmall">超小 (12px)</option>
+                        <option value="small">小 (14px)</option>
+                        <option value="medium">中 (16px)</option>
+                        <option value="large">大 (18px)</option>
+                        <option value="xlarge">特大 (20px)</option>
+                        <option value="xxlarge">超大 (24px)</option>
+                        <option value="xxxlarge">巨大 (28px)</option>
+                        <option value="huge">極大 (32px)</option>
+                        <option value="massive">超級大 (36px)</option>
+                      </select>
+                    </div>
+                  </div>
                 </div>
 
                 <div className="space-y-2">
@@ -518,7 +631,30 @@ export default function Appearance() {
                     {profilePhotoUrl ? (
                       <div className="relative">
                         <img src={profilePhotoUrl} alt="Profile" className="h-14 w-14 rounded-full object-cover border-2 border-background shadow-md" />
-                        <button onClick={() => setProfilePhotoUrl("")} className="absolute -top-1 -right-1 h-5 w-5 rounded-full bg-destructive text-destructive-foreground flex items-center justify-center hover:bg-destructive/90">
+                        <button 
+                          onClick={async () => {
+                            try {
+                              setUploadingProfile(true);
+                              // Use backend proxy to get image as base64
+                              const result = await utils.client.images.getImageAsBase64.query({ imageUrl: profilePhotoUrl });
+                              setCropperImage(result.dataUrl);
+                              setCropperType("profile");
+                              setCropperOpen(true);
+                              setUploadingProfile(false);
+                            } catch (error) {
+                              console.error("Failed to load image:", error);
+                              toast.error("無法載入圖片，請重新上傳");
+                              setUploadingProfile(false);
+                            }
+                          }}
+                          className="absolute -top-1 -right-1 h-5 w-5 rounded-full bg-black/50 text-white flex items-center justify-center hover:bg-black/70"
+                          title="編輯個人照片"
+                        >
+                          <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3" viewBox="0 0 20 20" fill="currentColor">
+                            <path d="M13.586 3.586a2 2 0 112.828 2.828l-.793.793-2.828-2.828.793-.793zM11.379 5.793L3 14.172V17h2.828l8.38-8.379-2.83-2.828z" />
+                          </svg>
+                        </button>
+                        <button onClick={() => setProfilePhotoUrl("")} className="absolute -top-1 -left-1 h-5 w-5 rounded-full bg-destructive text-destructive-foreground flex items-center justify-center hover:bg-destructive/90">
                           <X className="h-3 w-3" />
                         </button>
                       </div>
@@ -532,10 +668,12 @@ export default function Appearance() {
                         {uploadingProfile ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <Upload className="h-4 w-4 mr-2" />}
                         上傳照片
                       </Button>
-                      <p className="text-xs text-muted-foreground mt-1">建議 400x400 像素</p>
+                      <p className="text-xs text-muted-foreground mt-1">
+                        建議 400x400 像素，JPG/PNG 格式，最大 5MB
+                      </p>
                     </div>
                   </div>
-                  <input ref={profileInputRef} type="file" accept="image/*" className="hidden" onChange={(e) => { const file = e.target.files?.[0]; if (file) handleImageUpload(file, "profile"); }} />
+                  <input ref={profileInputRef} type="file" accept="image/*" className="hidden" onChange={(e) => { const file = e.target.files?.[0]; if (file) handleImageSelect(file, "profile"); }} />
                   <div className="space-y-2">
                     <Label htmlFor="tagline">個人標語</Label>
                     <Input id="tagline" value={tagline} onChange={(e) => setTagline(e.target.value)} placeholder="例如：專業保險顧問，為您的未來保駕護航" maxLength={100} />
@@ -544,27 +682,175 @@ export default function Appearance() {
               </Card>
             )}
 
-            {/* Background Image - for custom style */}
+            {/* Background Settings - for custom style */}
             {layoutStyle === "custom" && (
               <Card>
                 <CardHeader className="pb-3">
-                  <CardTitle className="text-base">背景圖片</CardTitle>
-                  <CardDescription>上傳自訂背景，打造獨特品牌風格</CardDescription>
+                  <CardTitle className="text-base">背景設定</CardTitle>
+                  <CardDescription>選擇使用圖片或顏色作為背景</CardDescription>
                 </CardHeader>
-                <CardContent>
-                  {backgroundImageUrl ? (
-                    <div className="relative rounded-lg overflow-hidden">
-                      <img src={backgroundImageUrl} alt="Background" className="w-full h-24 object-cover" />
-                      <button onClick={() => setBackgroundImageUrl("")} className="absolute top-2 right-2 h-6 w-6 rounded-full bg-black/50 text-white flex items-center justify-center hover:bg-black/70">
-                        <X className="h-3 w-3" />
+                <CardContent className="space-y-4">
+                  {/* Background Type Selection */}
+                  <div className="space-y-2">
+                    <Label>背景類型</Label>
+                    <div className="grid grid-cols-3 gap-2">
+                      <button
+                        onClick={() => {
+                          setBackgroundType("none");
+                          setBackgroundImageUrl("");
+                        }}
+                        className={`p-3 rounded-lg border-2 text-center transition-all ${
+                          backgroundType === "none"
+                            ? "border-primary bg-primary/5"
+                            : "border-border hover:border-primary/50"
+                        }`}
+                      >
+                        <div className="text-sm font-medium">無背景</div>
+                        <div className="text-xs text-muted-foreground mt-0.5">白色背景</div>
+                      </button>
+                      <button
+                        onClick={() => setBackgroundType("color")}
+                        className={`p-3 rounded-lg border-2 text-center transition-all ${
+                          backgroundType === "color"
+                            ? "border-primary bg-primary/5"
+                            : "border-border hover:border-primary/50"
+                        }`}
+                      >
+                        <div className="text-sm font-medium">純色背景</div>
+                        <div className="text-xs text-muted-foreground mt-0.5">選擇顏色</div>
+                      </button>
+                      <button
+                        onClick={() => setBackgroundType("image")}
+                        className={`p-3 rounded-lg border-2 text-center transition-all ${
+                          backgroundType === "image"
+                            ? "border-primary bg-primary/5"
+                            : "border-border hover:border-primary/50"
+                        }`}
+                      >
+                        <div className="text-sm font-medium">圖片背景</div>
+                        <div className="text-xs text-muted-foreground mt-0.5">上傳圖片</div>
                       </button>
                     </div>
-                  ) : (
-                    <div onClick={() => backgroundInputRef.current?.click()} className="h-24 rounded-lg border-2 border-dashed border-muted-foreground/25 flex flex-col items-center justify-center cursor-pointer hover:border-primary/50 transition-colors">
-                      {uploadingBackground ? <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" /> : <><ImageIcon className="h-5 w-5 text-muted-foreground mb-1" /><p className="text-xs text-muted-foreground">點擊上傳背景圖片</p></>}
+                  </div>
+
+                  {/* Color Picker - shown when backgroundType is "color" */}
+                  {backgroundType === "color" && (
+                    <div className="space-y-2">
+                      <Label htmlFor="backgroundColor">背景顏色</Label>
+                      <div className="flex items-center gap-3">
+                        <input
+                          type="color"
+                          id="backgroundColor"
+                          value={backgroundColor}
+                          onChange={(e) => setBackgroundColor(e.target.value)}
+                          className="h-10 w-20 rounded border cursor-pointer"
+                        />
+                        <Input
+                          value={backgroundColor}
+                          onChange={(e) => setBackgroundColor(e.target.value)}
+                          className="w-32"
+                          placeholder="#FFFFFF"
+                        />
+                        <div 
+                          className="h-10 flex-1 rounded border"
+                          style={{ backgroundColor: backgroundColor }}
+                        />
+                      </div>
+                      <p className="text-xs text-muted-foreground">選擇一個顏色作為對話頁面的背景</p>
                     </div>
                   )}
-                  <input ref={backgroundInputRef} type="file" accept="image/*" className="hidden" onChange={(e) => { const file = e.target.files?.[0]; if (file) handleImageUpload(file, "background"); }} />
+
+                  {/* Image Upload - shown when backgroundType is "image" */}
+                  {backgroundType === "image" && (
+                    <div className="space-y-2">
+                      <Label>背景圖片</Label>
+                      {backgroundImageUrl ? (
+                        <div className="relative rounded-lg overflow-hidden">
+                          <img src={backgroundImageUrl} alt="Background" className="w-full h-32 object-cover" />
+                          <div className="absolute top-2 right-2 flex gap-2">
+                            <button 
+                              onClick={async () => {
+                                try {
+                                  setUploadingBackground(true);
+                                  // Use backend proxy to get image as base64
+                                  const result = await utils.client.images.getImageAsBase64.query({ imageUrl: backgroundImageUrl });
+                                  setCropperImage(result.dataUrl);
+                                  setCropperType("background");
+                                  setCropperOpen(true);
+                                  setUploadingBackground(false);
+                                } catch (error) {
+                                  console.error("Failed to load image:", error);
+                                  toast.error("無法載入圖片，請重新上傳");
+                                  setUploadingBackground(false);
+                                }
+                              }}
+                              className="h-6 w-6 rounded-full bg-black/50 text-white flex items-center justify-center hover:bg-black/70"
+                              title="編輯背景圖片"
+                            >
+                              <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3" viewBox="0 0 20 20" fill="currentColor">
+                                <path d="M13.586 3.586a2 2 0 112.828 2.828l-.793.793-2.828-2.828.793-.793zM11.379 5.793L3 14.172V17h2.828l8.38-8.379-2.83-2.828z" />
+                              </svg>
+                            </button>
+                            <button 
+                              onClick={() => {
+                                setBackgroundImageUrl("");
+                                setBackgroundType("none");
+                              }} 
+                              className="h-6 w-6 rounded-full bg-black/50 text-white flex items-center justify-center hover:bg-black/70"
+                              title="刪除背景圖片"
+                            >
+                              <X className="h-3 w-3" />
+                            </button>
+                          </div>
+                        </div>
+                      ) : (
+                        <div 
+                          onClick={() => backgroundInputRef.current?.click()} 
+                          className="h-32 rounded-lg border-2 border-dashed border-muted-foreground/25 flex flex-col items-center justify-center cursor-pointer hover:border-primary/50 transition-colors"
+                        >
+                          {uploadingBackground ? (
+                            <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+                          ) : (
+                            <>
+                              <ImageIcon className="h-6 w-6 text-muted-foreground mb-2" />
+                              <p className="text-sm text-muted-foreground">點擊上傳背景圖片</p>
+                              <p className="text-xs text-muted-foreground mt-1">建議 1920x1080 像素，最大 5MB</p>
+                            </>
+                          )}
+                        </div>
+                      )}
+                      <input 
+                        ref={backgroundInputRef} 
+                        type="file" 
+                        accept="image/*" 
+                        className="hidden" 
+                        onChange={(e) => { 
+                          const file = e.target.files?.[0]; 
+                          if (file) handleImageSelect(file, "background"); 
+                        }} 
+                      />
+                    </div>
+                  )}
+
+                  {/* Immersive Mode Checkbox - shown when background is set */}
+                  {(backgroundType === "color" || backgroundType === "image") && (
+                    <div className="flex items-start space-x-3 p-4 rounded-lg border bg-muted/30">
+                      <Checkbox 
+                        id="immersiveMode" 
+                        checked={immersiveMode}
+                        onCheckedChange={(checked) => setImmersiveMode(checked as boolean)}
+                        className="mt-0.5"
+                      />
+                      <div className="flex-1">
+                        <Label htmlFor="immersiveMode" className="cursor-pointer font-medium">
+                          沉浸式風格
+                        </Label>
+                        <p className="text-xs text-muted-foreground mt-1">
+                          啟用後，背景將延伸到整個對話區域，包括輸入框和按鈕，創造更具沉浸感的視覺體驗
+                        </p>
+                      </div>
+                    </div>
+                  )}
                 </CardContent>
               </Card>
             )}
@@ -810,111 +1096,29 @@ export default function Appearance() {
         </Tabs>
 
         {/* Right: Compact Preview Panel */}
-        <div className="lg:sticky lg:top-6 space-y-2">
-          <div className="flex items-center justify-between">
-            <h3 className="font-medium text-sm">即時預覽</h3>
-            <span className="text-xs text-muted-foreground">手機版</span>
-          </div>
-          
-          <div className="relative mx-auto" style={{ width: "220px" }}>
-            <div className="rounded-[20px] border-4 border-gray-800 bg-gray-800 shadow-xl overflow-hidden">
-              <div className="h-4 bg-gray-800 flex items-center justify-center">
-                <div className="w-12 h-2.5 bg-black rounded-full" />
-              </div>
-              
-              <div 
-                className="bg-background overflow-hidden"
-                style={{ 
-                  height: "340px",
-                  backgroundImage: layoutStyle === "custom" && backgroundImageUrl ? `url(${backgroundImageUrl})` : undefined,
-                  backgroundSize: "cover",
-                  backgroundPosition: "center",
-                }}
-              >
-                {layoutStyle === "custom" && backgroundImageUrl && <div className="absolute inset-0 bg-black/40" />}
-                
-                <div className={`h-full flex flex-col ${layoutStyle === "custom" ? "relative z-10" : ""}`}>
-                  {/* Header */}
-                  <div className={`p-2 border-b ${layoutStyle === "custom" ? "bg-black/20 border-white/10" : "bg-background/95"}`}>
-                    <div className="flex items-center gap-2">
-                      <div className="h-6 w-6 rounded-full flex items-center justify-center overflow-hidden" style={{ backgroundColor: `${primaryColor}15` }}>
-                        {avatarUrl ? <img src={avatarUrl} alt="" className="h-full w-full object-cover" /> : <Bot className="h-3 w-3" style={{ color: primaryColor }} />}
-                      </div>
-                      <div>
-                        <p className={`text-[10px] font-medium ${layoutStyle === "custom" ? "text-white" : ""}`}>{agentName || "AI 助手"}</p>
-                        <p className={`text-[8px] ${layoutStyle === "custom" ? "text-white/70" : "text-muted-foreground"}`}>在線</p>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Profile Section for Professional */}
-                  {layoutStyle === "professional" && (
-                    <div className="p-2 text-center border-b">
-                      {profilePhotoUrl ? (
-                        <img src={profilePhotoUrl} alt="" className="h-10 w-10 rounded-full object-cover mx-auto border-2 border-background shadow-sm" />
-                      ) : (
-                        <div className="h-10 w-10 rounded-full mx-auto flex items-center justify-center" style={{ backgroundColor: `${primaryColor}15` }}>
-                          <User className="h-4 w-4" style={{ color: primaryColor }} />
-                        </div>
-                      )}
-                      {tagline && <p className="text-[8px] text-muted-foreground mt-1 px-2 line-clamp-2">{tagline}</p>}
-                    </div>
-                  )}
-
-                  {/* Chat Area */}
-                  <div className="flex-1 p-2 overflow-hidden">
-                    <div className="flex gap-1.5 mb-2">
-                      <div className="h-4 w-4 rounded-full flex items-center justify-center flex-shrink-0" style={{ backgroundColor: `${primaryColor}15` }}>
-                        <Bot className="h-2 w-2" style={{ color: primaryColor }} />
-                      </div>
-                      <div className={`rounded-lg px-2 py-1 max-w-[85%] ${layoutStyle === "custom" ? "bg-white/90 text-gray-900" : "bg-muted"}`}>
-                        <p className="text-[8px] leading-relaxed">{welcomeMessage || "您好！有什麼可以幫您？"}</p>
-                      </div>
-                    </div>
-
-                    {suggestedQuestions.length > 0 && (
-                      <div className="space-y-1 mt-2">
-                        {suggestedQuestions.slice(0, 2).map((q, i) => (
-                          <div key={i} className={`text-[7px] px-1.5 py-0.5 rounded-full border truncate ${layoutStyle === "custom" ? "bg-white/80 border-white/50 text-gray-700" : "bg-background border-border"}`}>{q}</div>
-                        ))}
-                        {suggestedQuestions.length > 2 && <p className={`text-[7px] text-center ${layoutStyle === "custom" ? "text-white/60" : "text-muted-foreground"}`}>+{suggestedQuestions.length - 2} 更多</p>}
-                      </div>
-                    )}
-
-                    {showQuickButtons && buttons && buttons.length > 0 && (
-                      <div className="flex flex-wrap gap-1 mt-2">
-                        {buttons.filter(b => b.isActive).slice(0, 3).map((button) => {
-                          const IconComponent = getIconComponent(button.icon || "search");
-                          return (
-                            <div key={button.id} className={`text-[7px] px-1.5 py-0.5 rounded flex items-center gap-0.5 ${layoutStyle === "custom" ? "bg-white/80 text-gray-700" : "bg-primary/10 text-primary"}`}>
-                              <IconComponent className="h-2 w-2" />
-                              {button.label}
-                            </div>
-                          );
-                        })}
-                      </div>
-                    )}
-                  </div>
-
-                  {/* Input Area */}
-                  <div className={`p-1.5 border-t ${layoutStyle === "custom" ? "bg-black/20 border-white/10" : ""}`}>
-                    <div className={`flex items-center gap-1 rounded-full px-2 py-1 ${layoutStyle === "custom" ? "bg-white/90" : "bg-muted"}`}>
-                      <span className="text-[8px] text-muted-foreground flex-1 truncate">{chatPlaceholder}</span>
-                      <div className="h-4 w-4 rounded-full flex items-center justify-center" style={{ backgroundColor: primaryColor }}>
-                        <Send className="h-2 w-2 text-white" />
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-              
-              <div className="h-3 bg-gray-800 flex items-center justify-center">
-                <div className="w-16 h-0.5 bg-gray-600 rounded-full" />
-              </div>
-            </div>
-          </div>
-          
-          <p className="text-[9px] text-muted-foreground text-center">預覽會隨設定即時更新</p>
+        <div className="sticky top-20 self-start h-[calc(100vh-6rem)] overflow-hidden">
+          <CompactChatPreview
+            agentName={agentName}
+            avatarUrl={avatarUrl}
+            welcomeMessage={welcomeMessage}
+            welcomeMessageColor={welcomeMessageColor}
+            welcomeMessageSize={welcomeMessageSize}
+            primaryColor={primaryColor}
+            suggestedQuestions={suggestedQuestions}
+            quickButtons={(buttons || []).filter(b => b.isActive).map(b => ({
+              label: b.label,
+              icon: b.icon || "search",
+              actionType: b.actionType,
+            }))}
+            buttonDisplayMode={buttonDisplayMode}
+            chatPlaceholder={chatPlaceholder}
+            layoutStyle={layoutStyle}
+            profilePhotoUrl={profilePhotoUrl}
+            backgroundImageUrl={backgroundImageUrl}
+            backgroundType={backgroundType}
+            backgroundColor={backgroundColor}
+            immersiveMode={immersiveMode}
+          />
         </div>
       </div>
 
@@ -998,6 +1202,23 @@ export default function Appearance() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* Image Cropper Dialog */}
+      <ImageCropper
+        open={cropperOpen}
+        onClose={() => setCropperOpen(false)}
+        imageSrc={cropperImage}
+        onCropComplete={handleCropComplete}
+        aspectRatio={cropperType === "profile" ? 1 : 16 / 9}
+        cropShape={cropperType === "profile" ? "round" : "rect"}
+        title={cropperType === "profile" ? "裁切個人照片" : "裁切背景圖片"}
+        showDisplaySettings={cropperType === "background"}
+        initialDisplaySettings={{
+          backgroundSize,
+          backgroundPosition,
+          backgroundRepeat,
+        }}
+      />
     </div>
   );
 }
