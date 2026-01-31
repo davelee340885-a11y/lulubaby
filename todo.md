@@ -1239,3 +1239,10 @@
 - [x] 測試記憶引用效果（AI 成功引用張先生記憶）
 - [x] 提交代碼並創建 PR
 - [x] 合併 PR 到主分支
+
+
+## 後端 UAT 問題修復（2026-01-31）
+- [x] [High] 學習日記選項 API 認證問題 - 改為 publicProcedure
+- [x] [Medium] 資源不存在錯誤處理 - 返回 404 狀態碼 (TRPCError NOT_FOUND)
+- [x] [Low] 方法命名一致性 - getContextualMemories → getMemoryContext
+- [x] 測試驗證修復結果 (277 passed, 4 failed - 失敗為既有的 customerAuth 測試問題，與本次修復無關)

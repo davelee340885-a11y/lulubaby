@@ -5,7 +5,7 @@
  */
 
 import { z } from "zod";
-import { router, protectedProcedure } from "./_core/trpc";
+import { router, protectedProcedure, publicProcedure } from "./_core/trpc";
 import { createMemoryService, MemoryType, ImportanceLevel } from "./services/memoryService";
 
 // 記憶類型驗證
@@ -154,7 +154,7 @@ export const learningDiaryRouter = router({
   /**
    * 獲取記憶類型選項（用於前端下拉選單）
    */
-  getMemoryTypes: protectedProcedure
+  getMemoryTypes: publicProcedure
     .query(async () => {
       return [
         { value: "sales_experience", label: "銷售經驗", icon: "💼", description: "記錄銷售技巧和成功經驗" },
@@ -170,7 +170,7 @@ export const learningDiaryRouter = router({
   /**
    * 獲取重要性等級選項
    */
-  getImportanceLevels: protectedProcedure
+  getImportanceLevels: publicProcedure
     .query(async () => {
       return [
         { value: "low", label: "低", color: "gray" },

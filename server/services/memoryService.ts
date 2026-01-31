@@ -188,7 +188,7 @@ export class MemoryService {
    * 獲取對話上下文相關的記憶
    * 用於在 AI 對話中自動注入相關記憶
    */
-  async getContextualMemories(conversationContext: string, limit: number = 5): Promise<string> {
+  async getMemoryContext(conversationContext: string, limit: number = 5): Promise<string> {
     // 首先嘗試語義搜索
     const memories = await this.searchMemories(conversationContext, limit);
     

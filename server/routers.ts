@@ -457,7 +457,10 @@ export const appRouter = router({
       .mutation(async ({ input }) => {
         const persona = await getPersonaById(input.personaId);
         if (!persona) {
-          throw new Error("Persona not found");
+          throw new TRPCError({
+            code: 'NOT_FOUND',
+            message: 'Persona not found',
+          });
         }
         
         // Check message limit for the persona owner
@@ -518,7 +521,7 @@ export const appRouter = router({
           console.log("[chat.send] Searching for contextual memories for user:", persona.userId);
           console.log("[chat.send] User message:", input.message);
           const memoryService = createMemoryService(persona.userId);
-          const contextualMemories = await memoryService.getContextualMemories(input.message, 5);
+          const contextualMemories = await memoryService.getMemoryContext(input.message, 5);
           console.log("[chat.send] Contextual memories found:", contextualMemories ? contextualMemories.length : 0, "chars");
           if (contextualMemories && contextualMemories.trim()) {
             memoryContext = contextualMemories;
@@ -640,7 +643,10 @@ ${knowledgeContent.substring(0, 10000)}
       .mutation(async ({ input }) => {
         const persona = await getPersonaById(input.personaId);
         if (!persona) {
-          throw new Error("Persona not found");
+          throw new TRPCError({
+            code: 'NOT_FOUND',
+            message: 'Persona not found',
+          });
         }
 
         // Get customer
@@ -1117,7 +1123,7 @@ ${knowledgeContent.substring(0, 10000)}
         
         // Check team member limit
         const team = await getTeamById(input.teamId);
-        if (!team) throw new Error("Team not found");
+        if (!team) throw new TRPCError({ code: 'NOT_FOUND', message: 'Team not found' });
         
         const memberCount = await getTeamMemberCount(input.teamId);
         if (memberCount >= team.maxMembers) {
@@ -1145,7 +1151,7 @@ ${knowledgeContent.substring(0, 10000)}
         
         const targetMember = await getTeamMemberById(input.memberId);
         if (!targetMember || targetMember.teamId !== input.teamId) {
-          throw new Error("Member not found");
+          throw new TRPCError({ code: 'NOT_FOUND', message: 'Member not found' });
         }
         
         // Can't change owner's role
@@ -1173,7 +1179,7 @@ ${knowledgeContent.substring(0, 10000)}
         
         const targetMember = await getTeamMemberById(input.memberId);
         if (!targetMember || targetMember.teamId !== input.teamId) {
-          throw new Error("Member not found");
+          throw new TRPCError({ code: 'NOT_FOUND', message: 'Member not found' });
         }
         
         // Can't remove owner
@@ -1244,7 +1250,7 @@ ${knowledgeContent.substring(0, 10000)}
         
         const knowledge = await getTeamKnowledgeById(input.knowledgeId);
         if (!knowledge || knowledge.teamId !== input.teamId) {
-          throw new Error("Knowledge item not found");
+          throw new TRPCError({ code: 'NOT_FOUND', message: 'Knowledge item not found' });
         }
         
         return updateTeamKnowledge(input.knowledgeId, {
@@ -1269,7 +1275,7 @@ ${knowledgeContent.substring(0, 10000)}
         
         const knowledge = await getTeamKnowledgeById(input.knowledgeId);
         if (!knowledge || knowledge.teamId !== input.teamId) {
-          throw new Error("Knowledge item not found");
+          throw new TRPCError({ code: 'NOT_FOUND', message: 'Knowledge item not found' });
         }
         
         await deleteTeamKnowledge(input.knowledgeId);
@@ -1340,7 +1346,7 @@ ${knowledgeContent.substring(0, 10000)}
       }))
       .mutation(async ({ ctx, input }) => {
         const customer = await getCustomerById(input.customerId);
-        if (!customer) throw new Error("Customer not found");
+        if (!customer) throw new TRPCError({ code: 'NOT_FOUND', message: 'Customer not found' });
         
         const persona = await getPersonaById(customer.personaId);
         if (!persona || persona.userId !== ctx.user.id) {
@@ -1356,7 +1362,7 @@ ${knowledgeContent.substring(0, 10000)}
       .input(z.object({ customerId: z.number() }))
       .mutation(async ({ ctx, input }) => {
         const customer = await getCustomerById(input.customerId);
-        if (!customer) throw new Error("Customer not found");
+        if (!customer) throw new TRPCError({ code: 'NOT_FOUND', message: 'Customer not found' });
         
         const persona = await getPersonaById(customer.personaId);
         if (!persona || persona.userId !== ctx.user.id) {
@@ -1410,7 +1416,7 @@ ${knowledgeContent.substring(0, 10000)}
       }))
       .mutation(async ({ ctx, input }) => {
         const customer = await getCustomerById(input.customerId);
-        if (!customer) throw new Error("Customer not found");
+        if (!customer) throw new TRPCError({ code: 'NOT_FOUND', message: 'Customer not found' });
         
         const persona = await getPersonaById(customer.personaId);
         if (!persona || persona.userId !== ctx.user.id) {
@@ -1446,7 +1452,7 @@ ${knowledgeContent.substring(0, 10000)}
       .input(z.object({ memoryId: z.number(), customerId: z.number() }))
       .mutation(async ({ ctx, input }) => {
         const customer = await getCustomerById(input.customerId);
-        if (!customer) throw new Error("Customer not found");
+        if (!customer) throw new TRPCError({ code: 'NOT_FOUND', message: 'Customer not found' });
         
         const persona = await getPersonaById(customer.personaId);
         if (!persona || persona.userId !== ctx.user.id) {
@@ -1468,7 +1474,7 @@ ${knowledgeContent.substring(0, 10000)}
       }))
       .mutation(async ({ ctx, input }) => {
         const customer = await getCustomerById(input.customerId);
-        if (!customer) throw new Error("Customer not found");
+        if (!customer) throw new TRPCError({ code: 'NOT_FOUND', message: 'Customer not found' });
         
         const persona = await getPersonaById(customer.personaId);
         if (!persona || persona.userId !== ctx.user.id) {

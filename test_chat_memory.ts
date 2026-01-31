@@ -18,7 +18,7 @@ async function test() {
   const query = "張先生對醫療保險有什麼需求";
   console.log("Query:", query);
   
-  const memories = await memoryService.getContextualMemories(query, 5);
+  const memories = await memoryService.getMemoryContext(query, 5);
   console.log("Result length:", memories.length);
   console.log("Result:", memories);
 }
