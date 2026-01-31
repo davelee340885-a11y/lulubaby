@@ -1252,3 +1252,18 @@
 - [x] 調查 /appearance 頁面圖片載入錯誤原因
 - [x] 修復 Failed to fetch image: Not Found 錯誤 - 改進錯誤處理和用戶提示
 - [x] 測試驗證修復結果 - 圖片不存在時會自動清除 URL 並顯示友善提示
+
+
+## 客戶頁面資料庫查詢錯誤修復（2026-01-31）
+- [ ] 調查 /customers 頁面資料庫查詢錯誤原因
+- [ ] 修復資料庫 schema 或查詢問題
+- [ ] 測試驗證修復結果
+
+
+## 客戶頁面資料庫查詢錯誤修復（2026-01-31）
+- [x] 調查 /customers 頁面資料庫查詢錯誤原因 - 欄位名稱不一致
+- [x] 修復資料庫 schema - 重命名欄位並添加缺失欄位
+  - emailVerified → isEmailVerified
+  - passwordResetExpires → passwordResetExpiry
+  - 添加 emailVerificationToken, emailVerificationExpiry, lastLoginAt
+- [x] 測試驗證修復結果 - 客戶列表正常載入
