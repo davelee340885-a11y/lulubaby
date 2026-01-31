@@ -64,9 +64,7 @@ function Router() {
     if (window.location.pathname === '/') {
       return <CustomDomainChat />;
     }
-    if (window.location.pathname === '/dashboard') {
-      return <CustomerDashboard />;
-    }
+
   }
   
   return (

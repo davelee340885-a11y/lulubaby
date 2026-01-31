@@ -1230,3 +1230,12 @@
 - [x] 檢查 learningDiary 路由是否正確註冊到 appRouter
 - [x] 修復路由註冊問題（重啟伺服器後正常）
 - [x] 測試修復結果
+
+
+## 清理代碼並完成 PR（2026-01-31）
+- [x] 刪除未使用的 CustomerDashboard 組件
+- [x] 運行 pnpm typecheck 確認錯誤已修復（無錯誤）
+- [x] 運行 pnpm lint 確認代碼風格正確（無 lint 命令）
+- [x] 測試記憶引用效果（AI 成功引用張先生記憶）
+- [ ] 提交代碼並創建 PR
+- [ ] 合併 PR 到主分支
