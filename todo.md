@@ -1246,3 +1246,9 @@
 - [x] [Medium] 資源不存在錯誤處理 - 返回 404 狀態碼 (TRPCError NOT_FOUND)
 - [x] [Low] 方法命名一致性 - getContextualMemories → getMemoryContext
 - [x] 測試驗證修復結果 (277 passed, 4 failed - 失敗為既有的 customerAuth 測試問題，與本次修復無關)
+
+
+## 圖片載入錯誤修復（2026-01-31）
+- [x] 調查 /appearance 頁面圖片載入錯誤原因
+- [x] 修復 Failed to fetch image: Not Found 錯誤 - 改進錯誤處理和用戶提示
+- [x] 測試驗證修復結果 - 圖片不存在時會自動清除 URL 並顯示友善提示

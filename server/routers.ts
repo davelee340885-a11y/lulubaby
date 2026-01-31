@@ -203,10 +203,28 @@ export const appRouter = router({
       }))
       .query(async ({ input }) => {
         try {
+          // Validate URL before fetching
+          if (!input.imageUrl || !input.imageUrl.startsWith('http')) {
+            throw new TRPCError({
+              code: 'BAD_REQUEST',
+              message: '無效的圖片 URL',
+            });
+          }
+          
           // Fetch the image from S3/storage
           const response = await fetch(input.imageUrl);
           if (!response.ok) {
-            throw new Error(`Failed to fetch image: ${response.statusText}`);
+            // Handle 404 specifically
+            if (response.status === 404) {
+              throw new TRPCError({
+                code: 'NOT_FOUND',
+                message: '圖片不存在或已被刪除，請重新上傳',
+              });
+            }
+            throw new TRPCError({
+              code: 'INTERNAL_SERVER_ERROR',
+              message: `無法載入圖片: ${response.statusText}`,
+            });
           }
           
           const arrayBuffer = await response.arrayBuffer();
@@ -222,8 +240,15 @@ export const appRouter = router({
             dataUrl: `data:${contentType};base64,${base64}`,
           };
         } catch (error) {
+          // Re-throw TRPCError as-is
+          if (error instanceof TRPCError) {
+            throw error;
+          }
           console.error('Error fetching image:', error);
-          throw new Error(`Failed to fetch image: ${error}`);
+          throw new TRPCError({
+            code: 'INTERNAL_SERVER_ERROR',
+            message: '無法載入圖片，請稍後再試',
+          });
         }
       }),
   }),

@@ -641,9 +641,17 @@ export default function Appearance() {
                               setCropperType("profile");
                               setCropperOpen(true);
                               setUploadingProfile(false);
-                            } catch (error) {
+                            } catch (error: unknown) {
                               console.error("Failed to load image:", error);
-                              toast.error("無法載入圖片，請重新上傳");
+                              // Check if it's a NOT_FOUND error (image deleted from storage)
+                              const trpcError = error as { data?: { code?: string } };
+                              if (trpcError?.data?.code === 'NOT_FOUND') {
+                                // Clear the invalid URL and prompt user to re-upload
+                                setProfilePhotoUrl("");
+                                toast.error("圖片已不存在，請重新上傳");
+                              } else {
+                                toast.error("無法載入圖片，請重新上傳");
+                              }
                               setUploadingProfile(false);
                             }
                           }}
@@ -778,9 +786,18 @@ export default function Appearance() {
                                   setCropperType("background");
                                   setCropperOpen(true);
                                   setUploadingBackground(false);
-                                } catch (error) {
+                                } catch (error: unknown) {
                                   console.error("Failed to load image:", error);
-                                  toast.error("無法載入圖片，請重新上傳");
+                                  // Check if it's a NOT_FOUND error (image deleted from storage)
+                                  const trpcError = error as { data?: { code?: string } };
+                                  if (trpcError?.data?.code === 'NOT_FOUND') {
+                                    // Clear the invalid URL and prompt user to re-upload
+                                    setBackgroundImageUrl("");
+                                    setBackgroundType("none");
+                                    toast.error("背景圖片已不存在，請重新上傳");
+                                  } else {
+                                    toast.error("無法載入圖片，請重新上傳");
+                                  }
                                   setUploadingBackground(false);
                                 }
                               }}
