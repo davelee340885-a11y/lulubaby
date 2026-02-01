@@ -603,7 +603,14 @@ export default function Appearance() {
                   {layoutStyles.map((style) => (
                     <button
                       key={style.id}
-                      onClick={() => setLayoutStyle(style.id as "minimal" | "professional" | "custom")}
+                      onClick={() => {
+                        setLayoutStyle(style.id as "minimal" | "professional" | "custom");
+                        // Reset background settings when switching away from custom style
+                        if (style.id !== "custom") {
+                          setBackgroundType("none");
+                          setImmersiveMode(false);
+                        }
+                      }}
                       className={`p-3 rounded-xl border-2 text-left transition-all ${
                         layoutStyle === style.id
                           ? "border-primary bg-primary/5"

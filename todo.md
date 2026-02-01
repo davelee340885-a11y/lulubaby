@@ -1267,3 +1267,15 @@
   - passwordResetExpires → passwordResetExpiry
   - 添加 emailVerificationToken, emailVerificationExpiry, lastLoginAt
 - [x] 測試驗證修復結果 - 客戶列表正常載入
+
+
+## 版面設定預覽問題修復（2026-02-01）
+- [ ] 調查預覽組件和風格設定邏輯
+- [ ] 修復簡約風格預覽顯示為純白色背景
+- [ ] 測試驗證修復結果
+
+
+## 版面設定預覽問題修復（2026-02-01）
+- [x] 調查預覽組件和風格設定邏輯
+- [x] 修復簡約風格預覽顯示為純白色背景 - immersiveMode 只在 custom 風格生效
+- [x] 測試驗證修復結果 - 預覽已顯示純白色背景

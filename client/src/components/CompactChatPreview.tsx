@@ -101,10 +101,10 @@ function PreviewContent({
   return (
     <div 
       className="w-full h-full bg-background border border-border rounded-lg shadow-sm overflow-hidden flex flex-col relative"
-      style={immersiveMode ? backgroundStyle : {}}
+      style={immersiveMode && layoutStyle === "custom" ? backgroundStyle : {}}
     >
-      {/* Gradient Overlay for Immersive Mode */}
-      {immersiveMode && (
+      {/* Gradient Overlay for Immersive Mode - only show for custom layout */}
+      {immersiveMode && layoutStyle === "custom" && (
         <div className="absolute inset-0 z-0">
           <div className="absolute inset-0 bg-gradient-to-b from-black/20 via-black/30 to-black/60" />
           <div className="absolute inset-0 backdrop-blur-[2px]" style={{ maskImage: 'linear-gradient(to bottom, transparent 0%, black 100%)' }} />
@@ -132,7 +132,7 @@ function PreviewContent({
       {/* Content Area */}
       <div 
         className="flex-1 flex flex-col items-center justify-center px-4 py-6 overflow-auto relative"
-        style={!immersiveMode ? backgroundStyle : {}}
+        style={!immersiveMode && layoutStyle === "custom" ? backgroundStyle : {}}
       >
         {/* Overlay for non-immersive mode */}
         {!immersiveMode && hasBackgroundImage && <div className="absolute inset-0 bg-black/40 z-0" />}
