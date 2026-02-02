@@ -1341,3 +1341,15 @@
 - [x] 刪除錯誤的測試域名 test-1769841009698.xyz
 - [x] 修復對話連結使用 Manus 內建 URL（manus.space 格式）
 - [x] 測試驗證修復結果 - 用戶端渲染時會顯示正確的 Manus URL
+
+
+## AI 開發內地客戶按鈕修復（2026-02-02）
+- [x] 調查按鈕消失原因 - 按鈕只在 AgentChatLayout 中，未在 DashboardLayout 中
+- [x] 修復按鈕顯示問題 - 在 DashboardLayout 側邊欄底部添加按鈕和 Modal
+- [ ] 測試驗證修復結果
+
+
+## AI 開發內地客戶按鈕修復（2026-02-02）
+- [x] 調查按鈕消失原因 - 按鈕只在 AgentChatLayout 中，未在 DashboardLayout 中
+- [x] 修復按鈕顯示問題 - 在 DashboardLayout 側邊欄底部添加按鈕和 Modal
+- [x] 測試驗證修復結果 - 截圖確認按鈕已顯示在側邊欄底部

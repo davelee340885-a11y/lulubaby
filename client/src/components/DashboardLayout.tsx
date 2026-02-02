@@ -21,11 +21,18 @@ import {
 } from "@/components/ui/sidebar";
 import { getLoginUrl } from "@/const";
 import { useIsMobile } from "@/hooks/useMobile";
-import { LayoutDashboard, LogOut, PanelLeft, FileText, Bot, Palette, Globe, Brain, Zap, User, CreditCard, ExternalLink, MessageCircle, Users, UserCircle, Monitor, Settings, Sparkles, Code, Puzzle } from "lucide-react";
+import { LayoutDashboard, LogOut, PanelLeft, FileText, Bot, Palette, Globe, Brain, Zap, User, CreditCard, ExternalLink, MessageCircle, Users, UserCircle, Monitor, Settings, Sparkles, Code, Puzzle, Phone, Mail, MapPin } from "lucide-react";
 import { CSSProperties, useEffect, useRef, useState } from "react";
 import { useLocation } from "wouter";
 import { DashboardLayoutSkeleton } from './DashboardLayoutSkeleton';
 import { Button } from "./ui/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 
 // Navigation categories with colors
 const navCategories = [
@@ -90,6 +97,10 @@ const allMenuItems = navCategories.flatMap(cat => cat.items);
 
 const SIDEBAR_WIDTH_KEY = "sidebar-width";
 const DEFAULT_WIDTH = 260;
+
+// AI 開發內地客戶 Modal 狀態
+let globalContactModalOpen = false;
+let globalSetContactModalOpen: ((open: boolean) => void) | null = null;
 const MIN_WIDTH = 200;
 const MAX_WIDTH = 400;
 
@@ -102,6 +113,7 @@ export default function DashboardLayout({
     const saved = localStorage.getItem(SIDEBAR_WIDTH_KEY);
     return saved ? parseInt(saved, 10) : DEFAULT_WIDTH;
   });
+  const [contactModalOpen, setContactModalOpen] = useState(false);
   const { loading, user } = useAuth();
 
   useEffect(() => {
@@ -170,6 +182,7 @@ function DashboardLayoutContent({
   const { state, toggleSidebar } = useSidebar();
   const isCollapsed = state === "collapsed";
   const [isResizing, setIsResizing] = useState(false);
+  const [contactModalOpen, setContactModalOpen] = useState(false);
   const sidebarRef = useRef<HTMLDivElement>(null);
   const activeMenuItem = allMenuItems.find(item => item.path === location);
   const isMobile = useIsMobile();
@@ -298,6 +311,20 @@ function DashboardLayoutContent({
             ))}
           </SidebarContent>
 
+          {/* AI 開發內地客戶按鈕 */}
+          <div className={`px-3 py-2 ${isCollapsed ? 'px-2' : ''}`}>
+            <Button
+              variant="outline"
+              className={`w-full justify-start gap-2 border-violet-200 dark:border-violet-800 hover:bg-violet-50 dark:hover:bg-violet-950 ${isCollapsed ? 'justify-center px-2' : ''}`}
+              onClick={() => setContactModalOpen(true)}
+            >
+              <MessageCircle className="h-4 w-4 text-violet-500 shrink-0" />
+              {!isCollapsed && (
+                <span className="text-violet-600 dark:text-violet-400">AI 開發內地客戶</span>
+              )}
+            </Button>
+          </div>
+
           <SidebarFooter className="p-3">
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
@@ -356,6 +383,49 @@ function DashboardLayoutContent({
         )}
         <main className="flex-1 p-4 md:p-6">{children}</main>
       </SidebarInset>
+
+      {/* AI 開發內地客戶 Modal */}
+      <Dialog open={contactModalOpen} onOpenChange={setContactModalOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <MessageCircle className="h-5 w-5 text-violet-500" />
+              AI 開發內地客戶
+            </DialogTitle>
+            <DialogDescription>
+              聯繫我們了解如何使用 AI 智能體開發內地客戶
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <div className="flex items-center gap-3 p-3 rounded-lg bg-muted/50">
+              <Phone className="h-5 w-5 text-violet-500" />
+              <div>
+                <p className="text-sm font-medium">電話諮詢</p>
+                <p className="text-sm text-muted-foreground">+852 9123 4567</p>
+              </div>
+            </div>
+            <div className="flex items-center gap-3 p-3 rounded-lg bg-muted/50">
+              <Mail className="h-5 w-5 text-violet-500" />
+              <div>
+                <p className="text-sm font-medium">電郵聯繫</p>
+                <p className="text-sm text-muted-foreground">china@lulubaby.ai</p>
+              </div>
+            </div>
+            <div className="flex items-center gap-3 p-3 rounded-lg bg-muted/50">
+              <MapPin className="h-5 w-5 text-violet-500" />
+              <div>
+                <p className="text-sm font-medium">辦公室地址</p>
+                <p className="text-sm text-muted-foreground">香港中環皇后大道中 18 號</p>
+              </div>
+            </div>
+            <div className="pt-2 text-center">
+              <p className="text-xs text-muted-foreground">
+                我們的團隊將在 24 小時內與您聯繫
+              </p>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
     </>
   );
 }
