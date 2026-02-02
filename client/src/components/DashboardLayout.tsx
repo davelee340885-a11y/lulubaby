@@ -33,6 +33,11 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { Label } from "@/components/ui/label";
+import { toast } from "sonner";
+import { trpc } from "@/lib/trpc";
 
 // Navigation categories with colors
 const navCategories = [
@@ -183,6 +188,13 @@ function DashboardLayoutContent({
   const isCollapsed = state === "collapsed";
   const [isResizing, setIsResizing] = useState(false);
   const [contactModalOpen, setContactModalOpen] = useState(false);
+  const [contactForm, setContactForm] = useState({
+    name: "",
+    phone: "",
+    email: "",
+    message: ""
+  });
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const sidebarRef = useRef<HTMLDivElement>(null);
   const activeMenuItem = allMenuItems.find(item => item.path === location);
   const isMobile = useIsMobile();
@@ -385,7 +397,12 @@ function DashboardLayoutContent({
       </SidebarInset>
 
       {/* AI 開發內地客戶 Modal */}
-      <Dialog open={contactModalOpen} onOpenChange={setContactModalOpen}>
+      <Dialog open={contactModalOpen} onOpenChange={(open) => {
+        setContactModalOpen(open);
+        if (!open) {
+          setContactForm({ name: "", phone: "", email: "", message: "" });
+        }
+      }}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
@@ -393,37 +410,87 @@ function DashboardLayoutContent({
               AI 開發內地客戶
             </DialogTitle>
             <DialogDescription>
-              聯繫我們了解如何使用 AI 智能體開發內地客戶
+              填寫以下表單，我們的團隊將在 24 小時內與您聯繫
             </DialogDescription>
           </DialogHeader>
-          <div className="space-y-4 py-4">
-            <div className="flex items-center gap-3 p-3 rounded-lg bg-muted/50">
-              <Phone className="h-5 w-5 text-violet-500" />
-              <div>
-                <p className="text-sm font-medium">電話諮詢</p>
-                <p className="text-sm text-muted-foreground">+852 9123 4567</p>
-              </div>
+          <form onSubmit={async (e) => {
+            e.preventDefault();
+            if (!contactForm.name || !contactForm.phone || !contactForm.message) {
+              toast.error("請填寫必填欄位");
+              return;
+            }
+            setIsSubmitting(true);
+            try {
+              // 使用 tRPC API 提交聯繫表單
+              const response = await fetch("/api/trpc/system.submitContactForm", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(contactForm)
+              });
+              const result = await response.json();
+              if (result.result?.data?.success) {
+                toast.success("提交成功！我們將盡快與您聯繫。");
+                setContactModalOpen(false);
+                setContactForm({ name: "", phone: "", email: "", message: "" });
+              } else {
+                toast.error("提交失敗，請稍後再試。");
+              }
+            } catch (error) {
+              toast.error("提交失敗，請稍後再試。");
+            } finally {
+              setIsSubmitting(false);
+            }
+          }} className="space-y-4 py-4">
+            <div className="space-y-2">
+              <Label htmlFor="contact-name">姓名 <span className="text-destructive">*</span></Label>
+              <Input
+                id="contact-name"
+                placeholder="請輸入您的姓名"
+                value={contactForm.name}
+                onChange={(e) => setContactForm(prev => ({ ...prev, name: e.target.value }))}
+                required
+              />
             </div>
-            <div className="flex items-center gap-3 p-3 rounded-lg bg-muted/50">
-              <Mail className="h-5 w-5 text-violet-500" />
-              <div>
-                <p className="text-sm font-medium">電郵聯繫</p>
-                <p className="text-sm text-muted-foreground">china@lulubaby.ai</p>
-              </div>
+            <div className="space-y-2">
+              <Label htmlFor="contact-phone">電話 <span className="text-destructive">*</span></Label>
+              <Input
+                id="contact-phone"
+                type="tel"
+                placeholder="請輸入您的聯絡電話"
+                value={contactForm.phone}
+                onChange={(e) => setContactForm(prev => ({ ...prev, phone: e.target.value }))}
+                required
+              />
             </div>
-            <div className="flex items-center gap-3 p-3 rounded-lg bg-muted/50">
-              <MapPin className="h-5 w-5 text-violet-500" />
-              <div>
-                <p className="text-sm font-medium">辦公室地址</p>
-                <p className="text-sm text-muted-foreground">香港中環皇后大道中 18 號</p>
-              </div>
+            <div className="space-y-2">
+              <Label htmlFor="contact-email">電郵（選填）</Label>
+              <Input
+                id="contact-email"
+                type="email"
+                placeholder="請輸入您的電郵地址"
+                value={contactForm.email}
+                onChange={(e) => setContactForm(prev => ({ ...prev, email: e.target.value }))}
+              />
             </div>
-            <div className="pt-2 text-center">
-              <p className="text-xs text-muted-foreground">
-                我們的團隊將在 24 小時內與您聯繫
-              </p>
+            <div className="space-y-2">
+              <Label htmlFor="contact-message">諮詢內容 <span className="text-destructive">*</span></Label>
+              <Textarea
+                id="contact-message"
+                placeholder="請描述您的需求或問題..."
+                value={contactForm.message}
+                onChange={(e) => setContactForm(prev => ({ ...prev, message: e.target.value }))}
+                rows={4}
+                required
+              />
             </div>
-          </div>
+            <Button 
+              type="submit" 
+              className="w-full bg-violet-600 hover:bg-violet-700"
+              disabled={isSubmitting}
+            >
+              {isSubmitting ? "提交中..." : "提交諮詢"}
+            </Button>
+          </form>
         </DialogContent>
       </Dialog>
     </>
