@@ -18,10 +18,10 @@ export default function Dashboard() {
   const { data: recentConversations, isLoading: conversationsLoading } = trpc.analytics.recentConversations.useQuery({ limit: 10 });
   const { data: publishedDomain } = trpc.domains.getPublished.useQuery();
 
-  // 優先使用已發布的域名，否則使用當前網站的 origin
-  // 注意：window.location.origin 在用戶端渲染時會返回正確的 URL
+  // 當沒有已發布的自訂域名時，使用當前網站的 origin（Manus 內建 URL）
+  // 這樣用戶分享的連結會是 manus.space 格式
   const chatUrl = persona 
-    ? `${publishedDomain?.url || window.location.origin}/chat/${persona.id}` 
+    ? `${window.location.origin}/chat/${persona.id}` 
     : null;
 
   const copyUrl = () => {
