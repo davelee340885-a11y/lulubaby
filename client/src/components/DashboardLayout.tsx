@@ -36,6 +36,7 @@ const navCategories = [
     borderColor: "border-l-blue-500",
     items: [
       { icon: LayoutDashboard, label: "儀表板", path: "/" },
+      { icon: MessageCircle, label: "智能體對話", path: "/agent-chat" },
     ],
   },
   {

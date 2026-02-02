@@ -2,6 +2,7 @@ import { TRPCError } from "@trpc/server";
 import { getSessionCookieOptions } from "./_core/cookies";
 import { customerAuthRouter } from "./customerAuthRouter";
 import { learningDiaryRouter } from "./learningDiaryRouter";
+import { agentChatRouter } from "./agentChatRouter";
 import { createMemoryService } from "./services/memoryService";
 import { COOKIE_NAME } from "../shared/const";
 import { systemRouter } from "./_core/systemRouter";
@@ -2418,5 +2419,8 @@ ${knowledgeContent.substring(0, 10000)}
 
   // Learning Diary / Brain Memory System
   learningDiary: learningDiaryRouter,
+
+  // Agent Chat - 智能體對話
+  agentChat: agentChatRouter,
 });
 export type AppRouter = typeof appRouter;

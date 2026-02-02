@@ -1279,3 +1279,53 @@
 - [x] 調查預覽組件和風格設定邏輯
 - [x] 修復簡約風格預覽顯示為純白色背景 - immersiveMode 只在 custom 風格生效
 - [x] 測試驗證修復結果 - 預覽已顯示純白色背景
+
+
+## 智能體對話介面開發（2026-02-01）
+### 後端開發
+- [x] 創建 agentChatRouter.ts 路由文件
+- [x] 實現 sendMessage mutation（對話中學習邏輯）
+- [x] 整合到 server/routers.ts
+
+### 前端開發
+- [ ] 創建 AgentChatPage.tsx 頁面組件
+- [ ] 創建 AgentChatLayout.tsx 佈局組件（可收合側邊欄）
+- [ ] 實現 Manus 風格對話框 UI
+- [ ] 添加 /agent-chat 路由到 App.tsx
+- [ ] 更新 DashboardLayout 導航（添加「智能體對話」按鈕）
+- [ ] 添加「AI 開發內地客戶」Modal 到側邊欄底部
+
+### 驗收標準
+- [ ] 用戶可通過側邊欄進入智能體對話介面
+- [ ] 可收合側邊欄正常運作
+- [ ] 對話框 UI 與 Manus 一致
+- [ ] 對話中學習功能正常（「記住」關鍵詞觸發）
+- [ ] AI 開發內地客戶 Modal 正常顯示
+
+
+## 智能體對話介面開發（2026-02-01）
+- [x] 創建 agentChatRouter.ts 後端路由文件
+- [x] 實現 sendMessage mutation（對話中學習邏輯）
+- [x] 整合到 server/routers.ts
+- [x] 創建 AgentChatLayout.tsx 佈局組件
+- [x] 創建 AgentChatPage.tsx 頁面組件
+- [x] 實現 Manus 風格對話框 UI
+- [x] 添加 /agent-chat 路由到 App.tsx
+- [x] 添加「智能體對話」導航按鈕到側邊欄
+- [x] 測試對話中學習功能 - 記住 John 花生過敏已成功保存
+- [x] 測試「我的大腦」記憶保存 - 記憶已顯示在列表中
+- [ ] 測試 AI 開發內地客戶 Modal
+
+
+## 智能體對話介面開發（2026-02-01）
+- [x] 後端：創建 agentChatRouter.ts 路由文件
+- [x] 後端：實現 sendMessage mutation（對話中學習邏輯）
+- [x] 後端：整合到 server/routers.ts
+- [x] 前端：創建 AgentChatLayout.tsx 佈局組件
+- [x] 前端：創建 AgentChatPage.tsx 頁面組件
+- [x] 前端：實現 Manus 風格對話框 UI
+- [x] 前端：添加 /agent-chat 路由到 App.tsx
+- [x] 前端：添加「智能體對話」導航按鈕到側邊欄
+- [x] 功能：測試對話中學習功能 - 記住 John 花生過敏已成功保存
+- [x] 功能：測試「我的大腦」記憶保存 - 記憶已顯示在列表中
+- [x] 功能：測試 AI 開發內地客戶 Modal - 已成功顯示聯絡信息
