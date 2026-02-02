@@ -1416,3 +1416,28 @@
 - [x] 更新 App.tsx 路由配置
 - [x] 編寫認證 API 測試 - 16 個測試通過
 - [x] 運行所有測試 - 299 個測試通過（4 個 customerAuth 測試失敗為既有問題）
+
+
+## 客戶前端 AI 對話登入整合（2026-02-02）
+- [ ] 分析現有客戶認證系統架構
+- [ ] 確保登入按鈕在所有對話佈局中顯示
+- [ ] 整合登入狀態到對話頁面
+- [ ] 測試完整登入流程
+
+
+## 統一認證系統與登入按鈕重新設計（2026-02-02）
+- [ ] 整合 customerAuth 到 authRouter（統一認證系統）
+- [ ] 重新設計登入按鈕 - 參考 Manus AI 簡約風格
+- [ ] 更新 AI 對話頁面使用統一認證
+- [ ] 更新 CustomerLoginDialog 使用統一 API
+- [ ] 執行後台測試
+- [ ] 執行前端 UAT 測試
+
+
+## 統一認證系統與登入按鈕重新設計（2026-02-02）
+- [x] 統一認證系統 - 在 authRouter 中添加 customerLogin 和 customerSignup API
+- [x] 重新設計登入按鈕 - 創建 LoginButton 和 LoginIconButton 組件，參考 Manus AI 簡約風格
+- [x] 更新 AI 對話頁面 - 替換所有舊登入按鈕為新的簡約風格
+- [x] 更新 CustomerLoginDialog - 使用統一的 authRouter API
+- [x] 創建統一認證測試 - 10 個測試全部通過
+- [x] 運行所有測試 - 309 個測試通過（4 個 customerAuth 測試失敗為舊 API 測試）

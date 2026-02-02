@@ -22,9 +22,9 @@ export function CustomerLoginDialog({ isOpen, onClose, personaId = '1', onLoginS
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
 
-  // tRPC mutations
-  const emailLoginMutation = trpc.customerAuth.emailLogin.useMutation();
-  const emailSignupMutation = (trpc.customerAuth as any).emailSignup.useMutation();
+  // tRPC mutations - 使用統一的 authRouter
+  const emailLoginMutation = trpc.userAuth.customerLogin.useMutation();
+  const emailSignupMutation = trpc.userAuth.customerSignup.useMutation();
 
   const handleEmailLogin = async () => {
     if (!email.trim()) {

@@ -1,29 +1,58 @@
 /**
  * Authentication Router
- * Handles email/password authentication for Lulubaby platform
+ * Unified authentication for Lulubaby platform
+ * Supports both admin users and end customers
  */
 import { z } from "zod";
 import bcrypt from "bcryptjs";
 import crypto from "crypto";
+import jwt from "jsonwebtoken";
 import { publicProcedure, protectedProcedure, router } from "./_core/trpc";
-import { getDb } from "./db";
-import { users, passwordResetTokens } from "../drizzle/schema";
+import { getDb, createCustomerUser, getCustomerUserByEmail, verifyCustomerPassword, updateCustomerLastLogin, customerEmailExists } from "./db";
+import { users, passwordResetTokens, customerUsers } from "../drizzle/schema";
 import { eq, and, gt } from "drizzle-orm";
 import { TRPCError } from "@trpc/server";
 import { getSessionCookieOptions } from "./_core/cookies";
 import { sdk } from "./_core/sdk";
 import { COOKIE_NAME } from "../shared/const";
 import { notifyOwner } from "./_core/notification";
+import { ENV } from "./_core/env";
 
 const ONE_YEAR_MS = 365 * 24 * 60 * 60 * 1000;
 const PASSWORD_RESET_EXPIRY_HOURS = 24;
 
-// Password validation schema
-const passwordSchema = z.string()
+// Password validation schema for admin users (stricter)
+const adminPasswordSchema = z.string()
   .min(8, "密碼至少需要 8 個字符")
   .regex(/[A-Z]/, "密碼需要包含至少一個大寫字母")
   .regex(/[a-z]/, "密碼需要包含至少一個小寫字母")
   .regex(/[0-9]/, "密碼需要包含至少一個數字");
+
+// Password validation schema for customers (simpler)
+const customerPasswordSchema = z.string().min(8, "密碼至少需要 8 個字符");
+
+// Customer session type
+export type CustomerSession = {
+  id: number;
+  email: string;
+  name?: string;
+  provider: "email" | "google" | "apple" | "microsoft";
+  personaId: number;
+};
+
+// Create JWT token for customer
+function createCustomerToken(session: CustomerSession): string {
+  return jwt.sign(session, ENV.JWT_SECRET, { expiresIn: "7d" });
+}
+
+// Verify JWT token
+export function verifyCustomerToken(token: string): CustomerSession | null {
+  try {
+    return jwt.verify(token, ENV.JWT_SECRET) as CustomerSession;
+  } catch {
+    return null;
+  }
+}
 
 export const authRouter = router({
   /**
@@ -33,7 +62,7 @@ export const authRouter = router({
     .input(z.object({
       name: z.string().min(1, "請輸入姓名").max(255),
       email: z.string().email("請輸入有效的電郵地址"),
-      password: passwordSchema,
+      password: adminPasswordSchema,
     }))
     .mutation(async ({ input, ctx }) => {
       const db = await getDb();
@@ -224,7 +253,7 @@ export const authRouter = router({
   resetPassword: publicProcedure
     .input(z.object({
       token: z.string().min(1, "重置令牌無效"),
-      password: passwordSchema,
+      password: adminPasswordSchema,
     }))
     .mutation(async ({ input }) => {
       const db = await getDb();
@@ -283,7 +312,7 @@ export const authRouter = router({
   changePassword: protectedProcedure
     .input(z.object({
       currentPassword: z.string().min(1, "請輸入當前密碼"),
-      newPassword: passwordSchema,
+      newPassword: adminPasswordSchema,
     }))
     .mutation(async ({ input, ctx }) => {
       const db = await getDb();
@@ -323,4 +352,153 @@ export const authRouter = router({
 
       return { success: true, message: "密碼已成功更改" };
     }),
+
+  // ==================== Customer Authentication ====================
+  
+  /**
+   * Customer signup with email and password
+   */
+  customerSignup: publicProcedure
+    .input(z.object({
+      name: z.string().min(1, "請輸入姓名").max(100),
+      email: z.string().email("請輸入有效的電郵地址"),
+      password: customerPasswordSchema,
+      personaId: z.number(),
+    }))
+    .mutation(async ({ input }) => {
+      try {
+        // Check if email already exists
+        const emailExists = await customerEmailExists(input.email);
+        if (emailExists) {
+          throw new TRPCError({
+            code: "CONFLICT",
+            message: "此電郵已被註冊",
+          });
+        }
+
+        // Create new customer user
+        const user = await createCustomerUser(
+          input.email,
+          input.name,
+          input.password,
+          input.personaId,
+          "email"
+        );
+
+        // Create session
+        const session: CustomerSession = {
+          id: user.id,
+          email: user.email,
+          name: user.name || undefined,
+          provider: "email",
+          personaId: user.personaId,
+        };
+
+        const token = createCustomerToken(session);
+
+        return { success: true, token, user: session };
+      } catch (error) {
+        if (error instanceof TRPCError) throw error;
+        console.error("[CustomerAuth] Email signup error:", error);
+        throw new TRPCError({
+          code: "INTERNAL_SERVER_ERROR",
+          message: "註冊失敗",
+        });
+      }
+    }),
+
+  /**
+   * Customer login with email and password
+   */
+  customerLogin: publicProcedure
+    .input(z.object({
+      email: z.string().email("請輸入有效的電郵地址"),
+      password: z.string().min(1, "請輸入密碼"),
+      personaId: z.number(),
+    }))
+    .mutation(async ({ input }) => {
+      try {
+        // Check if user exists
+        const user = await getCustomerUserByEmail(input.email);
+        if (!user) {
+          throw new TRPCError({
+            code: "UNAUTHORIZED",
+            message: "電郵或密碼錯誤",
+          });
+        }
+
+        // Verify password
+        const isPasswordValid = await verifyCustomerPassword(
+          input.email,
+          input.password
+        );
+        if (!isPasswordValid) {
+          throw new TRPCError({
+            code: "UNAUTHORIZED",
+            message: "電郵或密碼錯誤",
+          });
+        }
+
+        // Check if user is active
+        if (!user.isActive) {
+          throw new TRPCError({
+            code: "FORBIDDEN",
+            message: "此帳戶已被停用",
+          });
+        }
+
+        // Check if persona ID matches
+        if (user.personaId !== input.personaId) {
+          throw new TRPCError({
+            code: "FORBIDDEN",
+            message: "此帳戶不屬於此 AI 助手",
+          });
+        }
+
+        // Update last login time
+        await updateCustomerLastLogin(user.id);
+
+        // Create session
+        const session: CustomerSession = {
+          id: user.id,
+          email: user.email,
+          name: user.name || undefined,
+          provider: user.provider as any,
+          personaId: user.personaId,
+        };
+
+        const token = createCustomerToken(session);
+
+        return { success: true, token, user: session };
+      } catch (error) {
+        if (error instanceof TRPCError) throw error;
+        console.error("[CustomerAuth] Email login error:", error);
+        throw new TRPCError({
+          code: "INTERNAL_SERVER_ERROR",
+          message: "登入失敗",
+        });
+      }
+    }),
+
+  /**
+   * Get customer session from token
+   */
+  customerSession: publicProcedure
+    .input(z.object({
+      token: z.string(),
+    }))
+    .query(async ({ input }) => {
+      const session = verifyCustomerToken(input.token);
+      if (!session) {
+        return { user: null };
+      }
+      return { user: session };
+    }),
+
+  /**
+   * Customer logout (client-side only)
+   */
+  customerLogout: publicProcedure.mutation(async () => {
+    return { success: true };
+  }),
 });
