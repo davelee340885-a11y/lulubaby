@@ -263,38 +263,6 @@ export function CustomerLoginDialog({ isOpen, onClose, personaId = '1', onLoginS
               )}
             </button>
 
-            {/* Divider */}
-            <div className="flex items-center gap-3 my-6">
-              <div className="flex-1 border-t border-gray-300"></div>
-              <span className="text-xs text-gray-500">或使用社交帳號</span>
-              <div className="flex-1 border-t border-gray-300"></div>
-            </div>
-
-            {/* Social Login Buttons */}
-            <div className="grid grid-cols-3 gap-3">
-              <button
-                type="button"
-                className="py-2.5 px-3 border border-gray-300 rounded-lg hover:bg-gray-50 flex items-center justify-center text-lg transition"
-                title="Google 登入"
-              >
-                🔵
-              </button>
-              <button
-                type="button"
-                className="py-2.5 px-3 border border-gray-300 rounded-lg hover:bg-gray-50 flex items-center justify-center text-lg transition"
-                title="Apple 登入"
-              >
-                🍎
-              </button>
-              <button
-                type="button"
-                className="py-2.5 px-3 border border-gray-300 rounded-lg hover:bg-gray-50 flex items-center justify-center text-lg transition"
-                title="Microsoft 登入"
-              >
-                ⊞
-              </button>
-            </div>
-
             {/* Mode Toggle */}
             <div className="pt-4 border-t border-gray-200">
               {mode === 'login' ? (

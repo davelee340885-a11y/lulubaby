@@ -1441,3 +1441,10 @@
 - [x] 更新 CustomerLoginDialog - 使用統一的 authRouter API
 - [x] 創建統一認證測試 - 10 個測試全部通過
 - [x] 運行所有測試 - 309 個測試通過（4 個 customerAuth 測試失敗為舊 API 測試）
+
+
+## OAuth 登入問題修復（2026-02-02）
+- [x] 分析 OAuth 登入流程和問題根源
+- [x] 修復登入後自動跳回未登入畫面的問題 - 添加 customerSession 查詢恢復登入狀態
+- [x] 處理 Manus 預覽環境與其他 OAuth 登入的衝突 - 移除社交登入按鈕
+- [x] 測試並驗證修復結果 - 309 個測試通過（4 個 customerAuth 測試失敗為舊 API 測試）

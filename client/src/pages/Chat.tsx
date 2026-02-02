@@ -64,9 +64,27 @@ export default function Chat() {
   
   // Customer login state
   const [customer, setCustomer] = useState<any | null>(null);
-  const handleCustomerLogin = (user: any) => setCustomer(user);
-  const handleCustomerLogout = () => setCustomer(null);
   const [showLoginDialog, setShowLoginDialog] = useState(false);
+  
+  // Customer session query to restore login state
+  const customerToken = typeof window !== 'undefined' ? localStorage.getItem('customerToken') : null;
+  const { data: customerSession } = trpc.userAuth.customerSession.useQuery(
+    { token: customerToken || '' },
+    { enabled: !!customerToken && !customer }
+  );
+  
+  // Restore customer login state from token
+  useEffect(() => {
+    if (customerSession?.user && !customer) {
+      setCustomer(customerSession.user);
+    }
+  }, [customerSession, customer]);
+  
+  const handleCustomerLogin = (user: any) => setCustomer(user);
+  const handleCustomerLogout = () => {
+    setCustomer(null);
+    localStorage.removeItem('customerToken');
+  };
 
   const { data: persona, isLoading: personaLoading } = trpc.persona.getPublic.useQuery(
     { personaId },
