@@ -254,7 +254,7 @@ function DashboardLayoutContent({
               <MessageCircle className="h-4 w-4 shrink-0" />
               {!isCollapsed && (
                 <>
-                  <span className="flex-1">預覽AI對話</span>
+                  <span className="flex-1">預覽客戶前端 AI 對話</span>
                   <ExternalLink className="h-3 w-3 opacity-60" />
                 </>
               )}
