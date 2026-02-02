@@ -141,6 +141,13 @@
       "when": 1769774892939,
       "tag": "0019_thick_skin",
       "breakpoints": true
+    },
+    {
+      "idx": 20,
+      "version": "5",
+      "when": 1770018582741,
+      "tag": "0020_minor_silver_fox",
+      "breakpoints": true
     }
   ]
 }

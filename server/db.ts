@@ -28,11 +28,7 @@ export async function getDb() {
 }
 
 // ==================== User Operations ====================
-export async function upsertUser(user: InsertUser): Promise<void> {
-  if (!user.openId) {
-    throw new Error("User openId is required for upsert");
-  }
-
+export async function upsertUser(user: Partial<InsertUser> & { openId?: string; email?: string }): Promise<void> {
   const db = await getDb();
   if (!db) {
     console.warn("[Database] Cannot upsert user: database not available");
@@ -40,43 +36,30 @@ export async function upsertUser(user: InsertUser): Promise<void> {
   }
 
   try {
+    // For Manus OAuth users, use openId as identifier
+    // For email/password users, use email as identifier
     const values: InsertUser = {
-      openId: user.openId,
-    };
-    const updateSet: Record<string, unknown> = {};
-
-    const textFields = ["name", "email", "loginMethod"] as const;
-    type TextField = (typeof textFields)[number];
-
-    const assignNullable = (field: TextField) => {
-      const value = user[field];
-      if (value === undefined) return;
-      const normalized = value ?? null;
-      values[field] = normalized;
-      updateSet[field] = normalized;
+      name: user.name || "User",
+      email: user.email || `${user.openId}@manus.local`, // Generate email for OAuth users
+      openId: user.openId || null,
+      loginMethod: user.loginMethod || (user.openId ? "manus" : "email"),
+      passwordHash: user.passwordHash || null,
+      role: user.role || "user",
+      lastSignedIn: user.lastSignedIn || new Date(),
     };
 
-    textFields.forEach(assignNullable);
-
-    if (user.lastSignedIn !== undefined) {
-      values.lastSignedIn = user.lastSignedIn;
-      updateSet.lastSignedIn = user.lastSignedIn;
-    }
-    if (user.role !== undefined) {
-      values.role = user.role;
-      updateSet.role = user.role;
-    } else if (user.openId === ENV.ownerOpenId) {
+    // Set admin role for owner
+    if (user.openId && user.openId === ENV.ownerOpenId) {
       values.role = 'admin';
-      updateSet.role = 'admin';
     }
 
-    if (!values.lastSignedIn) {
-      values.lastSignedIn = new Date();
-    }
+    const updateSet: Record<string, unknown> = {
+      lastSignedIn: new Date(),
+    };
 
-    if (Object.keys(updateSet).length === 0) {
-      updateSet.lastSignedIn = new Date();
-    }
+    if (user.name) updateSet.name = user.name;
+    if (user.loginMethod) updateSet.loginMethod = user.loginMethod;
+    if (user.role) updateSet.role = user.role;
 
     await db.insert(users).values(values).onDuplicateKeyUpdate({
       set: updateSet,

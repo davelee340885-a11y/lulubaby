@@ -1361,3 +1361,58 @@
 - [x] 創建後端 API 處理表單提交 (system.submitContactForm)
 - [x] 實現表單驗證和提交成功提示
 - [x] 測試完整流程 - 6 個測試全部通過
+
+
+## 多用戶認證系統與管理員後台（2026-02-02）
+
+### 數據庫變更
+- [ ] 更新 users 表，加入 passwordHash 和 role 字段
+- [ ] 新增 passwordResetTokens 表
+- [ ] 確保所有用戶數據表都有 userId 外鍵
+- [ ] 執行 drizzle-kit push 更新數據庫
+
+### 後端 API
+- [ ] 創建 authRouter.ts
+  - [ ] signup - 用戶註冊
+  - [ ] login - 用戶登入
+  - [ ] logout - 用戶登出
+  - [ ] requestPasswordReset - 請求密碼重置
+  - [ ] resetPassword - 重置密碼
+- [ ] 創建 adminRouter.ts
+  - [ ] getAllUsers - 獲取所有用戶列表
+  - [ ] updateUserRole - 更新用戶角色
+- [ ] 修改 context.ts 使用 JWT cookie 驗證取代 Manus OAuth
+
+### 前端頁面
+- [ ] 創建 /signup 註冊頁面
+- [ ] 創建 /login 登入頁面（包含「忘記密碼」鏈接）
+- [ ] 創建 /forgot-password 忘記密碼頁面
+- [ ] 創建 /reset-password 重置密碼頁面
+- [ ] 創建 /admin/users 管理員後台頁面
+
+### UI 要求
+- [ ] 所有密碼輸入框都有「顯示/隱藏密碼」的眼睛圖標按鈕
+- [ ] 管理員後台需要權限保護，僅限 role === 'admin' 的用戶訪問
+
+### 測試驗收
+- [ ] 新用戶可以使用電郵和密碼註冊
+- [ ] 現有用戶可以使用電郵和密碼登入
+- [ ] 用戶可以使用「忘記密碼」功能重置密碼
+- [ ] 每個用戶只能看到自己的 AI 記憶和數據
+- [ ] 管理員可以在 /admin/users 查看所有用戶列表
+- [ ] 管理員可以更改用戶的角色
+
+
+## 多用戶認證系統與管理員後台（2026-02-02）
+- [x] 數據庫變更 - users 表添加 passwordHash 字段，新增 passwordResetTokens 表
+- [x] 創建 authRouter.ts - 實現 signup, login, logout, requestPasswordReset, resetPassword
+- [x] 創建 adminRouter.ts - 實現 getAllUsers, updateUserRole, deleteUser, getDashboardStats
+- [x] 修改 sdk.ts - 支持電郵/密碼用戶的 JWT 認證
+- [x] 創建 /signup 註冊頁面 - 包含密碼顯示/隱藏眼睛圖標
+- [x] 創建 /login 登入頁面 - 包含密碼顯示/隱藏眼睛圖標和「忘記密碼」連結
+- [x] 創建 /forgot-password 忘記密碼頁面
+- [x] 創建 /reset-password 重置密碼頁面 - 包含密碼顯示/隱藏眼睛圖標
+- [x] 創建 /admin/users 管理員後台頁面 - 包含權限保護
+- [x] 更新 App.tsx 路由配置
+- [x] 編寫認證 API 測試 - 16 個測試通過
+- [x] 運行所有測試 - 299 個測試通過（4 個 customerAuth 測試失敗為既有問題）

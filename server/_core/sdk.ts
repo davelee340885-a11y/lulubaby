@@ -268,6 +268,30 @@ class SDKServer {
 
     const sessionUserId = session.openId;
     const signedInAt = new Date();
+    
+    // Check if this is an email/password user (openId starts with "email_")
+    if (sessionUserId.startsWith("email_")) {
+      // Extract user ID from session ID (format: email_{userId}_{timestamp})
+      const parts = sessionUserId.split("_");
+      if (parts.length >= 2) {
+        const userId = parseInt(parts[1], 10);
+        if (!isNaN(userId)) {
+          const user = await db.getUserById(userId);
+          if (user) {
+            // Update last signed in
+            await db.upsertUser({
+              email: user.email,
+              name: user.name ?? "User",
+              lastSignedIn: signedInAt,
+            });
+            return user;
+          }
+        }
+      }
+      throw ForbiddenError("User not found");
+    }
+    
+    // Manus OAuth user flow
     let user = await db.getUserByOpenId(sessionUserId);
 
     // If user not in DB, sync from OAuth server automatically
@@ -276,9 +300,9 @@ class SDKServer {
         const userInfo = await this.getUserInfoWithJwt(sessionCookie ?? "");
         await db.upsertUser({
           openId: userInfo.openId,
-          name: userInfo.name || null,
-          email: userInfo.email ?? null,
-          loginMethod: userInfo.loginMethod ?? userInfo.platform ?? null,
+          name: userInfo.name || "User",
+          email: userInfo.email || `${userInfo.openId}@manus.local`,
+          loginMethod: "manus",
           lastSignedIn: signedInAt,
         });
         user = await db.getUserByOpenId(userInfo.openId);
@@ -293,7 +317,9 @@ class SDKServer {
     }
 
     await db.upsertUser({
-      openId: user.openId,
+      openId: user.openId ?? undefined,
+      email: user.email,
+      name: user.name ?? "User",
       lastSignedIn: signedInAt,
     });
 

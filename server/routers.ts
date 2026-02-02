@@ -2,6 +2,8 @@ import { TRPCError } from "@trpc/server";
 import { getSessionCookieOptions } from "./_core/cookies";
 import { customerAuthRouter } from "./customerAuthRouter";
 import { learningDiaryRouter } from "./learningDiaryRouter";
+import { authRouter } from "./authRouter";
+import { adminRouter } from "./adminRouter";
 import { agentChatRouter } from "./agentChatRouter";
 import { createMemoryService } from "./services/memoryService";
 import { COOKIE_NAME } from "../shared/const";
@@ -62,6 +64,13 @@ import {
 export const appRouter = router({
   system: systemRouter,
   
+  // User authentication (email/password)
+  userAuth: authRouter,
+  
+  // Admin management
+  admin: adminRouter,
+  
+  // Legacy auth (Manus OAuth)
   auth: router({
     me: publicProcedure.query(opts => opts.ctx.user),
     logout: publicProcedure.mutation(({ ctx }) => {

@@ -26,6 +26,11 @@ import ApiDocs from "./pages/ApiDocs";
 import Brain from "./pages/Brain";
 import GoogleAuthCallback from "./pages/GoogleAuthCallback";
 import AgentChatPage from "./pages/AgentChatPage";
+import Signup from "./pages/Signup";
+import Login from "./pages/Login";
+import ForgotPassword from "./pages/ForgotPassword";
+import ResetPassword from "./pages/ResetPassword";
+import AdminUsers from "./pages/AdminUsers";
 
 function DashboardRoutes() {
   return (
@@ -47,6 +52,8 @@ function DashboardRoutes() {
         <Route path="/customers" component={Customers} />
         <Route path="/widget" component={Widget} />
         <Route path="/api-docs" component={ApiDocs} />
+        {/* Admin routes */}
+        <Route path="/admin/users" component={AdminUsers} />
         <Route component={NotFound} />
       </Switch>
     </DashboardLayout>
@@ -70,6 +77,12 @@ function Router() {
   
   return (
     <Switch>
+      {/* Authentication pages - no auth required */}
+      <Route path="/signup" component={Signup} />
+      <Route path="/login" component={Login} />
+      <Route path="/forgot-password" component={ForgotPassword} />
+      <Route path="/reset-password" component={ResetPassword} />
+      
       {/* Google OAuth callback */}
       <Route path="/auth/google/callback" component={GoogleAuthCallback} />
       
@@ -78,6 +91,9 @@ function Router() {
       
       {/* Agent chat page - auth required */}
       <Route path="/agent-chat" component={AgentChatPage} />
+      
+      {/* Admin routes */}
+      <Route path="/admin/users" component={AdminUsers} />
       
       {/* Dashboard routes - auth required */}
       <Route path="/" component={DashboardRoutes} />
