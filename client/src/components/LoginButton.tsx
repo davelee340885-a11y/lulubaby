@@ -58,17 +58,17 @@ export function LoginButton({
         onClick={() => setShowLoginDialog(true)}
         className={`
           group flex items-center gap-2 
-          px-4 py-2 
+          px-4 py-2.5 
           bg-white hover:bg-gray-50
-          border border-gray-200 hover:border-gray-300
+          border-2 border-gray-300 hover:border-cyan-400
           rounded-full
-          text-sm font-medium text-gray-700 hover:text-gray-900
-          shadow-sm hover:shadow
+          text-sm font-semibold text-gray-800 hover:text-cyan-600
+          shadow-md hover:shadow-lg
           transition-all duration-200
           ${className}
         `}
       >
-        <LogIn className="w-4 h-4 text-gray-500 group-hover:text-cyan-500 transition-colors" />
+        <LogIn className="w-4 h-4 text-cyan-500 group-hover:text-cyan-600 transition-colors" />
         <span>登入</span>
       </button>
 
@@ -123,19 +123,19 @@ export function LoginIconButton({
       <button
         onClick={() => setShowLoginDialog(true)}
         className={`
-          w-9 h-9 
+          w-10 h-10 
           flex items-center justify-center 
           bg-white hover:bg-gray-50
-          border border-gray-200 hover:border-gray-300
+          border-2 border-gray-300 hover:border-cyan-400
           rounded-full 
-          text-gray-500 hover:text-cyan-500
-          shadow-sm hover:shadow
+          text-cyan-500 hover:text-cyan-600
+          shadow-md hover:shadow-lg
           transition-all duration-200
           ${className}
         `}
         title="登入"
       >
-        <LogIn className="w-4 h-4" />
+        <LogIn className="w-5 h-5" />
       </button>
 
       <CustomerLoginDialog

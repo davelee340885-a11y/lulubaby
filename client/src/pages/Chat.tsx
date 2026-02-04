@@ -633,7 +633,7 @@ function MinimalLayout({
             </div>
             
             {/* Customer Login Button - Fixed Bottom Left - Manus AI 風格 */}
-            <div className="fixed bottom-4 left-4 z-50">
+            <div className="fixed bottom-20 left-4 z-[9999]">
               <LoginButton
                 customer={customer}
                 personaId={String(persona.id)}
@@ -865,7 +865,7 @@ function ProfessionalLayout({
             </div>
             
             {/* Customer Login Button - Fixed Bottom Left - Manus AI 風格 */}
-            <div className="fixed bottom-4 left-4 z-50">
+            <div className="fixed bottom-20 left-4 z-[9999]">
               <LoginButton
                 customer={customer}
                 personaId={String(persona.id)}
@@ -1159,7 +1159,7 @@ function CustomLayout({
             </div>
             
             {/* Customer Login Button - Fixed Bottom Left - Manus AI 風格 */}
-            <div className="fixed bottom-4 left-4 z-50">
+            <div className="fixed bottom-20 left-4 z-[9999]">
               <LoginButton
                 customer={customer}
                 personaId={String(persona.id)}
