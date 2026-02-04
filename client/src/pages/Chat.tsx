@@ -562,6 +562,17 @@ function MinimalLayout({
 
   return (
     <div className="min-h-screen flex flex-col bg-background">
+      {/* Customer Login Button - Fixed Bottom Left - Always Visible in MinimalLayout */}
+      <div className="fixed bottom-6 left-4 z-[9999]">
+        <LoginButton
+          customer={customer}
+          personaId={String(persona.id)}
+          onLogin={onLogin}
+          onLogout={onLogout}
+          variant="minimal"
+        />
+      </div>
+      
       {/* Main Content Area */}
       <div className="flex-1 flex flex-col">
         {/* Welcome State - Compact & Centered Layout */}
@@ -630,17 +641,6 @@ function MinimalLayout({
                   />
                 </div>
               )}
-            </div>
-            
-            {/* Customer Login Button - Fixed Bottom Left - Manus AI 風格 */}
-            <div className="fixed bottom-20 left-4 z-[9999]">
-              <LoginButton
-                customer={customer}
-                personaId={String(persona.id)}
-                onLogin={onLogin}
-                onLogout={onLogout}
-                variant="minimal"
-              />
             </div>
           </div>
         )}
@@ -794,6 +794,17 @@ function ProfessionalLayout({
 
   return (
     <div className="min-h-screen flex flex-col bg-background">
+      {/* Customer Login Button - Fixed Bottom Left - Always Visible in ProfessionalLayout */}
+      <div className="fixed bottom-6 left-4 z-[9999]">
+        <LoginButton
+          customer={customer}
+          personaId={String(persona.id)}
+          onLogin={onLogin}
+          onLogout={onLogout}
+          variant="minimal"
+        />
+      </div>
+      
       {/* Main Content Area */}
       <div className="flex-1 flex flex-col">
         {/* Welcome State - Compact & Centered Layout */}
@@ -862,17 +873,6 @@ function ProfessionalLayout({
                   />
                 </div>
               )}
-            </div>
-            
-            {/* Customer Login Button - Fixed Bottom Left - Manus AI 風格 */}
-            <div className="fixed bottom-20 left-4 z-[9999]">
-              <LoginButton
-                customer={customer}
-                personaId={String(persona.id)}
-                onLogin={onLogin}
-                onLogout={onLogout}
-                variant="minimal"
-              />
             </div>
           </div>
         )}
@@ -1074,6 +1074,17 @@ function CustomLayout({
       className={`min-h-screen flex flex-col ${immersiveMode ? "" : ""}`}
       style={immersiveMode ? {} : backgroundStyle}
     >
+      {/* Customer Login Button - Fixed Bottom Left - Always Visible in CustomLayout */}
+      <div className="fixed bottom-6 left-4 z-[9999]">
+        <LoginButton
+          customer={customer}
+          personaId={String(persona.id)}
+          onLogin={onLogin}
+          onLogout={onLogout}
+          variant="minimal"
+        />
+      </div>
+      
       {/* Gradient Overlay for Immersive Mode */}
       {immersiveMode && (
         <div className="fixed inset-0 -z-10" style={backgroundStyle}>
@@ -1156,17 +1167,6 @@ function CustomLayout({
                   />
                 </div>
               )}
-            </div>
-            
-            {/* Customer Login Button - Fixed Bottom Left - Manus AI 風格 */}
-            <div className="fixed bottom-20 left-4 z-[9999]">
-              <LoginButton
-                customer={customer}
-                personaId={String(persona.id)}
-                onLogin={onLogin}
-                onLogout={onLogout}
-                variant="minimal"
-              />
             </div>
           </div>
         )}
