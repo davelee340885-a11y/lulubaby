@@ -1,5 +1,6 @@
 import { eq, and, asc, desc, sql, count, gte } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/mysql2"; 
+import mysql from "mysql2/promise";
 import { 
   InsertUser, users, 
   aiPersonas, InsertAiPersona, AiPersona,
@@ -16,8 +17,19 @@ let _db: ReturnType<typeof drizzle> | null = null;
 export async function getDb() {
   if (!_db && process.env.DATABASE_URL) {
     try {
-      // Force fresh connection with schema
-      _db = drizzle(process.env.DATABASE_URL);
+      // Parse DATABASE_URL and create connection with SSL for TiDB Cloud
+      const url = new URL(process.env.DATABASE_URL);
+      const connection = await mysql.createConnection({
+        host: url.hostname,
+        port: parseInt(url.port || "4000"),
+        user: url.username,
+        password: url.password,
+        database: url.pathname.slice(1),
+        ssl: {
+          rejectUnauthorized: true,
+        },
+      });
+      _db = drizzle(connection);
       console.log("[Database] Connected successfully");
     } catch (error) {
       console.warn("[Database] Failed to connect:", error);
