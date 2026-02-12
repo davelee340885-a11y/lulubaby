@@ -1,0 +1,163 @@
+{
+  "query": "SELECT id, userId, sourceType, fileName, sourceUrl, status, LENGTH(content) as content_length FROM knowledge_bases ORDER BY createdAt DESC LIMIT 20;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user VqBKoEwKfw4feq4.6cd8cd1ff95f --database aavW9BLbZ6sZHaPEemayyD --execute SELECT id, userId, sourceType, fileName, sourceUrl, status, LENGTH(content) as content_length FROM knowledge_bases ORDER BY createdAt DESC LIMIT 20;",
+  "rows": [
+    {
+      "id": "150006",
+      "userId": "1",
+      "sourceType": "webpage",
+      "fileName": "Cryptocurrency Prices, Charts And Market Capitalizations | CoinMarketCap",
+      "sourceUrl": "https://coinmarketcap.com",
+      "status": "ready",
+      "content_length": "13273"
+    },
+    {
+      "id": "150005",
+      "userId": "1",
+      "sourceType": "webpage",
+      "fileName": "aia.com.hk",
+      "sourceUrl": "https://aia.com.hk",
+      "status": "ready",
+      "content_length": "3742"
+    },
+    {
+      "id": "150004",
+      "userId": "1",
+      "sourceType": "webpage",
+      "fileName": "Instagram",
+      "sourceUrl": "https://www.instagram.com/boss.fdao",
+      "status": "ready",
+      "content_length": "170"
+    },
+    {
+      "id": "150003",
+      "userId": "1",
+      "sourceType": "webpage",
+      "fileName": "Example | LinkedIn",
+      "sourceUrl": "https://linkedin.com/company/example",
+      "status": "ready",
+      "content_length": "597"
+    },
+    {
+      "id": "150002",
+      "userId": "1",
+      "sourceType": "webpage",
+      "fileName": "Cryptocurrency Prices, Charts And Market Capitalizations | CoinMarketCap",
+      "sourceUrl": "https://coinmarketcap.com/",
+      "status": "ready",
+      "content_length": "13216"
+    },
+    {
+      "id": "150001",
+      "userId": "1",
+      "sourceType": "youtube",
+      "fileName": "YouTube-AI-HVbikxkRwu4",
+      "sourceUrl": "https://www.youtube.com/watch?v=HVbikxkRwu4&t=1s",
+      "status": "ready",
+      "content_length": "13031"
+    },
+    {
+      "id": "120001",
+      "userId": "1",
+      "sourceType": "youtube",
+      "fileName": "YouTube-AI-YZaQGIl-bgE",
+      "sourceUrl": "https://www.youtube.com/watch?v=YZaQGIl-bgE",
+      "status": "ready",
+      "content_length": "8743"
+    },
+    {
+      "id": "90007",
+      "userId": "3990405",
+      "sourceType": "text",
+      "fileName": "房產列表",
+      "sourceUrl": "NULL",
+      "status": "ready",
+      "content_length": "168"
+    },
+    {
+      "id": "90006",
+      "userId": "3990397",
+      "sourceType": "text",
+      "fileName": "美容療程價目表",
+      "sourceUrl": "NULL",
+      "status": "ready",
+      "content_length": "170"
+    },
+    {
+      "id": "90005",
+      "userId": "3990405",
+      "sourceType": "text",
+      "fileName": "房產列表",
+      "sourceUrl": "NULL",
+      "status": "ready",
+      "content_length": "168"
+    },
+    {
+      "id": "90004",
+      "userId": "3990397",
+      "sourceType": "text",
+      "fileName": "美容療程價目表",
+      "sourceUrl": "NULL",
+      "status": "ready",
+      "content_length": "170"
+    },
+    {
+      "id": "90003",
+      "userId": "1",
+      "sourceType": "text",
+      "fileName": "回歸測試文字知識",
+      "sourceUrl": "NULL",
+      "status": "ready",
+      "content_length": "271"
+    },
+    {
+      "id": "90002",
+      "userId": "1",
+      "sourceType": "text",
+      "fileName": "深度測試產品資料",
+      "sourceUrl": "NULL",
+      "status": "ready",
+      "content_length": "24"
+    },
+    {
+      "id": "90001",
+      "userId": "1",
+      "sourceType": "faq",
+      "fileName": "UAT 測試 FAQ",
+      "sourceUrl": "NULL",
+      "status": "ready",
+      "content_length": "149"
+    },
+    {
+      "id": "60001",
+      "userId": "1",
+      "sourceType": "file",
+      "fileName": "OPS-200116-001-013_1.pdf.pdf",
+      "sourceUrl": "NULL",
+      "status": "ready",
+      "content_length": "89327"
+    },
+    {
+      "id": "30001",
+      "userId": "1",
+      "sourceType": "file",
+      "fileName": "ceop leaflet.pdf",
+      "sourceUrl": "NULL",
+      "status": "ready",
+      "content_length": "2325"
+    },
+    {
+      "id": "1",
+      "userId": "1",
+      "sourceType": "file",
+      "fileName": "test_upload.txt",
+      "sourceUrl": "NULL",
+      "status": "ready",
+      "content_length": "169"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\tuserId\tsourceType\tfileName\tsourceUrl\tstatus\tcontent_length\n150006\t1\twebpage\tCryptocurrency Prices, Charts And Market Capitalizations | CoinMarketCap\thttps://coinmarketcap.com\tready\t13273\n150005\t1\twebpage\taia.com.hk\thttps://aia.com.hk\tready\t3742\n150004\t1\twebpage\tInstagram\thttps://www.instagram.com/boss.fdao\tready\t170\n150003\t1\twebpage\tExample | LinkedIn\thttps://linkedin.com/company/example\tready\t597\n150002\t1\twebpage\tCryptocurrency Prices, Charts And Market Capitalizations | CoinMarketCap\thttps://coinmarketcap.com/\tready\t13216\n150001\t1\tyoutube\tYouTube-AI-HVbikxkRwu4\thttps://www.youtube.com/watch?v=HVbikxkRwu4&t=1s\tready\t13031\n120001\t1\tyoutube\tYouTube-AI-YZaQGIl-bgE\thttps://www.youtube.com/watch?v=YZaQGIl-bgE\tready\t8743\n90007\t3990405\ttext\t房產列表\tNULL\tready\t168\n90006\t3990397\ttext\t美容療程價目表\tNULL\tready\t170\n90005\t3990405\ttext\t房產列表\tNULL\tready\t168\n90004\t3990397\ttext\t美容療程價目表\tNULL\tready\t170\n90003\t1\ttext\t回歸測試文字知識\tNULL\tready\t271\n90002\t1\ttext\t深度測試產品資料\tNULL\tready\t24\n90001\t1\tfaq\tUAT 測試 FAQ\tNULL\tready\t149\n60001\t1\tfile\tOPS-200116-001-013_1.pdf.pdf\tNULL\tready\t89327\n30001\t1\tfile\tceop leaflet.pdf\tNULL\tready\t2325\n1\t1\tfile\ttest_upload.txt\tNULL\tready\t169\n",
+  "stderr": "",
+  "execution_time_ms": 1511
+}

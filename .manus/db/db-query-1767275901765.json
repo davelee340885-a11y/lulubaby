@@ -1,0 +1,9 @@
+{
+  "query": "CREATE TABLE IF NOT EXISTS `team_members` (\n  `id` int AUTO_INCREMENT NOT NULL,\n  `teamId` int NOT NULL,\n  `userId` int NOT NULL,\n  `role` enum('owner','admin','member') NOT NULL DEFAULT 'member',\n  `knowledgeAccess` enum('full','partial','none') NOT NULL DEFAULT 'full',\n  `inviteStatus` enum('pending','accepted','declined') NOT NULL DEFAULT 'accepted',\n  `inviteEmail` varchar(320),\n  `inviteToken` varchar(64),\n  `joinedAt` timestamp NOT NULL DEFAULT (now()),\n  `createdAt` timestamp NOT NULL DEFAULT (now()),\n  `updatedAt` timestamp NOT NULL DEFAULT (now()) ON UPDATE CURRENT_TIMESTAMP,\n  CONSTRAINT `team_members_id` PRIMARY KEY(`id`)\n);",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user VqBKoEwKfw4feq4.6cd8cd1ff95f --database aavW9BLbZ6sZHaPEemayyD --execute CREATE TABLE IF NOT EXISTS `team_members` (\n  `id` int AUTO_INCREMENT NOT NULL,\n  `teamId` int NOT NULL,\n  `userId` int NOT NULL,\n  `role` enum('owner','admin','member') NOT NULL DEFAULT 'member',\n  `knowledgeAccess` enum('full','partial','none') NOT NULL DEFAULT 'full',\n  `inviteStatus` enum('pending','accepted','declined') NOT NULL DEFAULT 'accepted',\n  `inviteEmail` varchar(320),\n  `inviteToken` varchar(64),\n  `joinedAt` timestamp NOT NULL DEFAULT (now()),\n  `createdAt` timestamp NOT NULL DEFAULT (now()),\n  `updatedAt` timestamp NOT NULL DEFAULT (now()) ON UPDATE CURRENT_TIMESTAMP,\n  CONSTRAINT `team_members_id` PRIMARY KEY(`id`)\n);",
+  "rows": [],
+  "messages": [],
+  "stdout": "",
+  "stderr": "",
+  "execution_time_ms": 1619
+}

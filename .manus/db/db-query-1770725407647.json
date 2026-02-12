@@ -1,0 +1,15 @@
+{
+  "query": "SELECT p.id as personaId, p.agentName, p.userId FROM ai_personas p INNER JOIN users u ON p.userId = u.id WHERE u.email = 'davelee340885@gmail.com'",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user VqBKoEwKfw4feq4.6cd8cd1ff95f --database aavW9BLbZ6sZHaPEemayyD --execute SELECT p.id as personaId, p.agentName, p.userId FROM ai_personas p INNER JOIN users u ON p.userId = u.id WHERE u.email = 'davelee340885@gmail.com'",
+  "rows": [
+    {
+      "personaId": "1",
+      "agentName": "Minimal Agent",
+      "userId": "1"
+    }
+  ],
+  "messages": [],
+  "stdout": "personaId\tagentName\tuserId\n1\tMinimal Agent\t1\n",
+  "stderr": "",
+  "execution_time_ms": 1498
+}

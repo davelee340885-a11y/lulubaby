@@ -1,0 +1,60 @@
+{
+  "query": "SELECT id, name, subdomain FROM users WHERE subdomain IS NOT NULL LIMIT 10;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user VqBKoEwKfw4feq4.6cd8cd1ff95f --database aavW9BLbZ6sZHaPEemayyD --execute SELECT id, name, subdomain FROM users WHERE subdomain IS NOT NULL LIMIT 10;",
+  "rows": [
+    {
+      "id": "1",
+      "name": "Dave Lee",
+      "subdomain": "i0t4qebd"
+    },
+    {
+      "id": "3060061",
+      "name": "Test Admin",
+      "subdomain": "oonqk42m"
+    },
+    {
+      "id": "3060062",
+      "name": "Test Admin",
+      "subdomain": "g2fln8p1"
+    },
+    {
+      "id": "3060063",
+      "name": "Test Admin",
+      "subdomain": "ajt92q2z"
+    },
+    {
+      "id": "3060064",
+      "name": "Test Admin",
+      "subdomain": "sdyyhy3j"
+    },
+    {
+      "id": "3060065",
+      "name": "Test Admin",
+      "subdomain": "wxcrayds"
+    },
+    {
+      "id": "3060066",
+      "name": "Test Admin",
+      "subdomain": "pr23lbrw"
+    },
+    {
+      "id": "3060069",
+      "name": "Test Admin",
+      "subdomain": "tn9jmcut"
+    },
+    {
+      "id": "3060070",
+      "name": "Test Admin",
+      "subdomain": "snr6t1lr"
+    },
+    {
+      "id": "3060071",
+      "name": "Test Admin",
+      "subdomain": "l571efwm"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\tname\tsubdomain\n1\tDave Lee\ti0t4qebd\n3060061\tTest Admin\toonqk42m\n3060062\tTest Admin\tg2fln8p1\n3060063\tTest Admin\tajt92q2z\n3060064\tTest Admin\tsdyyhy3j\n3060065\tTest Admin\twxcrayds\n3060066\tTest Admin\tpr23lbrw\n3060069\tTest Admin\ttn9jmcut\n3060070\tTest Admin\tsnr6t1lr\n3060071\tTest Admin\tl571efwm\n",
+  "stderr": "",
+  "execution_time_ms": 1556
+}

@@ -1,0 +1,88 @@
+{
+  "query": "SHOW TABLES;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user VqBKoEwKfw4feq4.6cd8cd1ff95f --database aavW9BLbZ6sZHaPEemayyD --execute SHOW TABLES;",
+  "rows": [
+    {
+      "Tables_in_aavW9BLbZ6sZHaPEemayyD": "__drizzle_migrations"
+    },
+    {
+      "Tables_in_aavW9BLbZ6sZHaPEemayyD": "ai_personas"
+    },
+    {
+      "Tables_in_aavW9BLbZ6sZHaPEemayyD": "ai_training"
+    },
+    {
+      "Tables_in_aavW9BLbZ6sZHaPEemayyD": "conversations"
+    },
+    {
+      "Tables_in_aavW9BLbZ6sZHaPEemayyD": "customer_conversation_summaries"
+    },
+    {
+      "Tables_in_aavW9BLbZ6sZHaPEemayyD": "customer_memories"
+    },
+    {
+      "Tables_in_aavW9BLbZ6sZHaPEemayyD": "customer_users"
+    },
+    {
+      "Tables_in_aavW9BLbZ6sZHaPEemayyD": "customers"
+    },
+    {
+      "Tables_in_aavW9BLbZ6sZHaPEemayyD": "domain_health_logs"
+    },
+    {
+      "Tables_in_aavW9BLbZ6sZHaPEemayyD": "domain_orders"
+    },
+    {
+      "Tables_in_aavW9BLbZ6sZHaPEemayyD": "knowledge_bases"
+    },
+    {
+      "Tables_in_aavW9BLbZ6sZHaPEemayyD": "learning_diaries"
+    },
+    {
+      "Tables_in_aavW9BLbZ6sZHaPEemayyD": "memory_embeddings"
+    },
+    {
+      "Tables_in_aavW9BLbZ6sZHaPEemayyD": "password_reset_tokens"
+    },
+    {
+      "Tables_in_aavW9BLbZ6sZHaPEemayyD": "quick_buttons"
+    },
+    {
+      "Tables_in_aavW9BLbZ6sZHaPEemayyD": "spark_transactions"
+    },
+    {
+      "Tables_in_aavW9BLbZ6sZHaPEemayyD": "stripe_payments"
+    },
+    {
+      "Tables_in_aavW9BLbZ6sZHaPEemayyD": "subscriptions"
+    },
+    {
+      "Tables_in_aavW9BLbZ6sZHaPEemayyD": "superpowers"
+    },
+    {
+      "Tables_in_aavW9BLbZ6sZHaPEemayyD": "team_knowledge"
+    },
+    {
+      "Tables_in_aavW9BLbZ6sZHaPEemayyD": "team_knowledge_access"
+    },
+    {
+      "Tables_in_aavW9BLbZ6sZHaPEemayyD": "team_members"
+    },
+    {
+      "Tables_in_aavW9BLbZ6sZHaPEemayyD": "teams"
+    },
+    {
+      "Tables_in_aavW9BLbZ6sZHaPEemayyD": "usage_logs"
+    },
+    {
+      "Tables_in_aavW9BLbZ6sZHaPEemayyD": "user_domains"
+    },
+    {
+      "Tables_in_aavW9BLbZ6sZHaPEemayyD": "users"
+    }
+  ],
+  "messages": [],
+  "stdout": "Tables_in_aavW9BLbZ6sZHaPEemayyD\n__drizzle_migrations\nai_personas\nai_training\nconversations\ncustomer_conversation_summaries\ncustomer_memories\ncustomer_users\ncustomers\ndomain_health_logs\ndomain_orders\nknowledge_bases\nlearning_diaries\nmemory_embeddings\npassword_reset_tokens\nquick_buttons\nspark_transactions\nstripe_payments\nsubscriptions\nsuperpowers\nteam_knowledge\nteam_knowledge_access\nteam_members\nteams\nusage_logs\nuser_domains\nusers\n",
+  "stderr": "",
+  "execution_time_ms": 1488
+}

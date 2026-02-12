@@ -1,0 +1,43 @@
+CREATE TABLE `domain_orders` (
+	`id` int AUTO_INCREMENT NOT NULL,
+	`userId` int NOT NULL,
+	`domain` varchar(255) NOT NULL,
+	`tld` varchar(20) NOT NULL,
+	`registrar` varchar(100) NOT NULL DEFAULT 'namecom',
+	`registrarOrderId` varchar(255),
+	`domainPrice` int NOT NULL,
+	`managementFee` int NOT NULL DEFAULT 9900,
+	`totalPrice` int NOT NULL,
+	`currency` varchar(3) NOT NULL DEFAULT 'HKD',
+	`stripePaymentIntentId` varchar(255),
+	`stripeInvoiceId` varchar(255),
+	`status` enum('pending_payment','payment_processing','payment_failed','payment_completed','registering','registered','failed','cancelled') NOT NULL DEFAULT 'pending_payment',
+	`registrationDate` timestamp,
+	`expirationDate` timestamp,
+	`autoRenewal` boolean NOT NULL DEFAULT true,
+	`lastErrorMessage` text,
+	`failureReason` text,
+	`metadata` text,
+	`createdAt` timestamp NOT NULL DEFAULT (now()),
+	`updatedAt` timestamp NOT NULL DEFAULT (now()) ON UPDATE CURRENT_TIMESTAMP,
+	CONSTRAINT `domain_orders_id` PRIMARY KEY(`id`)
+);
+--> statement-breakpoint
+CREATE TABLE `stripe_payments` (
+	`id` int AUTO_INCREMENT NOT NULL,
+	`userId` int NOT NULL,
+	`stripePaymentIntentId` varchar(255) NOT NULL,
+	`stripeCustomerId` varchar(255),
+	`stripeInvoiceId` varchar(255),
+	`amount` int NOT NULL,
+	`currency` varchar(3) NOT NULL DEFAULT 'HKD',
+	`description` text,
+	`status` enum('requires_payment_method','requires_confirmation','requires_action','processing','requires_capture','canceled','succeeded') NOT NULL,
+	`relatedType` enum('domain_order','subscription','other') DEFAULT 'domain_order',
+	`relatedId` int,
+	`metadata` text,
+	`createdAt` timestamp NOT NULL DEFAULT (now()),
+	`updatedAt` timestamp NOT NULL DEFAULT (now()) ON UPDATE CURRENT_TIMESTAMP,
+	CONSTRAINT `stripe_payments_id` PRIMARY KEY(`id`),
+	CONSTRAINT `stripe_payments_stripePaymentIntentId_unique` UNIQUE(`stripePaymentIntentId`)
+);

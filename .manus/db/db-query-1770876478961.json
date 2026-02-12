@@ -1,0 +1,40 @@
+{
+  "query": "SELECT id, name, email, referralCode FROM users WHERE email IN ('davelee340885@gmail.com', 'hkcc88@yahoo.com.hk') OR id <= 3 LIMIT 5;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user VqBKoEwKfw4feq4.6cd8cd1ff95f --database aavW9BLbZ6sZHaPEemayyD --execute SELECT id, name, email, referralCode FROM users WHERE email IN ('davelee340885@gmail.com', 'hkcc88@yahoo.com.hk') OR id <= 3 LIMIT 5;",
+  "rows": [
+    {
+      "id": "1",
+      "name": "Dave Lee",
+      "email": "davelee340885@gmail.com",
+      "referralCode": "LULU-KZXKHB"
+    },
+    {
+      "id": "4170090",
+      "name": "h",
+      "email": "hkcc88@yahoo.com.hk",
+      "referralCode": "LULU-5C37XF"
+    },
+    {
+      "id": "4170091",
+      "name": "h",
+      "email": "hkcc88@yahoo.com.hk",
+      "referralCode": "LULU-CASARV"
+    },
+    {
+      "id": "4170092",
+      "name": "h",
+      "email": "hkcc88@yahoo.com.hk",
+      "referralCode": "LULU-FYSJQ7"
+    },
+    {
+      "id": "4170095",
+      "name": "h",
+      "email": "hkcc88@yahoo.com.hk",
+      "referralCode": "LULU-EJ54F7"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\tname\temail\treferralCode\n1\tDave Lee\tdavelee340885@gmail.com\tLULU-KZXKHB\n4170090\th\thkcc88@yahoo.com.hk\tLULU-5C37XF\n4170091\th\thkcc88@yahoo.com.hk\tLULU-CASARV\n4170092\th\thkcc88@yahoo.com.hk\tLULU-FYSJQ7\n4170095\th\thkcc88@yahoo.com.hk\tLULU-EJ54F7\n",
+  "stderr": "",
+  "execution_time_ms": 1492
+}

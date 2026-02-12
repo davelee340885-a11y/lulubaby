@@ -1,0 +1,170 @@
+{
+  "query": "SELECT id, name, email, loginMethod, passwordHash IS NOT NULL as hasPassword, role FROM users WHERE email = 'test-uat-1739173800@example.com'",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user VqBKoEwKfw4feq4.6cd8cd1ff95f --database aavW9BLbZ6sZHaPEemayyD --execute SELECT id, name, email, loginMethod, passwordHash IS NOT NULL as hasPassword, role FROM users WHERE email = 'test-uat-1739173800@example.com'",
+  "rows": [
+    {
+      "id": "3990043",
+      "name": "UAT Test User",
+      "email": "test-uat-1739173800@example.com",
+      "loginMethod": "email",
+      "hasPassword": "1",
+      "role": "user"
+    },
+    {
+      "id": "3990044",
+      "name": "UAT Test User",
+      "email": "test-uat-1739173800@example.com",
+      "loginMethod": "email",
+      "hasPassword": "0",
+      "role": "user"
+    },
+    {
+      "id": "3990045",
+      "name": "UAT Test User",
+      "email": "test-uat-1739173800@example.com",
+      "loginMethod": "email",
+      "hasPassword": "0",
+      "role": "user"
+    },
+    {
+      "id": "3990048",
+      "name": "UAT Test User",
+      "email": "test-uat-1739173800@example.com",
+      "loginMethod": "email",
+      "hasPassword": "0",
+      "role": "user"
+    },
+    {
+      "id": "3990049",
+      "name": "UAT Test User",
+      "email": "test-uat-1739173800@example.com",
+      "loginMethod": "email",
+      "hasPassword": "0",
+      "role": "user"
+    },
+    {
+      "id": "3990050",
+      "name": "UAT Test User",
+      "email": "test-uat-1739173800@example.com",
+      "loginMethod": "email",
+      "hasPassword": "0",
+      "role": "user"
+    },
+    {
+      "id": "3990051",
+      "name": "UAT Test User",
+      "email": "test-uat-1739173800@example.com",
+      "loginMethod": "email",
+      "hasPassword": "0",
+      "role": "user"
+    },
+    {
+      "id": "3990052",
+      "name": "UAT Test User",
+      "email": "test-uat-1739173800@example.com",
+      "loginMethod": "email",
+      "hasPassword": "0",
+      "role": "user"
+    },
+    {
+      "id": "3990053",
+      "name": "UAT Test User",
+      "email": "test-uat-1739173800@example.com",
+      "loginMethod": "email",
+      "hasPassword": "0",
+      "role": "user"
+    },
+    {
+      "id": "3990054",
+      "name": "UAT Test User",
+      "email": "test-uat-1739173800@example.com",
+      "loginMethod": "email",
+      "hasPassword": "0",
+      "role": "user"
+    },
+    {
+      "id": "3990055",
+      "name": "UAT Test User",
+      "email": "test-uat-1739173800@example.com",
+      "loginMethod": "email",
+      "hasPassword": "0",
+      "role": "user"
+    },
+    {
+      "id": "3990056",
+      "name": "UAT Test User",
+      "email": "test-uat-1739173800@example.com",
+      "loginMethod": "email",
+      "hasPassword": "0",
+      "role": "user"
+    },
+    {
+      "id": "3990057",
+      "name": "UAT Test User",
+      "email": "test-uat-1739173800@example.com",
+      "loginMethod": "email",
+      "hasPassword": "0",
+      "role": "user"
+    },
+    {
+      "id": "3990058",
+      "name": "UAT Test User",
+      "email": "test-uat-1739173800@example.com",
+      "loginMethod": "email",
+      "hasPassword": "0",
+      "role": "user"
+    },
+    {
+      "id": "3990059",
+      "name": "UAT Test User",
+      "email": "test-uat-1739173800@example.com",
+      "loginMethod": "email",
+      "hasPassword": "0",
+      "role": "user"
+    },
+    {
+      "id": "3990060",
+      "name": "UAT Test User",
+      "email": "test-uat-1739173800@example.com",
+      "loginMethod": "email",
+      "hasPassword": "0",
+      "role": "user"
+    },
+    {
+      "id": "3990061",
+      "name": "UAT Test User",
+      "email": "test-uat-1739173800@example.com",
+      "loginMethod": "email",
+      "hasPassword": "0",
+      "role": "user"
+    },
+    {
+      "id": "3990062",
+      "name": "UAT Test User",
+      "email": "test-uat-1739173800@example.com",
+      "loginMethod": "email",
+      "hasPassword": "0",
+      "role": "user"
+    },
+    {
+      "id": "3990063",
+      "name": "UAT Test User",
+      "email": "test-uat-1739173800@example.com",
+      "loginMethod": "email",
+      "hasPassword": "0",
+      "role": "user"
+    },
+    {
+      "id": "3990064",
+      "name": "UAT Test User",
+      "email": "test-uat-1739173800@example.com",
+      "loginMethod": "email",
+      "hasPassword": "0",
+      "role": "user"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\tname\temail\tloginMethod\thasPassword\trole\n3990043\tUAT Test User\ttest-uat-1739173800@example.com\temail\t1\tuser\n3990044\tUAT Test User\ttest-uat-1739173800@example.com\temail\t0\tuser\n3990045\tUAT Test User\ttest-uat-1739173800@example.com\temail\t0\tuser\n3990048\tUAT Test User\ttest-uat-1739173800@example.com\temail\t0\tuser\n3990049\tUAT Test User\ttest-uat-1739173800@example.com\temail\t0\tuser\n3990050\tUAT Test User\ttest-uat-1739173800@example.com\temail\t0\tuser\n3990051\tUAT Test User\ttest-uat-1739173800@example.com\temail\t0\tuser\n3990052\tUAT Test User\ttest-uat-1739173800@example.com\temail\t0\tuser\n3990053\tUAT Test User\ttest-uat-1739173800@example.com\temail\t0\tuser\n3990054\tUAT Test User\ttest-uat-1739173800@example.com\temail\t0\tuser\n3990055\tUAT Test User\ttest-uat-1739173800@example.com\temail\t0\tuser\n3990056\tUAT Test User\ttest-uat-1739173800@example.com\temail\t0\tuser\n3990057\tUAT Test User\ttest-uat-1739173800@example.com\temail\t0\tuser\n3990058\tUAT Test User\ttest-uat-1739173800@example.com\temail\t0\tuser\n3990059\tUAT Test User\ttest-uat-1739173800@example.com\temail\t0\tuser\n3990060\tUAT Test User\ttest-uat-1739173800@example.com\temail\t0\tuser\n3990061\tUAT Test User\ttest-uat-1739173800@example.com\temail\t0\tuser\n3990062\tUAT Test User\ttest-uat-1739173800@example.com\temail\t0\tuser\n3990063\tUAT Test User\ttest-uat-1739173800@example.com\temail\t0\tuser\n3990064\tUAT Test User\ttest-uat-1739173800@example.com\temail\t0\tuser\n",
+  "stderr": "",
+  "execution_time_ms": 1571
+}

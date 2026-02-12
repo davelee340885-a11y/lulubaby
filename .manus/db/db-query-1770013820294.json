@@ -1,0 +1,194 @@
+{
+  "query": "SELECT id, domain, personaId, isPublished, dnsStatus, sslStatus FROM domain_orders WHERE userId = 1;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user VqBKoEwKfw4feq4.6cd8cd1ff95f --database aavW9BLbZ6sZHaPEemayyD --execute SELECT id, domain, personaId, isPublished, dnsStatus, sslStatus FROM domain_orders WHERE userId = 1;",
+  "rows": [
+    {
+      "id": "30001",
+      "domain": "lulubaby.co",
+      "personaId": "NULL",
+      "isPublished": "0",
+      "dnsStatus": "pending",
+      "sslStatus": "pending"
+    },
+    {
+      "id": "30002",
+      "domain": "lulubaby.co",
+      "personaId": "NULL",
+      "isPublished": "0",
+      "dnsStatus": "pending",
+      "sslStatus": "pending"
+    },
+    {
+      "id": "30003",
+      "domain": "fijqwaorigsa.co",
+      "personaId": "NULL",
+      "isPublished": "0",
+      "dnsStatus": "pending",
+      "sslStatus": "pending"
+    },
+    {
+      "id": "30004",
+      "domain": "fijqwaorigsa.co",
+      "personaId": "NULL",
+      "isPublished": "0",
+      "dnsStatus": "pending",
+      "sslStatus": "pending"
+    },
+    {
+      "id": "30005",
+      "domain": "lulubaby.co",
+      "personaId": "NULL",
+      "isPublished": "0",
+      "dnsStatus": "pending",
+      "sslStatus": "pending"
+    },
+    {
+      "id": "30006",
+      "domain": "qwrgasldgk.co",
+      "personaId": "NULL",
+      "isPublished": "0",
+      "dnsStatus": "pending",
+      "sslStatus": "pending"
+    },
+    {
+      "id": "30007",
+      "domain": "w0aufewgiadjvasldjvk.co",
+      "personaId": "NULL",
+      "isPublished": "0",
+      "dnsStatus": "pending",
+      "sslStatus": "pending"
+    },
+    {
+      "id": "30008",
+      "domain": "w0aufewgiadjvasldjvk.co",
+      "personaId": "NULL",
+      "isPublished": "0",
+      "dnsStatus": "pending",
+      "sslStatus": "pending"
+    },
+    {
+      "id": "30009",
+      "domain": "qwrgasldgk.co",
+      "personaId": "NULL",
+      "isPublished": "0",
+      "dnsStatus": "pending",
+      "sslStatus": "pending"
+    },
+    {
+      "id": "30010",
+      "domain": "lulubaby.co",
+      "personaId": "NULL",
+      "isPublished": "0",
+      "dnsStatus": "pending",
+      "sslStatus": "pending"
+    },
+    {
+      "id": "30011",
+      "domain": "lulubaby.co",
+      "personaId": "NULL",
+      "isPublished": "0",
+      "dnsStatus": "pending",
+      "sslStatus": "pending"
+    },
+    {
+      "id": "30012",
+      "domain": "lulubaby.co",
+      "personaId": "NULL",
+      "isPublished": "0",
+      "dnsStatus": "pending",
+      "sslStatus": "pending"
+    },
+    {
+      "id": "30013",
+      "domain": "ljsdlkj.co",
+      "personaId": "NULL",
+      "isPublished": "0",
+      "dnsStatus": "pending",
+      "sslStatus": "pending"
+    },
+    {
+      "id": "30014",
+      "domain": "testlulubaby.com",
+      "personaId": "NULL",
+      "isPublished": "0",
+      "dnsStatus": "pending",
+      "sslStatus": "pending"
+    },
+    {
+      "id": "60001",
+      "domain": "lulubaby.co",
+      "personaId": "NULL",
+      "isPublished": "0",
+      "dnsStatus": "pending",
+      "sslStatus": "pending"
+    },
+    {
+      "id": "90001",
+      "domain": "lulubaby.co",
+      "personaId": "NULL",
+      "isPublished": "0",
+      "dnsStatus": "pending",
+      "sslStatus": "pending"
+    },
+    {
+      "id": "120001",
+      "domain": "lulubaby.co",
+      "personaId": "NULL",
+      "isPublished": "0",
+      "dnsStatus": "pending",
+      "sslStatus": "pending"
+    },
+    {
+      "id": "120002",
+      "domain": "test-1767509623554.xyz",
+      "personaId": "NULL",
+      "isPublished": "0",
+      "dnsStatus": "pending",
+      "sslStatus": "pending"
+    },
+    {
+      "id": "150001",
+      "domain": "90wq8et.co",
+      "personaId": "NULL",
+      "isPublished": "0",
+      "dnsStatus": "pending",
+      "sslStatus": "pending"
+    },
+    {
+      "id": "150002",
+      "domain": "ejtyrjh.co",
+      "personaId": "NULL",
+      "isPublished": "0",
+      "dnsStatus": "pending",
+      "sslStatus": "pending"
+    },
+    {
+      "id": "150003",
+      "domain": "lulubaby.co",
+      "personaId": "NULL",
+      "isPublished": "0",
+      "dnsStatus": "pending",
+      "sslStatus": "pending"
+    },
+    {
+      "id": "210003",
+      "domain": "lulubaby.xyz",
+      "personaId": "1",
+      "isPublished": "1",
+      "dnsStatus": "active",
+      "sslStatus": "active"
+    },
+    {
+      "id": "300003",
+      "domain": "test-1769841009698.xyz",
+      "personaId": "1",
+      "isPublished": "1",
+      "dnsStatus": "active",
+      "sslStatus": "active"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\tdomain\tpersonaId\tisPublished\tdnsStatus\tsslStatus\n30001\tlulubaby.co\tNULL\t0\tpending\tpending\n30002\tlulubaby.co\tNULL\t0\tpending\tpending\n30003\tfijqwaorigsa.co\tNULL\t0\tpending\tpending\n30004\tfijqwaorigsa.co\tNULL\t0\tpending\tpending\n30005\tlulubaby.co\tNULL\t0\tpending\tpending\n30006\tqwrgasldgk.co\tNULL\t0\tpending\tpending\n30007\tw0aufewgiadjvasldjvk.co\tNULL\t0\tpending\tpending\n30008\tw0aufewgiadjvasldjvk.co\tNULL\t0\tpending\tpending\n30009\tqwrgasldgk.co\tNULL\t0\tpending\tpending\n30010\tlulubaby.co\tNULL\t0\tpending\tpending\n30011\tlulubaby.co\tNULL\t0\tpending\tpending\n30012\tlulubaby.co\tNULL\t0\tpending\tpending\n30013\tljsdlkj.co\tNULL\t0\tpending\tpending\n30014\ttestlulubaby.com\tNULL\t0\tpending\tpending\n60001\tlulubaby.co\tNULL\t0\tpending\tpending\n90001\tlulubaby.co\tNULL\t0\tpending\tpending\n120001\tlulubaby.co\tNULL\t0\tpending\tpending\n120002\ttest-1767509623554.xyz\tNULL\t0\tpending\tpending\n150001\t90wq8et.co\tNULL\t0\tpending\tpending\n150002\tejtyrjh.co\tNULL\t0\tpending\tpending\n150003\tlulubaby.co\tNULL\t0\tpending\tpending\n210003\tlulubaby.xyz\t1\t1\tactive\tactive\n300003\ttest-1769841009698.xyz\t1\t1\tactive\tactive\n",
+  "stderr": "",
+  "execution_time_ms": 1585
+}

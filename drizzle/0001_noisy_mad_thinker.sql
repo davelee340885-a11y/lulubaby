@@ -1,0 +1,1 @@
+ALTER TABLE `quick_buttons` MODIFY COLUMN `actionType` enum('query','link','booking','product','profile','company','catalog','contact','faq','custom') NOT NULL DEFAULT 'query';

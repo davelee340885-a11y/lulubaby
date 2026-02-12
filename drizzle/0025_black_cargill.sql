@@ -1,0 +1,1 @@
+ALTER TABLE `ai_training` ADD `proactiveDataCollection` boolean DEFAULT false NOT NULL;

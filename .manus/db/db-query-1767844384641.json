@@ -1,0 +1,18 @@
+{
+  "query": "SELECT id, backgroundType, backgroundImageUrl, backgroundSize, backgroundPosition, backgroundRepeat FROM ai_personas WHERE id = 1;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user VqBKoEwKfw4feq4.6cd8cd1ff95f --database aavW9BLbZ6sZHaPEemayyD --execute SELECT id, backgroundType, backgroundImageUrl, backgroundSize, backgroundPosition, backgroundRepeat FROM ai_personas WHERE id = 1;",
+  "rows": [
+    {
+      "id": "1",
+      "backgroundType": "image",
+      "backgroundImageUrl": "https://d2xsxph8kpxj0f.cloudfront.net/310519663118989199/aavW9BLbZ6sZHaPEemayyD/images/1/background/hw-3oIjU68XOvIhcigZcW.jpg",
+      "backgroundSize": "cover",
+      "backgroundPosition": "center",
+      "backgroundRepeat": "no-repeat"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\tbackgroundType\tbackgroundImageUrl\tbackgroundSize\tbackgroundPosition\tbackgroundRepeat\n1\timage\thttps://d2xsxph8kpxj0f.cloudfront.net/310519663118989199/aavW9BLbZ6sZHaPEemayyD/images/1/background/hw-3oIjU68XOvIhcigZcW.jpg\tcover\tcenter\tno-repeat\n",
+  "stderr": "",
+  "execution_time_ms": 1571
+}

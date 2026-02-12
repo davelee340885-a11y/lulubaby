@@ -1,0 +1,1 @@
+-- subdomain column already exists in database, schema synced

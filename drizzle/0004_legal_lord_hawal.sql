@@ -1,0 +1,1 @@
+ALTER TABLE `ai_personas` ADD `buttonDisplayMode` varchar(20) DEFAULT 'full' NOT NULL;

@@ -1,0 +1,9 @@
+{
+  "query": "CREATE TABLE IF NOT EXISTS `spark_transactions` (\n\t`id` int AUTO_INCREMENT NOT NULL,\n\t`userId` int NOT NULL,\n\t`type` enum('topup','consume','bonus','refund') NOT NULL,\n\t`amount` int NOT NULL,\n\t`balance` int NOT NULL,\n\t`description` varchar(255),\n\t`stripeSessionId` varchar(255),\n\t`metadata` text,\n\t`createdAt` timestamp NOT NULL DEFAULT (now()),\n\tCONSTRAINT `spark_transactions_id` PRIMARY KEY(`id`)\n);",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user VqBKoEwKfw4feq4.6cd8cd1ff95f --database aavW9BLbZ6sZHaPEemayyD --execute CREATE TABLE IF NOT EXISTS `spark_transactions` (\n\t`id` int AUTO_INCREMENT NOT NULL,\n\t`userId` int NOT NULL,\n\t`type` enum('topup','consume','bonus','refund') NOT NULL,\n\t`amount` int NOT NULL,\n\t`balance` int NOT NULL,\n\t`description` varchar(255),\n\t`stripeSessionId` varchar(255),\n\t`metadata` text,\n\t`createdAt` timestamp NOT NULL DEFAULT (now()),\n\tCONSTRAINT `spark_transactions_id` PRIMARY KEY(`id`)\n);",
+  "rows": [],
+  "messages": [],
+  "stdout": "",
+  "stderr": "",
+  "execution_time_ms": 1963
+}

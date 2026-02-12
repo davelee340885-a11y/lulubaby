@@ -1,0 +1,88 @@
+{
+  "query": "SELECT TABLE_NAME FROM information_schema.TABLES WHERE TABLE_SCHEMA = DATABASE();",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user VqBKoEwKfw4feq4.6cd8cd1ff95f --database aavW9BLbZ6sZHaPEemayyD --execute SELECT TABLE_NAME FROM information_schema.TABLES WHERE TABLE_SCHEMA = DATABASE();",
+  "rows": [
+    {
+      "TABLE_NAME": "__drizzle_migrations"
+    },
+    {
+      "TABLE_NAME": "users"
+    },
+    {
+      "TABLE_NAME": "ai_personas"
+    },
+    {
+      "TABLE_NAME": "conversations"
+    },
+    {
+      "TABLE_NAME": "knowledge_bases"
+    },
+    {
+      "TABLE_NAME": "quick_buttons"
+    },
+    {
+      "TABLE_NAME": "ai_training"
+    },
+    {
+      "TABLE_NAME": "superpowers"
+    },
+    {
+      "TABLE_NAME": "subscriptions"
+    },
+    {
+      "TABLE_NAME": "usage_logs"
+    },
+    {
+      "TABLE_NAME": "teams"
+    },
+    {
+      "TABLE_NAME": "team_members"
+    },
+    {
+      "TABLE_NAME": "team_knowledge"
+    },
+    {
+      "TABLE_NAME": "team_knowledge_access"
+    },
+    {
+      "TABLE_NAME": "customers"
+    },
+    {
+      "TABLE_NAME": "customer_memories"
+    },
+    {
+      "TABLE_NAME": "customer_conversation_summaries"
+    },
+    {
+      "TABLE_NAME": "user_domains"
+    },
+    {
+      "TABLE_NAME": "domain_health_logs"
+    },
+    {
+      "TABLE_NAME": "domain_orders"
+    },
+    {
+      "TABLE_NAME": "stripe_payments"
+    },
+    {
+      "TABLE_NAME": "customer_users"
+    },
+    {
+      "TABLE_NAME": "learning_diaries"
+    },
+    {
+      "TABLE_NAME": "memory_embeddings"
+    },
+    {
+      "TABLE_NAME": "password_reset_tokens"
+    },
+    {
+      "TABLE_NAME": "spark_transactions"
+    }
+  ],
+  "messages": [],
+  "stdout": "TABLE_NAME\n__drizzle_migrations\nusers\nai_personas\nconversations\nknowledge_bases\nquick_buttons\nai_training\nsuperpowers\nsubscriptions\nusage_logs\nteams\nteam_members\nteam_knowledge\nteam_knowledge_access\ncustomers\ncustomer_memories\ncustomer_conversation_summaries\nuser_domains\ndomain_health_logs\ndomain_orders\nstripe_payments\ncustomer_users\nlearning_diaries\nmemory_embeddings\npassword_reset_tokens\nspark_transactions\n",
+  "stderr": "",
+  "execution_time_ms": 1552
+}

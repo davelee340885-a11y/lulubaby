@@ -1,0 +1,28 @@
+{
+  "query": "SELECT u.id, u.name, u.email, u.subdomain, p.id as persona_id, p.agentName, p.layoutStyle, p.primaryColor, p.welcomeMessage, p.welcomeMessageColor, p.welcomeMessageSize, p.backgroundType, p.backgroundColor, p.showQuickButtons, p.buttonDisplayMode, p.chatPlaceholder FROM users u LEFT JOIN ai_personas p ON p.userId = u.id WHERE u.email = 'hkcc88@yahoo.com.hk' LIMIT 1;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user VqBKoEwKfw4feq4.6cd8cd1ff95f --database aavW9BLbZ6sZHaPEemayyD --execute SELECT u.id, u.name, u.email, u.subdomain, p.id as persona_id, p.agentName, p.layoutStyle, p.primaryColor, p.welcomeMessage, p.welcomeMessageColor, p.welcomeMessageSize, p.backgroundType, p.backgroundColor, p.showQuickButtons, p.buttonDisplayMode, p.chatPlaceholder FROM users u LEFT JOIN ai_personas p ON p.userId = u.id WHERE u.email = 'hkcc88@yahoo.com.hk' LIMIT 1;",
+  "rows": [
+    {
+      "id": "4170090",
+      "name": "h",
+      "email": "hkcc88@yahoo.com.hk",
+      "subdomain": "q2welazm",
+      "persona_id": "1320001",
+      "agentName": "Dave ",
+      "layoutStyle": "professional",
+      "primaryColor": "#f4a41a",
+      "welcomeMessage": "This is Dave Lee, what can i help you?",
+      "welcomeMessageColor": "#f4a41a",
+      "welcomeMessageSize": "huge",
+      "backgroundType": "none",
+      "backgroundColor": "#FFFFFF",
+      "showQuickButtons": "1",
+      "buttonDisplayMode": "full",
+      "chatPlaceholder": "輸入您的問題..."
+    }
+  ],
+  "messages": [],
+  "stdout": "id\tname\temail\tsubdomain\tpersona_id\tagentName\tlayoutStyle\tprimaryColor\twelcomeMessage\twelcomeMessageColor\twelcomeMessageSize\tbackgroundType\tbackgroundColor\tshowQuickButtons\tbuttonDisplayMode\tchatPlaceholder\n4170090\th\thkcc88@yahoo.com.hk\tq2welazm\t1320001\tDave \tprofessional\t#f4a41a\tThis is Dave Lee, what can i help you?\t#f4a41a\thuge\tnone\t#FFFFFF\t1\tfull\t輸入您的問題...\n",
+  "stderr": "",
+  "execution_time_ms": 1520
+}

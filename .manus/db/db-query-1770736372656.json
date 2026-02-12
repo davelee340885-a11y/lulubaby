@@ -1,0 +1,74 @@
+{
+  "query": "SELECT id, userId, title, LEFT(content, 200) as content_preview, memoryType, importance FROM learning_diaries ORDER BY id DESC LIMIT 10;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user VqBKoEwKfw4feq4.6cd8cd1ff95f --database aavW9BLbZ6sZHaPEemayyD --execute SELECT id, userId, title, LEFT(content, 200) as content_preview, memoryType, importance FROM learning_diaries ORDER BY id DESC LIMIT 10;",
+  "rows": [
+    {
+      "id": "150002",
+      "userId": "1",
+      "title": "客戶李太太：退休教師背景與產品推薦",
+      "content_preview": "我有一位客戶李太太，她是退休教師。你她的情況嗎？她適合什麼產品？",
+      "memoryType": "customer_insight",
+      "importance": "medium"
+    },
+    {
+      "id": "150001",
+      "userId": "1",
+      "title": "深度測試 - 客戶李太太的理財需求",
+      "content_preview": "客戶李太太是一位退休教師，年約65歲。她主要關心退休金的保值增值，以及醫療保障。她有一個兒子在海外留學，也關心海外醫療保險。她偏好穩健型投資，不喜歡高風險產品。",
+      "memoryType": "customer_insight",
+      "importance": "medium"
+    },
+    {
+      "id": "120001",
+      "userId": "1",
+      "title": "客戶John對花生過敏",
+      "content_preview": "我的客戶 John 對花生過敏",
+      "memoryType": "customer_insight",
+      "importance": "critical"
+    },
+    {
+      "id": "90001",
+      "userId": "1",
+      "title": "客戶John花生過敏",
+      "content_preview": "我的客戶 John 對花生過敏",
+      "memoryType": "customer_insight",
+      "importance": "critical"
+    },
+    {
+      "id": "30001",
+      "userId": "1",
+      "title": "今日學咗什麼事黃金比例。",
+      "content_preview": "技術分析中的黃金比例. ",
+      "memoryType": "product_knowledge",
+      "importance": "critical"
+    },
+    {
+      "id": "3",
+      "userId": "1",
+      "title": "客戶張先生的保險需求",
+      "content_preview": "客戶張先生對醫療保險很感興趣，他有兩個小孩，關心教育基金。他希望為家人提供全面的保障，特別是醫療和教育方面。",
+      "memoryType": "customer_insight",
+      "importance": "medium"
+    },
+    {
+      "id": "2",
+      "userId": "1",
+      "title": "UAT 測試 - 如何與高端客戶建立信任",
+      "content_preview": "高端客戶通常更注重專業度和信任感。首先要展示專業知識，不要急於推銷。其次要尊重客戶的時間，提供簡潔有力的方案。最後要保持跟進，但不要過於頻繁。",
+      "memoryType": "sales_experience",
+      "importance": "medium"
+    },
+    {
+      "id": "1",
+      "userId": "1",
+      "title": "如何處理客戶對價格的異議",
+      "content_preview": "當客戶說「太貴了」時，不要急於降價。首先要了解客戶的真正顧慮是什麼。很多時候，客戶說太貴只是一個藉口，真正的原因可能是：1. 不確定產品價值 2. 預算有限 3. 需要比較其他選項。正確的處理方式是：先認同客戶的感受，然後引導客戶說出真正的顧慮，最後針對性地解答。",
+      "memoryType": "sales_experience",
+      "importance": "medium"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\tuserId\ttitle\tcontent_preview\tmemoryType\timportance\n150002\t1\t客戶李太太：退休教師背景與產品推薦\t我有一位客戶李太太，她是退休教師。你她的情況嗎？她適合什麼產品？\tcustomer_insight\tmedium\n150001\t1\t深度測試 - 客戶李太太的理財需求\t客戶李太太是一位退休教師，年約65歲。她主要關心退休金的保值增值，以及醫療保障。她有一個兒子在海外留學，也關心海外醫療保險。她偏好穩健型投資，不喜歡高風險產品。\tcustomer_insight\tmedium\n120001\t1\t客戶John對花生過敏\t我的客戶 John 對花生過敏\tcustomer_insight\tcritical\n90001\t1\t客戶John花生過敏\t我的客戶 John 對花生過敏\tcustomer_insight\tcritical\n30001\t1\t今日學咗什麼事黃金比例。\t技術分析中的黃金比例. \tproduct_knowledge\tcritical\n3\t1\t客戶張先生的保險需求\t客戶張先生對醫療保險很感興趣，他有兩個小孩，關心教育基金。他希望為家人提供全面的保障，特別是醫療和教育方面。\tcustomer_insight\tmedium\n2\t1\tUAT 測試 - 如何與高端客戶建立信任\t高端客戶通常更注重專業度和信任感。首先要展示專業知識，不要急於推銷。其次要尊重客戶的時間，提供簡潔有力的方案。最後要保持跟進，但不要過於頻繁。\tsales_experience\tmedium\n1\t1\t如何處理客戶對價格的異議\t當客戶說「太貴了」時，不要急於降價。首先要了解客戶的真正顧慮是什麼。很多時候，客戶說太貴只是一個藉口，真正的原因可能是：1. 不確定產品價值 2. 預算有限 3. 需要比較其他選項。正確的處理方式是：先認同客戶的感受，然後引導客戶說出真正的顧慮，最後針對性地解答。\tsales_experience\tmedium\n",
+  "stderr": "",
+  "execution_time_ms": 1512
+}

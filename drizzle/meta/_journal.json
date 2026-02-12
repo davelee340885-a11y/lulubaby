@@ -1,0 +1,209 @@
+{
+  "version": "7",
+  "dialect": "mysql",
+  "entries": [
+    {
+      "idx": 0,
+      "version": "5",
+      "when": 1767160961648,
+      "tag": "0000_broad_magik",
+      "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "5",
+      "when": 1767164326524,
+      "tag": "0001_noisy_mad_thinker",
+      "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "5",
+      "when": 1767194380025,
+      "tag": "0002_common_vengeance",
+      "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "5",
+      "when": 1767259663658,
+      "tag": "0003_violet_brother_voodoo",
+      "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "5",
+      "when": 1767261468168,
+      "tag": "0004_legal_lord_hawal",
+      "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "5",
+      "when": 1767275879741,
+      "tag": "0005_long_plazm",
+      "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "5",
+      "when": 1767323115157,
+      "tag": "0006_chubby_miss_america",
+      "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "5",
+      "when": 1767324091890,
+      "tag": "0007_milky_lady_bullseye",
+      "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "5",
+      "when": 1767334331278,
+      "tag": "0008_rich_loners",
+      "breakpoints": true
+    },
+    {
+      "idx": 9,
+      "version": "5",
+      "when": 1767434157890,
+      "tag": "0009_lyrical_hercules",
+      "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "5",
+      "when": 1767587744230,
+      "tag": "0010_faulty_wolverine",
+      "breakpoints": true
+    },
+    {
+      "idx": 11,
+      "version": "5",
+      "when": 1767604396727,
+      "tag": "0011_wealthy_triathlon",
+      "breakpoints": true
+    },
+    {
+      "idx": 12,
+      "version": "5",
+      "when": 1767666023975,
+      "tag": "0012_amazing_prima",
+      "breakpoints": true
+    },
+    {
+      "idx": 13,
+      "version": "5",
+      "when": 1767682598488,
+      "tag": "0013_wild_trauma",
+      "breakpoints": true
+    },
+    {
+      "idx": 14,
+      "version": "5",
+      "when": 1767686735772,
+      "tag": "0014_overconfident_legion",
+      "breakpoints": true
+    },
+    {
+      "idx": 15,
+      "version": "5",
+      "when": 1767775473146,
+      "tag": "0015_military_risque",
+      "breakpoints": true
+    },
+    {
+      "idx": 16,
+      "version": "5",
+      "when": 1767853608166,
+      "tag": "0016_last_shadowcat",
+      "breakpoints": true
+    },
+    {
+      "idx": 17,
+      "version": "5",
+      "when": 1768040744492,
+      "tag": "0017_wealthy_morg",
+      "breakpoints": true
+    },
+    {
+      "idx": 18,
+      "version": "5",
+      "when": 1769699694885,
+      "tag": "0018_silky_the_initiative",
+      "breakpoints": true
+    },
+    {
+      "idx": 19,
+      "version": "5",
+      "when": 1769774892939,
+      "tag": "0019_thick_skin",
+      "breakpoints": true
+    },
+    {
+      "idx": 20,
+      "version": "5",
+      "when": 1770018582741,
+      "tag": "0020_minor_silver_fox",
+      "breakpoints": true
+    },
+    {
+      "idx": 21,
+      "version": "5",
+      "when": 1770641821378,
+      "tag": "0021_unusual_sebastian_shaw",
+      "breakpoints": true
+    },
+    {
+      "idx": 22,
+      "version": "5",
+      "when": 1770717884479,
+      "tag": "0022_fancy_norman_osborn",
+      "breakpoints": true
+    },
+    {
+      "idx": 23,
+      "version": "5",
+      "when": 1770722454584,
+      "tag": "0023_bizarre_black_panther",
+      "breakpoints": true
+    },
+    {
+      "idx": 23,
+      "version": "5",
+      "when": 1770722800000,
+      "tag": "0023_subdomain_sync",
+      "breakpoints": true
+    },
+    {
+      "idx": 24,
+      "version": "5",
+      "when": 1770771068799,
+      "tag": "0024_steep_whistler",
+      "breakpoints": true
+    },
+    {
+      "idx": 25,
+      "version": "5",
+      "when": 1770783711270,
+      "tag": "0025_black_cargill",
+      "breakpoints": true
+    },
+    {
+      "idx": 26,
+      "version": "5",
+      "when": 1770798659359,
+      "tag": "0026_fresh_alice",
+      "breakpoints": true
+    },
+    {
+      "idx": 27,
+      "version": "5",
+      "when": 1770872254131,
+      "tag": "0027_worthless_boomer",
+      "breakpoints": true
+    }
+  ]
+}
