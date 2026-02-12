@@ -43,26 +43,25 @@ function WorkspaceGuard({ children, workspaceId }: { children: React.ReactNode; 
   const { user, loading } = useAuth();
   const [, setLocation] = useLocation();
 
-  useEffect(() => {
-    if (!loading && !user) {
-      setLocation("/login");
-    }
-  }, [user, loading, setLocation]);
+  // Determine if workspace mismatch exists
+  const userWs = user ? (user.subdomain || String(user.id)) : null;
+  const isMismatch = !!(user && userWs && userWs !== workspaceId && String(user.id) !== workspaceId);
 
-  if (loading || !user) {
+  useEffect(() => {
+    if (loading) return;
+    if (!user) {
+      setLocation("/login");
+    } else if (isMismatch && userWs) {
+      setLocation(`/w/${userWs}/dashboard`);
+    }
+  }, [user, loading, isMismatch, userWs, setLocation]);
+
+  if (loading || !user || isMismatch) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <Loader2 className="h-8 w-8 animate-spin text-primary" />
       </div>
     );
-  }
-
-  // Check if URL workspaceId matches logged-in user's subdomain or id
-  const userWs = user.subdomain || String(user.id);
-  if (userWs !== workspaceId && String(user.id) !== workspaceId) {
-    // Mismatch: redirect to user's own workspace
-    setLocation(`/w/${userWs}/dashboard`);
-    return null;
   }
 
   return <>{children}</>;

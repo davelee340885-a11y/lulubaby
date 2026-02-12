@@ -1942,3 +1942,6 @@
 ## v3.14.2 Hotfix：旗艦包顯示 + 推薦連結修復
 - [x] 旗艦包改為直接顯示 60,000 Spark（sparks=60000, bonus=0）
 - [x] 推薦連結按鈕改為「前往推薦有賞」，點擊後跳轉到 Account 頁面查看推薦碼
+
+## v3.14.3 Hotfix：WorkspaceGuard render phase navigate 錯誤
+- [x] 修復 WorkspaceGuard 在 render phase 調用 navigate() 導致 React 錯誤，改用 useEffect
