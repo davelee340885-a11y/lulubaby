@@ -315,10 +315,10 @@ describe("Spark 充值包定價驗證 (v3.14)", () => {
     expect(SPARK_PACKAGES.super.bonus).toBe(5000);
   });
 
-  it("旗艦包: HK$2888 → 40000+20000 Spark", () => {
+  it("旗艦包: HK$2888 → 60000 Spark", () => {
     expect(SPARK_PACKAGES.flagship.price).toBe(2888);
-    expect(SPARK_PACKAGES.flagship.sparks).toBe(40000);
-    expect(SPARK_PACKAGES.flagship.bonus).toBe(20000);
+    expect(SPARK_PACKAGES.flagship.sparks).toBe(60000);
+    expect(SPARK_PACKAGES.flagship.bonus).toBe(0);
   });
 
   it("新用戶免費額度應為 100 Spark", () => {

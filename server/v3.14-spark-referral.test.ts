@@ -22,8 +22,8 @@ describe("v3.14: Spark Package Configuration", () => {
     expect(SPARK_PACKAGES.super.bonus).toBe(5000);
     
     expect(SPARK_PACKAGES.flagship.price).toBe(2888);
-    expect(SPARK_PACKAGES.flagship.sparks).toBe(40000);
-    expect(SPARK_PACKAGES.flagship.bonus).toBe(20000);
+    expect(SPARK_PACKAGES.flagship.sparks).toBe(60000);
+    expect(SPARK_PACKAGES.flagship.bonus).toBe(0);
   });
 
   it("should have flagship package replacing unlimited", async () => {

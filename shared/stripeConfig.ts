@@ -8,7 +8,7 @@ export const SPARK_PACKAGES = {
   snack: { name: "小食包", nameEn: "Snack Pack", price: 88, currency: "HKD", sparks: 1000, bonus: 0, tagline: "淺嘗 AI 的威力" },
   energy: { name: "能量包", nameEn: "Energy Pack", price: 288, currency: "HKD", sparks: 3000, bonus: 1000, tagline: "最受歡迎的選擇" },
   super: { name: "超級包", nameEn: "Super Pack", price: 888, currency: "HKD", sparks: 10000, bonus: 5000, tagline: "釋放全部潛能" },
-  flagship: { name: "旗艦包", nameEn: "Flagship Pack", price: 2888, currency: "HKD", sparks: 40000, bonus: 20000, tagline: "企業級用量" },
+  flagship: { name: "旗艦包", nameEn: "Flagship Pack", price: 2888, currency: "HKD", sparks: 60000, bonus: 0, tagline: "企業級用量" },
 } as const;
 
 export type SparkPackageType = keyof typeof SPARK_PACKAGES;

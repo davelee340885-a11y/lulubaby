@@ -1,9 +1,0 @@
-{
-  "query": "ALTER TABLE ai_personas MODIFY COLUMN profilePhotoUrl TEXT;",
-  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user VqBKoEwKfw4feq4.6cd8cd1ff95f --database aavW9BLbZ6sZHaPEemayyD --execute ALTER TABLE ai_personas MODIFY COLUMN profilePhotoUrl TEXT;",
-  "rows": [],
-  "messages": [],
-  "stdout": "",
-  "stderr": "",
-  "execution_time_ms": 1634
-}

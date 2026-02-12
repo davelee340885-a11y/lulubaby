@@ -273,18 +273,11 @@ export default function Pricing() {
                   variant="outline"
                   size="sm"
                   className="border-blue-300 text-blue-700 hover:bg-blue-100 dark:border-blue-700 dark:text-blue-300 dark:hover:bg-blue-900/50"
-                  onClick={() => {
-                    const code = (user as any)?.referralCode;
-                    if (code) {
-                      navigator.clipboard.writeText(`https://lulubaby.xyz/signup?ref=${code}`);
-                      toast.success("推薦連結已複製到剪貼板！");
-                    } else {
-                      toast.error("推薦碼尚未生成，請前往帳戶設定頁面查看");
-                    }
-                  }}
+                  onClick={() => setLocation("/w/" + ((user as any)?.subdomain || "") + "/account")}
                 >
-                  <Copy className="h-4 w-4 mr-1.5" />
-                  複製推薦連結
+                  <Share2 className="h-4 w-4 mr-1.5" />
+                  前往推薦有賞
+                  <ArrowRight className="h-3 w-3 ml-1" />
                 </Button>
               )}
             </div>

@@ -1,9 +1,0 @@
-{
-  "query": "CREATE TABLE IF NOT EXISTS `customer_memories` (\n  `id` int AUTO_INCREMENT NOT NULL,\n  `customerId` int NOT NULL,\n  `memoryType` enum('preference','fact','need','concern','interaction','purchase','feedback','custom') NOT NULL DEFAULT 'fact',\n  `key` varchar(100) NOT NULL,\n  `value` text NOT NULL,\n  `confidence` int NOT NULL DEFAULT 80,\n  `sourceConversationId` int,\n  `extractedAt` timestamp NOT NULL DEFAULT (now()),\n  `isActive` boolean NOT NULL DEFAULT true,\n  `expiresAt` timestamp,\n  `createdAt` timestamp NOT NULL DEFAULT (now()),\n  `updatedAt` timestamp NOT NULL DEFAULT (now()) ON UPDATE CURRENT_TIMESTAMP,\n  CONSTRAINT `customer_memories_id` PRIMARY KEY(`id`)\n);",
-  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user VqBKoEwKfw4feq4.6cd8cd1ff95f --database aavW9BLbZ6sZHaPEemayyD --execute CREATE TABLE IF NOT EXISTS `customer_memories` (\n  `id` int AUTO_INCREMENT NOT NULL,\n  `customerId` int NOT NULL,\n  `memoryType` enum('preference','fact','need','concern','interaction','purchase','feedback','custom') NOT NULL DEFAULT 'fact',\n  `key` varchar(100) NOT NULL,\n  `value` text NOT NULL,\n  `confidence` int NOT NULL DEFAULT 80,\n  `sourceConversationId` int,\n  `extractedAt` timestamp NOT NULL DEFAULT (now()),\n  `isActive` boolean NOT NULL DEFAULT true,\n  `expiresAt` timestamp,\n  `createdAt` timestamp NOT NULL DEFAULT (now()),\n  `updatedAt` timestamp NOT NULL DEFAULT (now()) ON UPDATE CURRENT_TIMESTAMP,\n  CONSTRAINT `customer_memories_id` PRIMARY KEY(`id`)\n);",
-  "rows": [],
-  "messages": [],
-  "stdout": "",
-  "stderr": "",
-  "execution_time_ms": 1690
-}

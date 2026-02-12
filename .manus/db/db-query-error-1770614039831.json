@@ -1,8 +1,0 @@
-{
-  "query": "\nALTER TABLE subscriptions \n  MODIFY COLUMN plan ENUM('free', 'pro', 'enterprise') NOT NULL DEFAULT 'free',\n  MODIFY COLUMN status ENUM('active', 'canceled', 'incomplete', 'incomplete_expired', 'past_due', 'trialing', 'unpaid', 'paused') NOT NULL DEFAULT 'active',\n  MODIFY COLUMN stripeCustomerId VARCHAR(255) NOT NULL DEFAULT '',\n  ADD COLUMN IF NOT EXISTS currentPeriodStart TIMESTAMP NULL,\n  ADD COLUMN IF NOT EXISTS currentPeriodEnd TIMESTAMP NULL,\n  ADD COLUMN IF NOT EXISTS cancelAtPeriodEnd BOOLEAN NOT NULL DEFAULT FALSE;\n",
-  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user VqBKoEwKfw4feq4.6cd8cd1ff95f --database aavW9BLbZ6sZHaPEemayyD --execute \nALTER TABLE subscriptions \n  MODIFY COLUMN plan ENUM('free', 'pro', 'enterprise') NOT NULL DEFAULT 'free',\n  MODIFY COLUMN status ENUM('active', 'canceled', 'incomplete', 'incomplete_expired', 'past_due', 'trialing', 'unpaid', 'paused') NOT NULL DEFAULT 'active',\n  MODIFY COLUMN stripeCustomerId VARCHAR(255) NOT NULL DEFAULT '',\n  ADD COLUMN IF NOT EXISTS currentPeriodStart TIMESTAMP NULL,\n  ADD COLUMN IF NOT EXISTS currentPeriodEnd TIMESTAMP NULL,\n  ADD COLUMN IF NOT EXISTS cancelAtPeriodEnd BOOLEAN NOT NULL DEFAULT FALSE;\n",
-  "returncode": 1,
-  "logs": [
-    "ERROR 1265 (01000) at line 2: Data truncated for column 'stripecustomerid' at row 1"
-  ]
-}

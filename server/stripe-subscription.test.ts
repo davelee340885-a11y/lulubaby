@@ -72,14 +72,14 @@ describe("Spark Package Configuration (v3.14)", () => {
     expect(SPARK_PACKAGES.snack.sparks).toBe(1000);
     expect(SPARK_PACKAGES.energy.sparks).toBe(3000);
     expect(SPARK_PACKAGES.super.sparks).toBe(10000);
-    expect(SPARK_PACKAGES.flagship.sparks).toBe(40000);
+    expect(SPARK_PACKAGES.flagship.sparks).toBe(60000);
   });
 
   it("should have correct bonus amounts (v3.14 updated)", () => {
     expect(SPARK_PACKAGES.snack.bonus).toBe(0);
     expect(SPARK_PACKAGES.energy.bonus).toBe(1000);
     expect(SPARK_PACKAGES.super.bonus).toBe(5000);
-    expect(SPARK_PACKAGES.flagship.bonus).toBe(20000);
+    expect(SPARK_PACKAGES.flagship.bonus).toBe(0);
   });
 
   it("should have all currencies as HKD", () => {

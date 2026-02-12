@@ -1,9 +1,0 @@
-{
-  "query": "UPDATE domain_orders SET sslStatus = 'active', updatedAt = NOW() WHERE domain = 'lulubaby.xyz' AND id = 210003;",
-  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user VqBKoEwKfw4feq4.6cd8cd1ff95f --database aavW9BLbZ6sZHaPEemayyD --execute UPDATE domain_orders SET sslStatus = 'active', updatedAt = NOW() WHERE domain = 'lulubaby.xyz' AND id = 210003;",
-  "rows": [],
-  "messages": [],
-  "stdout": "",
-  "stderr": "",
-  "execution_time_ms": 1548
-}

@@ -1,9 +1,0 @@
-{
-  "query": "CREATE TABLE IF NOT EXISTS `customer_users` (\n  `id` int AUTO_INCREMENT NOT NULL,\n  `email` varchar(320) NOT NULL,\n  `name` varchar(100),\n  `passwordHash` varchar(255) NOT NULL,\n  `personaId` int NOT NULL,\n  `provider` enum('email','google','apple','microsoft') NOT NULL DEFAULT 'email',\n  `isActive` boolean NOT NULL DEFAULT true,\n  `lastLoginAt` timestamp,\n  `createdAt` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,\n  `updatedAt` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,\n  CONSTRAINT `customer_users_id` PRIMARY KEY(`id`),\n  CONSTRAINT `customer_users_email_unique` UNIQUE(`email`)\n);",
-  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user VqBKoEwKfw4feq4.6cd8cd1ff95f --database aavW9BLbZ6sZHaPEemayyD --execute CREATE TABLE IF NOT EXISTS `customer_users` (\n  `id` int AUTO_INCREMENT NOT NULL,\n  `email` varchar(320) NOT NULL,\n  `name` varchar(100),\n  `passwordHash` varchar(255) NOT NULL,\n  `personaId` int NOT NULL,\n  `provider` enum('email','google','apple','microsoft') NOT NULL DEFAULT 'email',\n  `isActive` boolean NOT NULL DEFAULT true,\n  `lastLoginAt` timestamp,\n  `createdAt` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,\n  `updatedAt` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,\n  CONSTRAINT `customer_users_id` PRIMARY KEY(`id`),\n  CONSTRAINT `customer_users_email_unique` UNIQUE(`email`)\n);",
-  "rows": [],
-  "messages": [],
-  "stdout": "",
-  "stderr": "",
-  "execution_time_ms": 1680
-}
