@@ -16,7 +16,7 @@ import {
 } from "@/components/ui/sidebar";
 import { getLoginUrl } from "@/const";
 import { useIsMobile } from "@/hooks/useMobile";
-import { LayoutDashboard, LogOut, PanelLeft, FileText, Bot, Palette, Globe, Brain, Zap, User, CreditCard, ExternalLink, MessageCircle, Users, UserCircle, Monitor, Settings, Sparkles, Code, Puzzle, Phone, Mail, MapPin, Gift } from "lucide-react";
+import { LayoutDashboard, LogOut, PanelLeft, FileText, Bot, Palette, Globe, Brain, Zap, User, CreditCard, ExternalLink, MessageCircle, Users, UserCircle, Monitor, Settings, Sparkles, Code, Puzzle, Phone, Mail, MapPin, Gift, Shield } from "lucide-react";
 import { CSSProperties, useEffect, useRef, useState } from "react";
 import { useLocation } from "wouter";
 import { DashboardLayoutSkeleton } from './DashboardLayoutSkeleton';
@@ -35,7 +35,7 @@ import { toast } from "sonner";
 import { trpc } from "@/lib/trpc";
 
 // Navigation categories with colors
-const navCategories = [
+const baseNavCategories = [
   {
     id: "dashboard",
     label: "儀表板",
@@ -85,16 +85,31 @@ const navCategories = [
     color: "bg-amber-500/10 text-amber-600 dark:text-amber-400",
     borderColor: "border-l-amber-500",
     items: [
-      // { icon: Users, label: "團隊管理", path: "/team" }, // v2.0 團隊功能暫時隱藏
       { icon: User, label: "帳戶設定", path: "/account" },
       { icon: Gift, label: "推薦有賞", path: "/account#referral" },
-      // { icon: Sparkles, label: "Feed ✨", path: "/feed" }, // MVP: Feed 功能暫時隱藏，避免用戶困惑
     ],
   },
 ];
 
-// Flatten menu items for finding active item
-const allMenuItems = navCategories.flatMap(cat => cat.items);
+const adminCategory = {
+  id: "admin",
+  label: "管理員",
+  color: "bg-red-500/10 text-red-600 dark:text-red-400",
+  borderColor: "border-l-red-500",
+  items: [
+    { icon: Shield, label: "用戶管理", path: "/admin/users" },
+  ],
+};
+
+function getNavCategories(isAdmin: boolean) {
+  if (isAdmin) {
+    return [...baseNavCategories, adminCategory];
+  }
+  return baseNavCategories;
+}
+
+// Flatten menu items for finding active item (includes admin items)
+const allMenuItems = [...baseNavCategories, adminCategory].flatMap(cat => cat.items);
 
 // Helper: resolve workspace path
 function wsPath(workspaceId: string | undefined, path: string) {
@@ -215,6 +230,8 @@ function DashboardLayoutContent({
   const sidebarRef = useRef<HTMLDivElement>(null);
   const activeMenuItem = allMenuItems.find(item => isNavActive(location, workspaceId, item.path));
   const isMobile = useIsMobile();
+  const isAdmin = user?.role === "admin";
+  const navCategories = getNavCategories(isAdmin ?? false);
 
   useEffect(() => {
     if (isCollapsed) {

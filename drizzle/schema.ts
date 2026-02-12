@@ -428,7 +428,7 @@ export type PlanLimits = typeof PLAN_LIMITS[PlanType];
 export const sparkTransactions = mysqlTable("spark_transactions", {
   id: int("id").autoincrement().primaryKey(),
   userId: int("userId").notNull(),
-  type: mysqlEnum("type", ["topup", "consume", "bonus", "refund", "referral_bonus"]).notNull(),
+  type: mysqlEnum("type", ["topup", "consume", "bonus", "refund", "referral_bonus", "admin_topup"]).notNull(),
   amount: int("amount").notNull(), // 正數=增加, 負數=消耗
   balance: int("balance").notNull(), // 交易後餘額
   description: varchar("description", { length: 255 }),

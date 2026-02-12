@@ -10,7 +10,8 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Loader2, Search, Users, Shield, UserCog, ChevronLeft, ChevronRight, AlertTriangle } from "lucide-react";
+import { Label } from "@/components/ui/label";
+import { Loader2, Search, Users, Shield, UserCog, ChevronLeft, ChevronRight, AlertTriangle, Zap, Plus, History } from "lucide-react";
 import { toast } from "sonner";
 import DashboardLayout from "@/components/DashboardLayout";
 
@@ -24,6 +25,8 @@ export default function AdminUsers() {
   const [selectedUser, setSelectedUser] = useState<any>(null);
   const [showRoleDialog, setShowRoleDialog] = useState(false);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+  const [showTopupDialog, setShowTopupDialog] = useState(false);
+  const [showHistoryDialog, setShowHistoryDialog] = useState(false);
 
   // Check admin access
   if (authLoading) {
@@ -64,6 +67,10 @@ export default function AdminUsers() {
         setShowRoleDialog={setShowRoleDialog}
         showDeleteDialog={showDeleteDialog}
         setShowDeleteDialog={setShowDeleteDialog}
+        showTopupDialog={showTopupDialog}
+        setShowTopupDialog={setShowTopupDialog}
+        showHistoryDialog={showHistoryDialog}
+        setShowHistoryDialog={setShowHistoryDialog}
         currentUserId={user.id}
       />
     </DashboardLayout>
@@ -83,6 +90,10 @@ function AdminUsersContent({
   setShowRoleDialog,
   showDeleteDialog,
   setShowDeleteDialog,
+  showTopupDialog,
+  setShowTopupDialog,
+  showHistoryDialog,
+  setShowHistoryDialog,
   currentUserId,
 }: {
   page: number;
@@ -97,9 +108,16 @@ function AdminUsersContent({
   setShowRoleDialog: (show: boolean) => void;
   showDeleteDialog: boolean;
   setShowDeleteDialog: (show: boolean) => void;
+  showTopupDialog: boolean;
+  setShowTopupDialog: (show: boolean) => void;
+  showHistoryDialog: boolean;
+  setShowHistoryDialog: (show: boolean) => void;
   currentUserId: number;
 }) {
   const utils = trpc.useUtils();
+  const [topupAmount, setTopupAmount] = useState("");
+  const [topupReason, setTopupReason] = useState("");
+  const [historyPage, setHistoryPage] = useState(1);
 
   const { data: usersData, isLoading } = trpc.admin.getAllUsers.useQuery({
     page,
@@ -109,6 +127,11 @@ function AdminUsersContent({
   });
 
   const { data: stats } = trpc.admin.getDashboardStats.useQuery();
+
+  const { data: sparkHistory, isLoading: historyLoading } = trpc.admin.getUserSparkHistory.useQuery(
+    { userId: selectedUser?.id || 0, page: historyPage, pageSize: 10 },
+    { enabled: showHistoryDialog && !!selectedUser }
+  );
 
   const updateRoleMutation = trpc.admin.updateUserRole.useMutation({
     onSuccess: () => {
@@ -134,6 +157,20 @@ function AdminUsersContent({
     },
   });
 
+  const topupMutation = trpc.admin.topupSpark.useMutation({
+    onSuccess: (data) => {
+      toast.success(data.message);
+      utils.admin.getAllUsers.invalidate();
+      utils.admin.getDashboardStats.invalidate();
+      setShowTopupDialog(false);
+      setTopupAmount("");
+      setTopupReason("");
+    },
+    onError: (error) => {
+      toast.error(error.message || "充值失敗");
+    },
+  });
+
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
     setPage(1);
@@ -156,6 +193,25 @@ function AdminUsersContent({
     }
   };
 
+  const handleTopup = () => {
+    const amount = parseInt(topupAmount);
+    if (!amount || amount <= 0) {
+      toast.error("請輸入有效的充值數量");
+      return;
+    }
+    if (!topupReason.trim()) {
+      toast.error("請輸入充值原因");
+      return;
+    }
+    if (selectedUser) {
+      topupMutation.mutate({
+        userId: selectedUser.id,
+        amount,
+        reason: topupReason.trim(),
+      });
+    }
+  };
+
   const formatDate = (date: Date | string | null) => {
     if (!date) return "-";
     return new Date(date).toLocaleDateString("zh-HK", {
@@ -167,17 +223,29 @@ function AdminUsersContent({
     });
   };
 
+  const getTransactionTypeLabel = (type: string) => {
+    const labels: Record<string, { text: string; color: string }> = {
+      topup: { text: "充值", color: "text-green-600" },
+      consume: { text: "消耗", color: "text-red-500" },
+      bonus: { text: "獎勵", color: "text-blue-500" },
+      refund: { text: "退款", color: "text-orange-500" },
+      referral_bonus: { text: "推薦獎勵", color: "text-purple-500" },
+      admin_topup: { text: "管理員充值", color: "text-emerald-600" },
+    };
+    return labels[type] || { text: type, color: "text-gray-500" };
+  };
+
   return (
     <div className="space-y-6 p-6">
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-bold">用戶管理</h1>
-          <p className="text-muted-foreground">管理平台用戶和權限</p>
+          <p className="text-muted-foreground">管理平台用戶、權限和 Spark 餘額</p>
         </div>
       </div>
 
       {/* Stats Cards */}
-      <div className="grid gap-4 md:grid-cols-4">
+      <div className="grid gap-4 md:grid-cols-5">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">總用戶數</CardTitle>
@@ -214,6 +282,15 @@ function AdminUsersContent({
             <div className="text-2xl font-bold">{stats?.weekUsers || 0}</div>
           </CardContent>
         </Card>
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Spark 總流通量</CardTitle>
+            <Zap className="h-4 w-4 text-amber-500" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold text-amber-600">{stats?.totalSpark?.toLocaleString() || 0}</div>
+          </CardContent>
+        </Card>
       </div>
 
       {/* Filters */}
@@ -227,7 +304,7 @@ function AdminUsersContent({
             <div className="relative flex-1">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
               <Input
-                placeholder="搜索姓名或電郵..."
+                placeholder="搜索姓名、電郵或子域名..."
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
                 className="pl-10"
@@ -252,67 +329,101 @@ function AdminUsersContent({
             </div>
           ) : (
             <>
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>ID</TableHead>
-                    <TableHead>姓名</TableHead>
-                    <TableHead>電郵</TableHead>
-                    <TableHead>角色</TableHead>
-                    <TableHead>登入方式</TableHead>
-                    <TableHead>註冊時間</TableHead>
-                    <TableHead>最後登入</TableHead>
-                    <TableHead className="text-right">操作</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {usersData?.users.map((u) => (
-                    <TableRow key={u.id}>
-                      <TableCell className="font-mono">{u.id}</TableCell>
-                      <TableCell className="font-medium">{u.name || "-"}</TableCell>
-                      <TableCell>{u.email}</TableCell>
-                      <TableCell>
-                        <Badge variant={u.role === "admin" ? "default" : "secondary"}>
-                          {u.role === "admin" ? "管理員" : "用戶"}
-                        </Badge>
-                      </TableCell>
-                      <TableCell>
-                        <Badge variant="outline">
-                          {u.loginMethod === "email" ? "電郵" : u.loginMethod === "manus" ? "Manus" : u.loginMethod || "-"}
-                        </Badge>
-                      </TableCell>
-                      <TableCell>{formatDate(u.createdAt)}</TableCell>
-                      <TableCell>{formatDate(u.lastSignedIn)}</TableCell>
-                      <TableCell className="text-right">
-                        <div className="flex justify-end gap-2">
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => {
-                              setSelectedUser(u);
-                              setShowRoleDialog(true);
-                            }}
-                            disabled={u.id === currentUserId}
-                          >
-                            更改角色
-                          </Button>
-                          <Button
-                            variant="destructive"
-                            size="sm"
-                            onClick={() => {
-                              setSelectedUser(u);
-                              setShowDeleteDialog(true);
-                            }}
-                            disabled={u.id === currentUserId}
-                          >
-                            刪除
-                          </Button>
-                        </div>
-                      </TableCell>
+              <div className="overflow-x-auto">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>ID</TableHead>
+                      <TableHead>姓名</TableHead>
+                      <TableHead>電郵</TableHead>
+                      <TableHead>子域名</TableHead>
+                      <TableHead>角色</TableHead>
+                      <TableHead className="text-right">Spark 餘額</TableHead>
+                      <TableHead>註冊時間</TableHead>
+                      <TableHead className="text-right">操作</TableHead>
                     </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
+                  </TableHeader>
+                  <TableBody>
+                    {usersData?.users.map((u) => (
+                      <TableRow key={u.id}>
+                        <TableCell className="font-mono text-xs">{u.id}</TableCell>
+                        <TableCell className="font-medium">{u.name || "-"}</TableCell>
+                        <TableCell className="text-sm">{u.email}</TableCell>
+                        <TableCell className="text-sm text-muted-foreground">{u.subdomain || "-"}</TableCell>
+                        <TableCell>
+                          <Badge variant={u.role === "admin" ? "default" : "secondary"}>
+                            {u.role === "admin" ? "管理員" : "用戶"}
+                          </Badge>
+                        </TableCell>
+                        <TableCell className="text-right">
+                          <div className="flex items-center justify-end gap-1">
+                            <Zap className="h-3.5 w-3.5 text-amber-500 fill-amber-400/30" />
+                            <span className="font-mono font-medium text-amber-700 dark:text-amber-300">
+                              {u.sparkBalance?.toLocaleString() || 0}
+                            </span>
+                          </div>
+                        </TableCell>
+                        <TableCell className="text-sm">{formatDate(u.createdAt)}</TableCell>
+                        <TableCell className="text-right">
+                          <div className="flex justify-end gap-1">
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              className="h-7 text-xs gap-1 text-amber-600 border-amber-200 hover:bg-amber-50 dark:hover:bg-amber-950"
+                              onClick={() => {
+                                setSelectedUser(u);
+                                setTopupAmount("");
+                                setTopupReason("");
+                                setShowTopupDialog(true);
+                              }}
+                            >
+                              <Plus className="h-3 w-3" />
+                              充值
+                            </Button>
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              className="h-7 text-xs gap-1"
+                              onClick={() => {
+                                setSelectedUser(u);
+                                setHistoryPage(1);
+                                setShowHistoryDialog(true);
+                              }}
+                            >
+                              <History className="h-3 w-3" />
+                              記錄
+                            </Button>
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              className="h-7 text-xs"
+                              onClick={() => {
+                                setSelectedUser(u);
+                                setShowRoleDialog(true);
+                              }}
+                              disabled={u.id === currentUserId}
+                            >
+                              角色
+                            </Button>
+                            <Button
+                              variant="destructive"
+                              size="sm"
+                              className="h-7 text-xs"
+                              onClick={() => {
+                                setSelectedUser(u);
+                                setShowDeleteDialog(true);
+                              }}
+                              disabled={u.id === currentUserId}
+                            >
+                              刪除
+                            </Button>
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </div>
 
               {/* Pagination */}
               {usersData && usersData.pagination.totalPages > 1 && (
@@ -346,6 +457,174 @@ function AdminUsersContent({
           )}
         </CardContent>
       </Card>
+
+      {/* Spark Top-up Dialog */}
+      <Dialog open={showTopupDialog} onOpenChange={setShowTopupDialog}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Zap className="h-5 w-5 text-amber-500" />
+              手動充值 Spark
+            </DialogTitle>
+            <DialogDescription>
+              為 {selectedUser?.name || selectedUser?.email} 充值 Spark
+              <br />
+              <span className="text-xs">目前餘額: {selectedUser?.sparkBalance?.toLocaleString() || 0} Spark</span>
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <div className="space-y-2">
+              <Label>充值數量</Label>
+              <Input
+                type="number"
+                min="1"
+                placeholder="輸入 Spark 數量..."
+                value={topupAmount}
+                onChange={(e) => setTopupAmount(e.target.value)}
+              />
+              <div className="flex gap-2">
+                {[100, 500, 1000, 5000, 10000].map((amount) => (
+                  <Button
+                    key={amount}
+                    variant="outline"
+                    size="sm"
+                    className="text-xs h-7"
+                    onClick={() => setTopupAmount(amount.toString())}
+                  >
+                    {amount.toLocaleString()}
+                  </Button>
+                ))}
+              </div>
+            </div>
+            <div className="space-y-2">
+              <Label>充值原因</Label>
+              <Input
+                placeholder="例如：客戶補償、測試用途、促銷活動..."
+                value={topupReason}
+                onChange={(e) => setTopupReason(e.target.value)}
+              />
+            </div>
+            {topupAmount && parseInt(topupAmount) > 0 && (
+              <div className="rounded-lg bg-amber-50 dark:bg-amber-950/30 p-3 border border-amber-200 dark:border-amber-800">
+                <p className="text-sm text-amber-800 dark:text-amber-200">
+                  充值後餘額: <strong>{((selectedUser?.sparkBalance || 0) + parseInt(topupAmount || "0")).toLocaleString()} Spark</strong>
+                </p>
+              </div>
+            )}
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowTopupDialog(false)}>
+              取消
+            </Button>
+            <Button
+              onClick={handleTopup}
+              disabled={topupMutation.isPending || !topupAmount || !topupReason.trim()}
+              className="bg-amber-600 hover:bg-amber-700"
+            >
+              {topupMutation.isPending ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  充值中...
+                </>
+              ) : (
+                <>
+                  <Zap className="mr-2 h-4 w-4" />
+                  確認充值
+                </>
+              )}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Spark History Dialog */}
+      <Dialog open={showHistoryDialog} onOpenChange={setShowHistoryDialog}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <History className="h-5 w-5" />
+              Spark 交易記錄
+            </DialogTitle>
+            <DialogDescription>
+              {selectedUser?.name || selectedUser?.email} 的 Spark 交易歷史
+            </DialogDescription>
+          </DialogHeader>
+          <div className="max-h-[400px] overflow-y-auto">
+            {historyLoading ? (
+              <div className="flex items-center justify-center h-32">
+                <Loader2 className="h-6 w-6 animate-spin text-primary" />
+              </div>
+            ) : sparkHistory?.transactions.length === 0 ? (
+              <div className="text-center py-8 text-muted-foreground">
+                暫無交易記錄
+              </div>
+            ) : (
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>時間</TableHead>
+                    <TableHead>類型</TableHead>
+                    <TableHead className="text-right">數量</TableHead>
+                    <TableHead className="text-right">餘額</TableHead>
+                    <TableHead>說明</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {sparkHistory?.transactions.map((tx) => {
+                    const typeInfo = getTransactionTypeLabel(tx.type);
+                    return (
+                      <TableRow key={tx.id}>
+                        <TableCell className="text-xs">{formatDate(tx.createdAt)}</TableCell>
+                        <TableCell>
+                          <span className={`text-xs font-medium ${typeInfo.color}`}>
+                            {typeInfo.text}
+                          </span>
+                        </TableCell>
+                        <TableCell className={`text-right font-mono text-sm ${tx.amount > 0 ? 'text-green-600' : 'text-red-500'}`}>
+                          {tx.amount > 0 ? '+' : ''}{tx.amount.toLocaleString()}
+                        </TableCell>
+                        <TableCell className="text-right font-mono text-sm">
+                          {tx.balance.toLocaleString()}
+                        </TableCell>
+                        <TableCell className="text-xs text-muted-foreground max-w-[200px] truncate">
+                          {tx.description || "-"}
+                        </TableCell>
+                      </TableRow>
+                    );
+                  })}
+                </TableBody>
+              </Table>
+            )}
+          </div>
+          {sparkHistory && sparkHistory.pagination.totalPages > 1 && (
+            <div className="flex items-center justify-between mt-2">
+              <p className="text-xs text-muted-foreground">
+                第 {historyPage} / {sparkHistory.pagination.totalPages} 頁
+              </p>
+              <div className="flex gap-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="h-7 text-xs"
+                  onClick={() => setHistoryPage(historyPage - 1)}
+                  disabled={historyPage <= 1}
+                >
+                  上一頁
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="h-7 text-xs"
+                  onClick={() => setHistoryPage(historyPage + 1)}
+                  disabled={historyPage >= sparkHistory.pagination.totalPages}
+                >
+                  下一頁
+                </Button>
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
 
       {/* Role Change Dialog */}
       <Dialog open={showRoleDialog} onOpenChange={setShowRoleDialog}>

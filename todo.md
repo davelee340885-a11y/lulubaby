@@ -1945,3 +1945,12 @@
 
 ## v3.14.3 Hotfix：WorkspaceGuard render phase navigate 錯誤
 - [x] 修復 WorkspaceGuard 在 render phase 調用 navigate() 導致 React 錯誤，改用 useEffect
+
+## v3.15.0 管理員後台 + 電郵修復
+- [x] 修復忘記密碼電郵重置按鈕不可點擊（按鈕區域空白，只有底部文字連結可用）
+- [x] 管理員後台：恢復管理員設定功能（側邊欄入口）
+- [x] 管理員後台：新增手動為用戶充值 Spark 功能
+- [x] 後端 API：adminRouter.topupSpark 手動充值路由
+- [x] 後端 API：adminRouter.getUserSparkHistory Spark 交易記錄查詢
+- [x] 前端 AdminUsers 頁面：Spark 餘額顯示和充值對話框
+- [x] 前端 AdminUsers 頁面：Spark 交易記錄查詢對話框

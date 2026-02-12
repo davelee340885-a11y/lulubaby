@@ -1,0 +1,1 @@
+ALTER TABLE `spark_transactions` MODIFY COLUMN `type` enum('topup','consume','bonus','refund','referral_bonus','admin_topup') NOT NULL;

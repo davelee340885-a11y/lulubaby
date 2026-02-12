@@ -1,12 +1,12 @@
 /**
  * Admin Router
- * Handles admin-only operations for user management
+ * Handles admin-only operations for user management and Spark top-up
  */
 import { z } from "zod";
 import { protectedProcedure, router } from "./_core/trpc";
 import { getDb } from "./db";
-import { users } from "../drizzle/schema";
-import { eq, desc, like, or, sql } from "drizzle-orm";
+import { users, sparkTransactions } from "../drizzle/schema";
+import { eq, desc, like, or, sql, and } from "drizzle-orm";
 import { TRPCError } from "@trpc/server";
 
 /**
@@ -42,28 +42,29 @@ export const adminRouter = router({
       const { page, pageSize, search, role } = input;
       const offset = (page - 1) * pageSize;
 
-      // Build where conditions
-      let whereConditions: any[] = [];
-      
+      // Build where clause
+      const conditions: any[] = [];
       if (search) {
-        whereConditions.push(
+        conditions.push(
           or(
             like(users.name, `%${search}%`),
-            like(users.email, `%${search}%`)
+            like(users.email, `%${search}%`),
+            like(users.subdomain, `%${search}%`)
           )
         );
       }
-
       if (role !== "all") {
-        whereConditions.push(eq(users.role, role));
+        conditions.push(eq(users.role, role));
       }
 
-      // Get total count
-      const countQuery = db.select({ count: sql<number>`count(*)` }).from(users);
-      if (whereConditions.length > 0) {
-        // Apply conditions manually
-      }
-      const countResult = await countQuery;
+      const whereClause = conditions.length > 0
+        ? conditions.length === 1 ? conditions[0] : and(...conditions)
+        : undefined;
+
+      // Get total count with filters
+      const countResult = await (whereClause
+        ? db.select({ count: sql<number>`count(*)` }).from(users).where(whereClause)
+        : db.select({ count: sql<number>`count(*)` }).from(users));
       const total = Number(countResult[0]?.count || 0);
 
       // Get users with pagination
@@ -73,24 +74,15 @@ export const adminRouter = router({
         email: users.email,
         role: users.role,
         loginMethod: users.loginMethod,
+        sparkBalance: users.sparkBalance,
+        subdomain: users.subdomain,
+        referralCode: users.referralCode,
         createdAt: users.createdAt,
         lastSignedIn: users.lastSignedIn,
       }).from(users);
 
-      // Apply filters
-      if (search && role !== "all") {
-        query = query.where(
-          sql`(${users.name} LIKE ${`%${search}%`} OR ${users.email} LIKE ${`%${search}%`}) AND ${users.role} = ${role}`
-        ) as any;
-      } else if (search) {
-        query = query.where(
-          or(
-            like(users.name, `%${search}%`),
-            like(users.email, `%${search}%`)
-          )
-        ) as any;
-      } else if (role !== "all") {
-        query = query.where(eq(users.role, role)) as any;
+      if (whereClause) {
+        query = query.where(whereClause) as any;
       }
 
       const userList = await query
@@ -128,6 +120,9 @@ export const adminRouter = router({
         email: users.email,
         role: users.role,
         loginMethod: users.loginMethod,
+        sparkBalance: users.sparkBalance,
+        subdomain: users.subdomain,
+        referralCode: users.referralCode,
         createdAt: users.createdAt,
         updatedAt: users.updatedAt,
         lastSignedIn: users.lastSignedIn,
@@ -180,7 +175,7 @@ export const adminRouter = router({
     }),
 
   /**
-   * Delete user (soft delete by deactivating)
+   * Delete user (hard delete)
    */
   deleteUser: adminProcedure
     .input(z.object({
@@ -210,6 +205,98 @@ export const adminRouter = router({
       await db.delete(users).where(eq(users.id, input.userId));
 
       return { success: true, message: "用戶已刪除" };
+    }),
+
+  /**
+   * Admin manual Spark top-up for any user
+   */
+  topupSpark: adminProcedure
+    .input(z.object({
+      userId: z.number(),
+      amount: z.number().min(1).max(1000000),
+      reason: z.string().min(1).max(255),
+    }))
+    .mutation(async ({ input, ctx }) => {
+      const db = await getDb();
+      if (!db) {
+        throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "數據庫連接失敗" });
+      }
+
+      // Check if target user exists
+      const userResult = await db.select({
+        id: users.id,
+        name: users.name,
+        email: users.email,
+        sparkBalance: users.sparkBalance,
+      }).from(users).where(eq(users.id, input.userId)).limit(1);
+
+      if (userResult.length === 0) {
+        throw new TRPCError({ code: "NOT_FOUND", message: "用戶不存在" });
+      }
+
+      const targetUser = userResult[0];
+      const newBalance = targetUser.sparkBalance + input.amount;
+
+      // Update user's spark balance
+      await db.update(users)
+        .set({ sparkBalance: newBalance, updatedAt: new Date() })
+        .where(eq(users.id, input.userId));
+
+      // Record transaction
+      await db.insert(sparkTransactions).values({
+        userId: input.userId,
+        type: "admin_topup",
+        amount: input.amount,
+        balance: newBalance,
+        description: `管理員充值: ${input.reason} (by ${ctx.user.name || ctx.user.email})`,
+      });
+
+      return { 
+        success: true, 
+        message: `已為 ${targetUser.name || targetUser.email} 充值 ${input.amount.toLocaleString()} Spark`,
+        newBalance,
+      };
+    }),
+
+  /**
+   * Get user's Spark transaction history (admin view)
+   */
+  getUserSparkHistory: adminProcedure
+    .input(z.object({
+      userId: z.number(),
+      page: z.number().min(1).default(1),
+      pageSize: z.number().min(1).max(50).default(10),
+    }))
+    .query(async ({ input }) => {
+      const db = await getDb();
+      if (!db) {
+        throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "數據庫連接失敗" });
+      }
+
+      const { userId, page, pageSize } = input;
+      const offset = (page - 1) * pageSize;
+
+      const countResult = await db.select({ count: sql<number>`count(*)` })
+        .from(sparkTransactions)
+        .where(eq(sparkTransactions.userId, userId));
+      const total = Number(countResult[0]?.count || 0);
+
+      const transactions = await db.select()
+        .from(sparkTransactions)
+        .where(eq(sparkTransactions.userId, userId))
+        .orderBy(desc(sparkTransactions.createdAt))
+        .limit(pageSize)
+        .offset(offset);
+
+      return {
+        transactions,
+        pagination: {
+          page,
+          pageSize,
+          total,
+          totalPages: Math.ceil(total / pageSize),
+        },
+      };
     }),
 
   /**
@@ -247,12 +334,17 @@ export const adminRouter = router({
       .where(sql`${users.createdAt} >= ${weekAgo}`);
     const weekUsers = Number(weekUsersResult[0]?.count || 0);
 
+    // Get total Spark in circulation
+    const totalSparkResult = await db.select({ total: sql<number>`COALESCE(SUM(${users.sparkBalance}), 0)` }).from(users);
+    const totalSpark = Number(totalSparkResult[0]?.total || 0);
+
     return {
       totalUsers,
       adminCount,
       regularUsers: totalUsers - adminCount,
       todayUsers,
       weekUsers,
+      totalSpark,
     };
   }),
 });
