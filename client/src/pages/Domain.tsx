@@ -736,7 +736,7 @@ export default function Domain() {
             <div>
               <CardTitle className="text-base flex items-center gap-2">
                 <Crown className="h-4 w-4 text-amber-600" />
-                自訂域名
+                購買指定網域
               </CardTitle>
               <CardDescription className="text-xs mt-1">
                 購買或綁定您自己的品牌域名，提供完整的品牌體驗
