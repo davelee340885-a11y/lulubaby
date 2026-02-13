@@ -133,7 +133,7 @@ function Router() {
       <Route path="/s/:subdomain" component={SubdomainChat} />
       
       {/* Workspace routes (core) — guarded by WorkspaceGuard */}
-      <Route path="/w/:workspaceId/:rest*">
+      <Route path="/w/:workspaceId/*">
         {(params: { workspaceId: string }) => (
           <WorkspaceGuard workspaceId={params.workspaceId}>
             <DashboardRoutes workspaceId={params.workspaceId} />

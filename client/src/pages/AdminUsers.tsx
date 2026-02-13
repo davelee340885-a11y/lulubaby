@@ -13,7 +13,7 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { Label } from "@/components/ui/label";
 import { Loader2, Search, Users, Shield, UserCog, ChevronLeft, ChevronRight, AlertTriangle, Zap, Plus, History } from "lucide-react";
 import { toast } from "sonner";
-import DashboardLayout from "@/components/DashboardLayout";
+
 
 export default function AdminUsers() {
   const [, setLocation] = useLocation();
@@ -31,30 +31,25 @@ export default function AdminUsers() {
   // Check admin access
   if (authLoading) {
     return (
-      <DashboardLayout>
-        <div className="flex items-center justify-center h-64">
-          <Loader2 className="h-8 w-8 animate-spin text-primary" />
-        </div>
-      </DashboardLayout>
+      <div className="flex items-center justify-center h-64">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      </div>
     );
   }
 
   if (!user || user.role !== "admin") {
     return (
-      <DashboardLayout>
-        <div className="flex flex-col items-center justify-center h-64 space-y-4">
-          <AlertTriangle className="h-16 w-16 text-yellow-500" />
-          <h2 className="text-xl font-semibold">權限不足</h2>
-          <p className="text-muted-foreground">只有管理員可以訪問此頁面</p>
-          <Button onClick={() => setLocation(wsPath("/dashboard"))}>返回儀表板</Button>
-        </div>
-      </DashboardLayout>
+      <div className="flex flex-col items-center justify-center h-64 space-y-4">
+        <AlertTriangle className="h-16 w-16 text-yellow-500" />
+        <h2 className="text-xl font-semibold">權限不足</h2>
+        <p className="text-muted-foreground">只有管理員可以訪問此頁面</p>
+        <Button onClick={() => setLocation(wsPath("/dashboard"))}>返回儀表板</Button>
+      </div>
     );
   }
 
   return (
-    <DashboardLayout>
-      <AdminUsersContent
+    <AdminUsersContent
         page={page}
         setPage={setPage}
         search={search}
@@ -73,7 +68,6 @@ export default function AdminUsers() {
         setShowHistoryDialog={setShowHistoryDialog}
         currentUserId={user.id}
       />
-    </DashboardLayout>
   );
 }
 
