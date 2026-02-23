@@ -63,13 +63,17 @@ export const handlePaymentIntentSucceeded = async (paymentIntent: Stripe.Payment
     
     try {
       // 準備域名購買請求
+      // 組合完整域名（domain + tld）
+      const fullDomain = `${order.domain}${order.tld}`;
       const purchaseRequest = {
         domain: {
-          domainName: order.domain,
+          domainName: fullDomain,
         },
         purchasePrice: order.domainPrice / 100, // 轉換為美元
         years: 1,
       };
+      
+      console.log(`Purchasing domain: ${fullDomain}`);
 
       const registrationResult = await purchaseDomain(purchaseRequest);
 
@@ -79,7 +83,7 @@ export const handlePaymentIntentSucceeded = async (paymentIntent: Stripe.Payment
       // 保存 Name.com 註冊信息
       console.log(`Domain registration result:`, registrationResult);
 
-      console.log(`Domain registered successfully: ${order.domain}`);
+      console.log(`Domain registered successfully: ${order.domain}${order.tld}`);
     } catch (error) {
       console.error(`Failed to register domain with Name.com: ${error}`);
       // 更新訂單狀態為註冊失敗（使用 'failed' 狀態）
@@ -160,20 +164,24 @@ export const handleCheckoutSessionCompleted = async (session: Stripe.Checkout.Se
     
     try {
       // 準備域名購買請求
+      // 組合完整域名（domain + tld）
+      const fullDomain = `${order.domain}${order.tld}`;
       const purchaseRequest = {
         domain: {
-          domainName: order.domain,
+          domainName: fullDomain,
         },
         purchasePrice: order.domainPrice / 100, // 轉換為美元
         years: 1,
       };
+      
+      console.log(`Purchasing domain: ${fullDomain}`);
 
       const registrationResult = await purchaseDomain(purchaseRequest);
 
       // 更新訂單狀態為已註冊
       await updateDomainOrderStatus(orderId, 'registered');
 
-      console.log(`Domain registered successfully: ${order.domain}`);
+      console.log(`Domain registered successfully: ${order.domain}${order.tld}`);
       console.log(`Registration result:`, registrationResult);
     } catch (error) {
       console.error(`Failed to register domain with Name.com:`, error);
