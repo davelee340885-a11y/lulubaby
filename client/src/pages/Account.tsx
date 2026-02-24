@@ -12,7 +12,7 @@ import {
   MessageSquare, Database, FileText, Clock,
   ChevronRight, LogOut, ArrowUpRight, ArrowDownRight,
   Gift, Zap, Pencil, Check, X, Eye, EyeOff, KeyRound, Save,
-  Copy, Share2
+  Copy, Share2, HelpCircle, ExternalLink
 } from "lucide-react";
 import { useLocation } from "wouter";
 import { useWorkspaceId } from "@/hooks/useWorkspaceId";
@@ -510,6 +510,25 @@ export default function Account() {
               </Button>
             </div>
           )}
+
+          <Separator />
+
+          {/* Support */}
+          <div className="flex items-center justify-between">
+            <div>
+              <h4 className="font-medium">支援</h4>
+              <p className="text-sm text-muted-foreground">需要幫助？聯絡我們的支援團隊</p>
+            </div>
+            <Button
+              variant="outline"
+              onClick={() => window.location.href = "mailto:cs@lulubaby.xyz"}
+              className="text-primary hover:text-primary hover:bg-primary/10 border-primary/30"
+            >
+              <HelpCircle className="h-4 w-4 mr-2" />
+              cs@lulubaby.xyz
+              <ExternalLink className="h-3 w-3 ml-2" />
+            </Button>
+          </div>
 
           <Separator />
 
