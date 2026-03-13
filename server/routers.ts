@@ -2180,6 +2180,27 @@ ${knowledgeContent}
       return getDomainsByUserId(ctx.user.id);
     }),
 
+    // Get domain by name (for Cloudflare Workers)
+    // This is a public endpoint used by Workers to route custom domains
+    getByDomain: publicProcedure
+      .input(z.object({ domain: z.string().min(1) }))
+      .query(async ({ input }) => {
+        const domain = input.domain.toLowerCase().trim();
+        const domainOrder = await getPublishedDomainByName(domain);
+        
+        if (!domainOrder) {
+          return null;
+        }
+        
+        return {
+          domain: domainOrder.domain,
+          personaId: domainOrder.personaId,
+          userId: domainOrder.userId,
+          isPublished: domainOrder.isPublished,
+          status: domainOrder.status,
+        };
+      }),
+
     // Get published domain for current user
     getPublished: protectedProcedure.query(async ({ ctx }) => {
       const persona = await getPersonaByUserId(ctx.user.id);
@@ -2952,14 +2973,150 @@ ${knowledgeContent}
         };
       }),
     
+    // ==================== DNS Management API ====================
+    
+    // List DNS records for a domain
+    getDnsRecords: protectedProcedure
+      .input(z.object({ orderId: z.number() }))
+      .query(async ({ ctx, input }) => {
+        const order = await getDomainOrder(input.orderId);
+        if (!order || order.userId !== ctx.user.id) {
+          throw new Error('訂單不存在或無權訪問');
+        }
+        
+        if (!order.cloudflareZoneId) {
+          throw new Error('域名尚未配置 Cloudflare，無法管理 DNS 記錄');
+        }
+        
+        const { listDnsRecords } = await import('./services/cloudflare');
+        const result = await listDnsRecords(order.cloudflareZoneId);
+        
+        if (!result.success) {
+          throw new Error(result.error || '無法獲取 DNS 記錄');
+        }
+        
+        return result.records || [];
+      }),
+    
+    // Add DNS record
+    addDnsRecord: protectedProcedure
+      .input(z.object({
+        orderId: z.number(),
+        type: z.enum(['A', 'AAAA', 'CNAME', 'MX', 'TXT', 'NS']),
+        name: z.string(),
+        content: z.string(),
+        ttl: z.number().optional(),
+        proxied: z.boolean().optional(),
+        priority: z.number().optional(),
+      }))
+      .mutation(async ({ ctx, input }) => {
+        const order = await getDomainOrder(input.orderId);
+        if (!order || order.userId !== ctx.user.id) {
+          throw new Error('訂單不存在或無權訪問');
+        }
+        
+        if (!order.cloudflareZoneId) {
+          throw new Error('域名尚未配置 Cloudflare，無法管理 DNS 記錄');
+        }
+        
+        const { createDnsRecord } = await import('./services/cloudflare');
+        const result = await createDnsRecord(order.cloudflareZoneId, {
+          type: input.type,
+          name: input.name,
+          content: input.content,
+          ttl: input.ttl,
+          proxied: input.proxied,
+          priority: input.priority,
+        });
+        
+        if (!result.success) {
+          throw new Error(result.error || '無法新增 DNS 記錄');
+        }
+        
+        return {
+          success: true,
+          recordId: result.recordId,
+          message: 'DNS 記錄已新增',
+        };
+      }),
+    
+    // Update DNS record
+    updateDnsRecord: protectedProcedure
+      .input(z.object({
+        orderId: z.number(),
+        recordId: z.string(),
+        content: z.string().optional(),
+        ttl: z.number().optional(),
+        proxied: z.boolean().optional(),
+        priority: z.number().optional(),
+      }))
+      .mutation(async ({ ctx, input }) => {
+        const order = await getDomainOrder(input.orderId);
+        if (!order || order.userId !== ctx.user.id) {
+          throw new Error('訂單不存在或無權訪問');
+        }
+        
+        if (!order.cloudflareZoneId) {
+          throw new Error('域名尚未配置 Cloudflare，無法管理 DNS 記錄');
+        }
+        
+        const { updateDnsRecord } = await import('./services/cloudflare');
+        const result = await updateDnsRecord(order.cloudflareZoneId, input.recordId, {
+          content: input.content,
+          ttl: input.ttl,
+          proxied: input.proxied,
+          priority: input.priority,
+        });
+        
+        if (!result.success) {
+          throw new Error(result.error || '無法更新 DNS 記錄');
+        }
+        
+        return {
+          success: true,
+          message: 'DNS 記錄已更新',
+        };
+      }),
+    
+    // Delete DNS record
+    deleteDnsRecord: protectedProcedure
+      .input(z.object({
+        orderId: z.number(),
+        recordId: z.string(),
+      }))
+      .mutation(async ({ ctx, input }) => {
+        const order = await getDomainOrder(input.orderId);
+        if (!order || order.userId !== ctx.user.id) {
+          throw new Error('訂單不存在或無權訪問');
+        }
+        
+        if (!order.cloudflareZoneId) {
+          throw new Error('域名尚未配置 Cloudflare，無法管理 DNS 記錄');
+        }
+        
+        const { deleteDnsRecord } = await import('./services/cloudflare');
+        const result = await deleteDnsRecord(order.cloudflareZoneId, input.recordId);
+        
+        if (!result.success) {
+          throw new Error(result.error || '無法刪除 DNS 記錄');
+        }
+        
+        return {
+          success: true,
+          message: 'DNS 記錄已刪除',
+        };
+      }),
+
     // Get domain management summary
     getManagementSummary: protectedProcedure.query(async ({ ctx }) => {
       const orders = await getRegisteredDomainOrders(ctx.user.id);
       
       const summary = {
         totalDomains: orders.length,
-        activeCount: orders.filter(o => o.dnsStatus === 'active' && o.sslStatus === 'active').length,
-        pendingCount: orders.filter(o => o.dnsStatus === 'pending' || o.dnsStatus === 'configuring' || o.dnsStatus === 'propagating').length,
+        // 「已上線」= isPublished=true 或 dnsStatus 為 active/propagating（DNS 傳播中視為已成功配置）
+        activeCount: orders.filter(o => o.isPublished || o.dnsStatus === 'active' || o.dnsStatus === 'propagating').length,
+        // 「配置中」= 尚未發布且 DNS 仍在初始配置階段
+        pendingCount: orders.filter(o => !o.isPublished && (o.dnsStatus === 'pending' || o.dnsStatus === 'configuring')).length,
         errorCount: orders.filter(o => o.dnsStatus === 'error' || o.sslStatus === 'error').length,
         domains: orders.map(o => ({
           id: o.id,
