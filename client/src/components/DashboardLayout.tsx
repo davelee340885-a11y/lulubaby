@@ -226,7 +226,20 @@ function DashboardLayoutContent({
     email: "",
     message: ""
   });
-  const [isSubmitting, setIsSubmitting] = useState(false);
+  const submitContactForm = trpc.system.submitContactForm.useMutation({
+    onSuccess: (data) => {
+      if (data.success) {
+        toast.success("提交成功！我們將盡快與您聯繫。");
+        setContactModalOpen(false);
+        setContactForm({ name: "", phone: "", email: "", message: "" });
+      } else {
+        toast.error("提交失敗，請稍後再試。");
+      }
+    },
+    onError: () => {
+      toast.error("提交失敗，請稍後再試。");
+    },
+  });
   const sidebarRef = useRef<HTMLDivElement>(null);
   const activeMenuItem = allMenuItems.find(item => isNavActive(location, workspaceId, item.path));
   const isMobile = useIsMobile();
@@ -517,33 +530,18 @@ function DashboardLayoutContent({
               填寫以下表單，我們的團隊將在 24 小時內與您聯繫
             </DialogDescription>
           </DialogHeader>
-          <form onSubmit={async (e) => {
+          <form onSubmit={(e) => {
             e.preventDefault();
             if (!contactForm.name || !contactForm.phone || !contactForm.message) {
               toast.error("請填寫必填欄位");
               return;
             }
-            setIsSubmitting(true);
-            try {
-              // 使用 tRPC API 提交聯繫表單
-              const response = await fetch("/api/trpc/system.submitContactForm", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify(contactForm)
-              });
-              const result = await response.json();
-              if (result.result?.data?.success) {
-                toast.success("提交成功！我們將盡快與您聯繫。");
-                setContactModalOpen(false);
-                setContactForm({ name: "", phone: "", email: "", message: "" });
-              } else {
-                toast.error("提交失敗，請稍後再試。");
-              }
-            } catch (error) {
-              toast.error("提交失敗，請稍後再試。");
-            } finally {
-              setIsSubmitting(false);
-            }
+            submitContactForm.mutate({
+              name: contactForm.name,
+              phone: contactForm.phone,
+              email: contactForm.email || undefined,
+              message: contactForm.message,
+            });
           }} className="space-y-4 py-4">
             <div className="space-y-2">
               <Label htmlFor="contact-name">姓名 <span className="text-destructive">*</span></Label>
@@ -590,9 +588,9 @@ function DashboardLayoutContent({
             <Button 
               type="submit" 
               className="w-full bg-violet-600 hover:bg-violet-700"
-              disabled={isSubmitting}
+              disabled={submitContactForm.isPending}
             >
-              {isSubmitting ? "提交中..." : "提交諮詢"}
+              {submitContactForm.isPending ? "提交中..." : "提交諮詢"}
             </Button>
           </form>
         </DialogContent>
